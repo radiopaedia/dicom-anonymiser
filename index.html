@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dcmanon</title>
+    <script type="text/javascript" src="lib/dcmio/BufferStream.js"></script>
+    <script type="text/javascript" src="lib/dcmio/DicomMetaDictionary.js"></script>
+    <script type="text/javascript" src="lib/dcmio/FileSaver.min.js"></script>
+
+    <script type="text/javascript" src="lib/dcmio/ValueRepresentation.js"></script>
+    <script type="text/javascript" src="lib/dcmio/Tag.js"></script>
+    <script type="text/javascript" src="lib/dcmio/DicomMessage.js"></script>
+
+    <script src="lib/sjcl.sha512.js"></script>
+    <script src=policy.js></script>
+    <script src=tags.js></script>
+    <script src=dcmanon.js></script>
+
+    <script type="text/javascript" src="lib/jquery-2.2.4.min.js"></script>
+    <script type="text/javascript">
+    // File drop functionality as borrowed from dcmio example.
+        $.fn.extend({
+            filedrop: function (options) {
+                var defaults = {
+                    callback : null
+                }
+                options =  $.extend(defaults, options)
+                return this.each(function() {
+                    var files = []
+                    var $this = $(this)
+
+                    // Stop default browser actions
+                    $this.bind('dragover dragleave', function(event) {
+                        event.stopPropagation()
+                        event.preventDefault()
+                    })
+
+                    // Catch drop event
+                    $this.bind('drop', function(event) {
+                        // Stop default browser actions
+                        event.stopPropagation()
+                        event.preventDefault()
+
+                        // Get all files that are dropped
+                        files = event.originalEvent.target.files || event.originalEvent.dataTransfer.files
+
+                        // Convert uploaded file to data URL and pass trought callback
+                        if(options.callback) {
+                            var reader = new FileReader()
+                            reader.onload = function(event) {
+                                options.callback(event.target.result)
+                            }
+                            reader.readAsArrayBuffer(files[0])
+                        }
+                        return false
+                    })
+                })
+            }
+        })
+    </script>
+    <script type="text/javascript">
+    // Converts JSON Dicom model to an HTML table
+    function jsonTable(data) {
+        var html = '<div style="width:600px; overflow:auto"><table >';
+        html += '<tr>';
+        var flag = 0;
+        $.each(data[0], function(index, value){
+            html += '<th>'+index+'</th>';
+        });
+        html += '</tr>';
+         $.each(data, function(index, value){
+             html += '<tr>';
+             if (dcmanon.tags[index.toLowerCase()]){
+                  html += '<td title = "' + dcmanon.tags[index.toLowerCase()]["key"] + '">';
+             } else {
+                  html += '<td title="unknown">';
+             }
+             html +=  index + '</td>';
+             html += '<td>' + JSON.stringify(data[index]["Value"])+'</td>';
+             html += '<tr>';
+         });
+         html += '</table></div>';
+         return html;
+    }
+
+    $(function(){
+        var dicomData = null;
+        $('#select').change(function(evt) {
+            var e = evt.originalEvent, files = e.target.files;
+
+            var reader = new FileReader()
+            reader.onload = function(e) {
+                var startTime = new Date();
+                dicomData = dcmio.DicomMessage.readFile(e.target.result);
+                var readIn = (new Date()) - startTime;
+
+                var beforeTable = jsonTable(dicomData.dict);
+                dicomData.dict = dcmanon.anonamize(dicomData.dict, dcmanon.policy);
+                var afterTable = jsonTable(dicomData.dict);
+
+                $('#before').html("<h2>Before</h2>" + beforeTable);
+                $('#after').html("<h2>After</h2>" + afterTable);
+
+                $('#read-time').html("Read in "+readIn+"ms");
+            }
+            reader.readAsArrayBuffer(files[0]);
+        });
+
+        $('#convertToDicom').click(function(){
+            if (dicomData !== null) {
+                var dataDict = dicomData.dict;
+                /*
+                dataDict['00080070']['Value'] = ['TOSHIBA'];
+                dataDict['00080090']['Value'] = ['TEST^Patient']; // changing scalar values
+                dataDict['00081110']['Value'][0]['00081150']['Value'] = ["3.3.3.3.3.3"]; //changing sq value
+                delete dataDict['00081070']; //delete entry
+                dataDict['00200037']['Value'].pop(); //changing multiple value entry
+                */
+
+                var startTime = new Date();
+                var buffer = dicomData.write();
+                var writeIn = (new Date()) - startTime;
+                $('#write-time').html("Write in "+writeIn+"ms");
+
+                //var str = new ReadBufferStream(buffer);
+                //str.increment(128);console.log(str.readUint8());
+                saveAs(new Blob([buffer], {type: "application/dicom"}), "test.dcm", true);
+            }
+        });
+    });
+    </script>
+    <style type="text/css">
+    #jsonContent {
+        width: 800px;
+        height: 800px;
+    }
+    </style>
+</head>
+<body>
+<div class="wrapper">
+    <input type="file" value="Select dicom" id="select"></input>
+    <span id="read-time"></span>
+    <div style="width: 1200px; overflow: auto; margin:10px">
+      <div style="width: 600px; height:500px; float: left;"id="before"></div>
+      <div style="margin-left: 620px; height:500px;" id="after"></div>
+    </div>
+    <div><button id="convertToDicom">Save To DICOM</button><span id="write-time"></span></div>
+</div>
+</body>
+</html>

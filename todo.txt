@@ -1,0 +1,17 @@
+*** CORRECT DICOM OUTPUT ****
+
+Each DICOM file will have an image storage SOP. Common SOPs are defined in the standard here:
+http://dicom.nema.org/dicom/2013/output/chtml/part04/sect_B.5.html
+
+For each SOP there will be a collection of modules (which are a collection of tags).
+Example for MR SOP: http://dicom.nema.org/dicom/2013/output/chtml/part03/sect_A.4.html
+Each module may be mandatory (M), conditional (C) or user defined (U)
+
+To remove tags, mandatory and conditional (if present) modules should be replaced with
+blank, randomised, or other placeholder data so as to create valid DICOM output.
+User defined tags can be removed completely.
+
+Tag IDs are split into 2, 4 hex-digit values; group and element.
+The group value (the first half) is even for all tags defined in the standard.
+Custom tags should always have an odd value for the group bytes (last bit is 1).
+These should be removed completely (unless known and required).
