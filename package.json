@@ -1,0 +1,13 @@
+{
+  "name": "dicomanon",
+  "version": "0.1",
+  "description": "Radiopaedia Dicom Anonamizer",
+  "author": "plwp",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.16.1"
+  }
+}
