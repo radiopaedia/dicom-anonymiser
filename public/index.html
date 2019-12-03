@@ -94,7 +94,7 @@
                 var readIn = (new Date()) - startTime;
 
                 var beforeTable = jsonTable(dicomData.dict);
-                dicomData.dict = dcmanon.anonamize(dicomData.dict, dcmanon.policy);
+                dicomData.dict = dcmanon.anonymize(dicomData.dict, dcmanon.policy);
                 var afterTable = jsonTable(dicomData.dict);
 
                 $('#before').html("<h2>Before</h2>" + beforeTable);
