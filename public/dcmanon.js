@@ -32,7 +32,7 @@ dcmanon.randomUid = function() {
 // TODO: Test that there's no personal data stored outside the "Value" for a
 // given tag. This should be the case, and we're making the assumption that the
 // user is not maliciously trying to hide data.
-dcmanon.anonamize = function(dict, policy) {
+dcmanon.anonymize = function(dict, policy) {
     var newDict = {};
     for(const [key, val] of Object.entries(dict)) {
         // Use default action or action specified in policy
