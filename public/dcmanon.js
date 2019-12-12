@@ -29,6 +29,14 @@ dcmanon.randomUid = function() {
     return dcmanon.UIDPREFIX + "777." + rando;
 };
 
+dcmanon.clone = function(oldTag) {
+    console.log(oldTag);
+    var tag = {Value:[], vr:""};
+    tag.Value = [...oldTag.Value];
+    tag.vr = [...oldTag.vr];
+    return tag;
+}
+
 // TODO: Test that there's no personal data stored outside the "Value" for a
 // given tag. This should be the case, and we're making the assumption that the
 // user is not maliciously trying to hide data.
@@ -45,7 +53,7 @@ dcmanon.anonymize = function(dict, policy) {
         // TODO: I'm going to assume we're only regenerating UIDs and they
         // always have a VM (multiplicity) of 1, which may be a bad assumption
         } else if (action == "regenerate") {
-            var oldTag = dict[key];
+            var oldTag = dcmanon.clone(dict[key]);
             if (rule["method"] == "random") {
                 oldTag["Value"] = [dcmanon.randomUid()];
             } else if (rule["method"] == "hash") {
@@ -57,7 +65,7 @@ dcmanon.anonymize = function(dict, policy) {
         } else if (action == "remove") {
         // Replacement can be used for tags that require a value..
         } else if (action == "replace") {
-            oldTag = dict[key];
+            oldTag = dcmanon.clone(dict[key]);
             // We're assuming the policy is correct for VR, etc.
             oldTag["Value"] = rule["value"];
             newDict[key] = oldTag;
