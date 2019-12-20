@@ -4,7 +4,7 @@ module.exports = {
     "mode": "production",
     "entry": "./lib/browser.js",
     "output": {
-        "path": __dirname+'/public',
+        "path": __dirname+'/docs',
         "filename": "main.js"
     },
     "devtool": "source-map"
