@@ -6,8 +6,8 @@ const express = require('express');
 const app = express();
 // This allows us to serve static files without having to define
 // paths for everything.
-app.use(express.static('docs'));
-app.use('/dist', express.static('dist'));
+app.use('/demo', express.static('docs'));
+app.use('/demo/dist', express.static('dist'));
 
 app.listen(PORT, HOST);
 console.log(`Running on http://${HOST}:${PORT}`);
