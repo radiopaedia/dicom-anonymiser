@@ -1,9 +1,7 @@
 
-var dcmio = dcmio || {};
-
 //http://jonisalonen.com/2012/from-utf-16-to-utf-8-in-javascript/
-dcmio.toUTF8Array = function(str) {
-    var utf8 = [];
+export function toUTF8Array(str) {
+    var utf8: Array<number> = [];
     for (var i=0; i < str.length; i++) {
         var charcode = str.charCodeAt(i);
         if (charcode < 0x80) utf8.push(charcode);
@@ -33,7 +31,7 @@ dcmio.toUTF8Array = function(str) {
     return utf8;
 }
 
-dcmio.toInt = function(val) {
+function toInt(val) {
     if (isNaN(val)) {
         throw new Error("Not a number: " + val);
     } else if (typeof val == 'string') {
@@ -41,7 +39,7 @@ dcmio.toInt = function(val) {
     } else return val;
 }
 
-dcmio.toFloat = function(val) {
+function toFloat(val) {
     if (isNaN(val)) {
         throw new Error("Not a number: " + val);
     } else if (typeof val == 'string') {
@@ -49,7 +47,12 @@ dcmio.toFloat = function(val) {
     } else return val;
 }
 
-dcmio.BufferStream = class{
+export class BufferStream {
+    size: number;
+    buffer: ArrayBuffer;
+    view: DataView;
+    offset: number;
+    isLittleEndian: boolean;
     constructor(sizeOrBuffer, littleEndian) {
         this.buffer = typeof sizeOrBuffer == 'number' ? new ArrayBuffer(sizeOrBuffer) : sizeOrBuffer;
         if (!this.buffer) {
@@ -67,55 +70,55 @@ dcmio.BufferStream = class{
 
     writeUint8(value) {
         this.checkSize(1);
-        this.view.setUint8(this.offset, dcmio.toInt(value));
+        this.view.setUint8(this.offset, toInt(value));
         return this.increment(1);
     }
 
     writeInt8(value) {
         this.checkSize(1);
-        this.view.setInt8(this.offset, dcmio.toInt(value));
+        this.view.setInt8(this.offset, toInt(value));
         return this.increment(1);
     }
 
     writeUint16(value) {
         this.checkSize(2);
-        this.view.setUint16(this.offset, dcmio.toInt(value), this.isLittleEndian);
+        this.view.setUint16(this.offset, toInt(value), this.isLittleEndian);
         return this.increment(2);
     }
 
     writeInt16(value) {
         this.checkSize(2);
-        this.view.setInt16(this.offset, dcmio.toInt(value), this.isLittleEndian);
+        this.view.setInt16(this.offset, toInt(value), this.isLittleEndian);
         return this.increment(2);
     }
 
     writeUint32(value) {
         this.checkSize(4);
-        this.view.setUint32(this.offset, dcmio.toInt(value), this.isLittleEndian);
+        this.view.setUint32(this.offset, toInt(value), this.isLittleEndian);
         return this.increment(4);
     }
 
     writeInt32(value) {
         this.checkSize(4);
-        this.view.setInt32(this.offset, dcmio.toInt(value), this.isLittleEndian);
+        this.view.setInt32(this.offset, toInt(value), this.isLittleEndian);
         return this.increment(4);
     }
 
     writeFloat(value) {
         this.checkSize(4);
-        this.view.setFloat32(this.offset, dcmio.toFloat(value), this.isLittleEndian);
+        this.view.setFloat32(this.offset, toFloat(value), this.isLittleEndian);
         return this.increment(4);
     }
 
     writeDouble(value) {
         this.checkSize(8);
-        this.view.setFloat64(this.offset, dcmio.toFloat(value), this.isLittleEndian);
+        this.view.setFloat64(this.offset, toFloat(value), this.isLittleEndian);
         return this.increment(8);
     }
 
     writeString(value) {
         value = value || "";
-        var utf8 = dcmio.toUTF8Array(value),
+        var utf8 = toUTF8Array(value),
             bytelen = utf8.length;
 
         this.checkSize(bytelen);
@@ -147,7 +150,7 @@ dcmio.BufferStream = class{
     }
 
     readUint32() {
-        var val = this.view.getUint32(this.offset, this.isLittleEndian);
+        var val: number = this.view.getUint32(this.offset, this.isLittleEndian);
         this.increment(4);
         return val;
     }
@@ -253,7 +256,7 @@ dcmio.BufferStream = class{
         return step;
     }
 
-    getBuffer(start, end) {
+    getBuffer(start=0, end=0) {
         if (!start && !end) {
             start = 0;
             end = this.size;
@@ -269,7 +272,7 @@ dcmio.BufferStream = class{
 
         var newBuf = this.buffer.slice(this.offset, this.offset + length);
         this.increment(length);
-        return new dcmio.ReadBufferStream(newBuf);
+        return new ReadBufferStream(newBuf);
     }
 
     reset() {
@@ -286,15 +289,15 @@ dcmio.BufferStream = class{
     }
 }
 
-dcmio.ReadBufferStream = class extends dcmio.BufferStream {
-    constructor(buffer, littleEndian) {
+export class ReadBufferStream extends BufferStream {
+    constructor(buffer, littleEndian=false) {
         super(buffer, littleEndian);
         this.size = this.buffer.byteLength;
     }
 }
 
-dcmio.WriteBufferStream = class extends dcmio.BufferStream {
-    constructor(buffer, littleEndian) {
+export class WriteBufferStream extends BufferStream {
+    constructor(buffer, littleEndian=false) {
         super(buffer, littleEndian);
         this.size = 0;
     }

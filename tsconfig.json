@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "es5",
+    "module": "commonjs",
+    "declaration": false,
+    "emitDecoratorMetadata": false,
+    "experimentalDecorators": false,
+    "allowSyntheticDefaultImports": true,
+    "lib": ["es6", "es2015", "dom"],
+    "module": "es6",
+    "moduleResolution": "node",
+    "sourceMap": true,
+    "target": "es5",
+    "jsx": "react",
+    "strictNullChecks": true,
+    "noUnusedLocals": true,                /* Report errors on unused locals. */
+    "noImplicitReturns": true,             /* Report error when not all code paths in function return a value. */
+    "noFallthroughCasesInSwitch": true,    /* Report errors for fallthrough cases in switch statement. */
+    "outDir": "./lib"
+  },
+  "include": ["src"],
+  "exclude": ["node_modules", "**/__tests__/*"]
+}

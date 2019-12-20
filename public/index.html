@@ -2,20 +2,9 @@
 <html>
 <head>
     <title>Dcmanon</title>
-    <script type="text/javascript" src="lib/dcmio/BufferStream.js"></script>
-    <script type="text/javascript" src="lib/dcmio/DicomMetaDictionary.js"></script>
-    <script type="text/javascript" src="lib/dcmio/FileSaver.min.js"></script>
+    <script type="text/javascript" src="/main.js"></script>
 
-    <script type="text/javascript" src="lib/dcmio/ValueRepresentation.js"></script>
-    <script type="text/javascript" src="lib/dcmio/Tag.js"></script>
-    <script type="text/javascript" src="lib/dcmio/DicomMessage.js"></script>
-
-    <script src="lib/sjcl.sha512.js"></script>
-    <script src=policy.js></script>
-    <script src=tags.js></script>
-    <script src=dcmanon.js></script>
-
-    <script type="text/javascript" src="lib/jquery-2.2.4.min.js"></script>
+    <script type="text/javascript" src="jquery-2.2.4.min.js"></script>
     <script type="text/javascript">
     // File drop functionality as borrowed from dcmio example.
         $.fn.extend({
@@ -69,8 +58,8 @@
         html += '</tr>';
          $.each(data, function(index, value){
              html += '<tr>';
-             if (dcmanon.tags[index.toLowerCase()]){
-                  html += '<td title = "' + dcmanon.tags[index.toLowerCase()]["key"] + '">';
+             if (dcmio.TagData[index.toLowerCase()]){
+                  html += '<td title = "' + dcmio.TagData[index.toLowerCase()]["key"] + '">';
              } else {
                   html += '<td title="unknown">';
              }
@@ -90,11 +79,11 @@
             var reader = new FileReader()
             reader.onload = function(e) {
                 var startTime = new Date();
-                dicomData = dcmio.DicomMessage.readFile(e.target.result);
+                dicomData = dcmio.Message.readFile(e.target.result);
                 var readIn = (new Date()) - startTime;
 
                 var beforeTable = jsonTable(dicomData.dict);
-                dicomData.dict = dcmanon.anonymize(dicomData.dict, dcmanon.policy);
+                dicomData.dict = dcmio.Anonymize(dicomData.dict, dcmio.DefaultPolicy);
                 var afterTable = jsonTable(dicomData.dict);
 
                 $('#before').html("<h2>Before</h2>" + beforeTable);
@@ -123,7 +112,7 @@
 
                 //var str = new ReadBufferStream(buffer);
                 //str.increment(128);console.log(str.readUint8());
-                saveAs(new Blob([buffer], {type: "application/dicom"}), "test.dcm", true);
+                window.saveAs(new Blob([buffer], {type: "application/dicom"}), "test.dcm", true);
             }
         });
     });

@@ -1,5 +1,4 @@
-var dcmanon = dcmanon || {};
-dcmanon.tags = {
+export default {
   "20000010": {
     "id": "(2000,0010)",
     "name": "Number of Copies",

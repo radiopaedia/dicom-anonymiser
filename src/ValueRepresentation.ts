@@ -1,50 +1,60 @@
+import {
+  WriteBufferStream,
+  ReadBufferStream
+} from './BufferStream';
+import DicomMessage from "./Message";
+import Tag from './Tag';
 
-var dcmio = dcmio || {};
-
-dcmio.paddingLeft = function(paddingValue, string) {
-   return String(paddingValue + string).slice(-paddingValue.length);
-}
-
-dcmio.rtrim = function(str) {
+function rtrim(str) {
   return str.replace(/\s*$/g, '');
 }
 
-dcmio.ltrim = function(str) {
-  return str.replace(/^\s*/g, '');
+export function tagFromNumbers(group, element) {
+  return new Tag(((group << 16) | element) >>> 0);
 }
 
-dcmio.tagFromNumbers = function(group, element) {
-  return new dcmio.Tag(((group << 16) | element) >>> 0);
-}
-
-dcmio.readTag = function(stream) {
+function readTag(stream) {
   var group = stream.readUint16(),
       element = stream.readUint16();
 
-  var tag = dcmio.tagFromNumbers(group, element);
+  var tag = tagFromNumbers(group, element);
   return tag;
 }
 
-dcmio.binaryVRs = ["FL", "FD", "SL", "SS", "UL", "US", "AT"],
-dcmio.explicitVRList = ["OB", "OW", "OF", "SQ", "UC", "UR", "UT", "UN"],
-dcmio.singleVRs = ["SQ", "OF", "OW", "OB", "UN"];
+const binaryVRs = ["FL", "FD", "SL", "SS", "UL", "US", "AT"];
+const explicitVRList = ["OB", "OW", "OF", "SQ", "UC", "UR", "UT", "UN"];
+const singleVRs = ["SQ", "OF", "OW", "OB", "UN"];
 
-dcmio.ValueRepresentation = class {
-    constructor(type, value) {
+export default class ValueRepresentation {
+    type: string;
+    multi: boolean;
+    maxLength: number | undefined;
+    noMultiple: boolean;
+    fillWith: string;
+    padByte: string;
+    fixed: boolean;16
+    defaultValue: string | number;
+    valueLength: number;
+    maxCharLength: number;
+    checkLength?: (value: string) => boolean;
+
+    constructor(type, value=undefined) {
       this.type = type;
       this.multi = false;
+      this.maxLength = 0;
+      this.noMultiple = false;
     }
 
     isBinary() {
-        return dcmio.binaryVRs.indexOf(this.type) != -1;
+        return binaryVRs.indexOf(this.type) != -1;
     }
 
     allowMultiple() {
-        return !this.isBinary() && dcmio.singleVRs.indexOf(this.type) == -1;
+        return !this.isBinary() && singleVRs.indexOf(this.type) == -1;
     }
 
     isExplicit() {
-        return dcmio.explicitVRList.indexOf(this.type) != -1;
+        return explicitVRList.indexOf(this.type) != -1;
     }
 
     read(stream, length, syntax) {
@@ -57,7 +67,7 @@ dcmio.ValueRepresentation = class {
       return this.readBytes(stream, length, syntax);
     }
 
-    readBytes(stream, length) {
+    readBytes(stream, length, _syntax) {
       return stream.readString(length);
     }
 
@@ -73,7 +83,7 @@ dcmio.ValueRepresentation = class {
     }
 
     writeFilledString(stream, value, length) {
-        if (length < this.maxLength && length >= 0) {
+        if (this.maxLength && length < this.maxLength && length >= 0) {
             var written = 0;
             if (length > 0)
                 written += stream.writeString(value);
@@ -87,12 +97,13 @@ dcmio.ValueRepresentation = class {
         }
     }
 
-    write(stream, type) {
+    write(stream, type, ...valueArgs) {
         var args = Array.from(arguments);
         if (args[2] === null || args[2] === "" || args[2] === undefined) {
             return [stream.writeString("")];
         } else {
-            var written = [], valueArgs = args.slice(2), func = stream["write"+type];
+            let written: Array<number> = [];
+            let func = stream["write"+type];
             if (Array.isArray(valueArgs[0])) {
                 if (valueArgs[0].length < 1) {
                     written.push(0);
@@ -116,14 +127,15 @@ dcmio.ValueRepresentation = class {
         }
     }
 
-    writeBytes(stream, value, lengths) {
+    writeBytes(stream, value, lengths, isEncapsulated=false) {
       var valid = true, valarr = Array.isArray(value) ? value : [value], total = 0;
 
       for (var i = 0;i < valarr.length;i++) {
-          var checkValue = valarr[i], checklen = lengths[i], isString = false, displaylen = checklen;
-          if (this.checkLength) {
+          let checkValue: string | number = valarr[i];
+          let checklen = lengths[i], isString = false, displaylen = checklen;
+          if (this.checkLength && typeof checkValue == "string") {
             valid = this.checkLength(checkValue);
-          } else if (this.maxCharLength) {
+          } else if (this.maxCharLength && typeof checkValue == "string") {
             var check = this.maxCharLength;//, checklen = checkValue.length;
             valid = checkValue.length <= check;
             displaylen = checkValue.length;
@@ -154,74 +166,67 @@ dcmio.ValueRepresentation = class {
       return written;
     }
 
-    static createByTypeString(type) {
-        var vr = null;
-        if (type == "AE") vr = new dcmio.ApplicationEntity();
-        else if (type == "AS") vr = new dcmio.AgeString();
-        else if (type == "AT") vr = new dcmio.AttributeTag();
-        else if (type == "CS") vr = new dcmio.CodeString();
-        else if (type == "DA") vr = new dcmio.DateValue();
-        else if (type == "DS") vr = new dcmio.DecimalString();
-        else if (type == "DT") vr = new dcmio.DateTime();
-        else if (type == "FL") vr = new dcmio.FloatingPointSingle();
-        else if (type == "FD") vr = new dcmio.FloatingPointDouble();
-        else if (type == "IS") vr = new dcmio.IntegerString();
-        else if (type == "LO") vr = new dcmio.LongString();
-        else if (type == "LT") vr = new dcmio.LongText();
-        else if (type == "OB") vr = new dcmio.OtherByteString();
-        else if (type == "OD") vr = new dcmio.OtherDoubleString();
-        else if (type == "OF") vr = new dcmio.OtherFloatString();
-        else if (type == "OW") vr = new dcmio.OtherWordString();
-        else if (type == "PN") vr = new dcmio.PersonName();
-        else if (type == "SH") vr = new dcmio.ShortString();
-        else if (type == "SL") vr = new dcmio.SignedLong();
-        else if (type == "SQ") vr = new dcmio.SequenceOfItems();
-        else if (type == "SS") vr = new dcmio.SignedShort();
-        else if (type == "ST") vr = new dcmio.ShortText();
-        else if (type == "TM") vr = new dcmio.TimeValue();
-        else if (type == "UC") vr = new dcmio.UnlimitedCharacters();
-        else if (type == "UI") vr = new dcmio.UniqueIdentifier();
-        else if (type == "UL") vr = new dcmio.UnsignedLong();
-        else if (type == "UN") vr = new dcmio.UnknownValue();
-        else if (type == "UR") vr = new dcmio.UniversalResource();
-        else if (type == "US") vr = new dcmio.UnsignedShort();
-        else if (type == "UT") vr = new dcmio.UnlimitedText();
+    static createByTypeString(type: string): ValueRepresentation {
+        let vr: ValueRepresentation;
+        if (type == "AE") vr = new ApplicationEntity();
+        else if (type == "AS") vr = new AgeString();
+        else if (type == "AT") vr = new AttributeTag();
+        else if (type == "CS") vr = new CodeString();
+        else if (type == "DA") vr = new DateValue(null);
+        else if (type == "DS") vr = new DecimalString();
+        else if (type == "DT") vr = new DateTime();
+        else if (type == "FL") vr = new FloatingPointSingle();
+        else if (type == "FD") vr = new FloatingPointDouble();
+        else if (type == "IS") vr = new IntegerString();
+        else if (type == "LO") vr = new LongString();
+        else if (type == "LT") vr = new LongText();
+        else if (type == "OB") vr = new OtherByteString();
+        // else if (type == "OD") vr = new OtherDoubleString();
+        // else if (type == "OF") vr = new OtherFloatString();
+        else if (type == "OW") vr = new OtherWordString();
+        else if (type == "PN") vr = new PersonName();
+        else if (type == "SH") vr = new ShortString();
+        else if (type == "SL") vr = new SignedLong();
+        else if (type == "SQ") vr = new SequenceOfItems();
+        else if (type == "SS") vr = new SignedShort();
+        else if (type == "ST") vr = new ShortText();
+        else if (type == "TM") vr = new TimeValue();
+        else if (type == "UC") vr = new UnlimitedCharacters();
+        else if (type == "UI") vr = new UniqueIdentifier();
+        else if (type == "UL") vr = new UnsignedLong();
+        else if (type == "UN") vr = new UnknownValue();
+        else if (type == "UR") vr = new UniversalResource();
+        else if (type == "US") vr = new UnsignedShort();
+        else if (type == "UT") vr = new UnlimitedText();
         else throw "Invalid vr type " + type;
 
         return vr;
     }
 }
 
-dcmio.StringRepresentation = class extends dcmio.ValueRepresentation {
-    constructor(type) {
-        super(type);
-    }
-
-    readBytes(stream, length) {
+class StringRepresentation extends ValueRepresentation {
+    readBytes(stream, length, _syntax) {
         return stream.readString(length);
     }
 
-    writeBytes(stream, value) {
+    writeBytes(stream, value, syntax, isEncapsulated) {
         var written = super.write(stream, "String", value);
 
         return super.writeBytes(stream, value, written);
     }
 }
 
-dcmio.BinaryRepresentation = class extends dcmio.ValueRepresentation {
-    constructor(type) {
-        super(type);
-    }
-
+class BinaryRepresentation extends ValueRepresentation {
     writeBytes(stream, value, syntax, isEncapsulated) {
         if (isEncapsulated) {
             var fragmentSize = 1024 * 20,
-                frames = value.length, startOffset = [];
+                frames = value.length;
+            let startOffset: Array<number> = [];
 
-            var binaryStream = new dcmio.WriteBufferStream(1024 * 1024 * 20, stream.isLittleEndian);
+            var binaryStream = new WriteBufferStream(1024 * 1024 * 20, stream.isLittleEndian);
             for (var i = 0;i < frames;i++) {
                 startOffset.push(binaryStream.size);
-                var frameBuffer = value[i], frameStream = new dcmio.ReadBufferStream(frameBuffer),
+                var frameBuffer = value[i], frameStream = new ReadBufferStream(frameBuffer),
                     fragmentsLength = Math.ceil(frameStream.size / fragmentSize);
 
                 for (var j = 0, fragmentStart = 0;j < fragmentsLength;j++) {
@@ -229,7 +234,7 @@ dcmio.BinaryRepresentation = class extends dcmio.ValueRepresentation {
                     if (j == fragmentsLength - 1) {
                         fragmentEnd = frameStream.size;
                     }
-                    var fragStream = new dcmio.ReadBufferStream(frameStream.getBuffer(fragmentStart, fragmentEnd));
+                    var fragStream = new ReadBufferStream(frameStream.getBuffer(fragmentStart, fragmentEnd));
                     fragmentStart = fragmentEnd;
                     binaryStream.writeUint16(0xfffe);
                     binaryStream.writeUint16(0xe000);
@@ -256,17 +261,17 @@ dcmio.BinaryRepresentation = class extends dcmio.ValueRepresentation {
 
             return 0xffffffff;
         } else {
-            var binaryData = value[0], binaryStream = new dcmio.ReadBufferStream(binaryData);
+            var binaryData = value[0], binaryStream = new ReadBufferStream(binaryData);
             stream.concat(binaryStream);
             return super.writeBytes(stream, binaryData, [binaryStream.size]);
         }
     }
 
-    readBytes(stream, length) {
+    readBytes(stream, length, _syntax) {
         if (length == 0xffffffff) {
-            var itemTagValue = dcmio.Tag.readTag(stream), frames = [];
+            var itemTagValue = Tag.readTag(stream), frames: Array<any> = [];
             if (itemTagValue.is(0xfffee000)) {
-                var itemLength = stream.readUint32(), numOfFrames = 1, offsets = [];
+                var itemLength = stream.readUint32(), numOfFrames = 1, offsets: Array<number> = [];
                 if (itemLength > 0x0) {
                     //has frames
                     numOfFrames = itemLength / 4;
@@ -277,7 +282,7 @@ dcmio.BinaryRepresentation = class extends dcmio.ValueRepresentation {
                 } else {
                     offsets = [0];
                 }
-                var nextTag = dcmio.Tag.readTag(stream), fragmentStream = null, start = 4,
+                var nextTag = Tag.readTag(stream), fragmentStream: any = null, start = 4,
                     frameOffset = offsets.shift();
 
                 while (nextTag.is(0xfffee000)) {
@@ -297,7 +302,7 @@ dcmio.BinaryRepresentation = class extends dcmio.ValueRepresentation {
                         fragmentStream.concat(thisStream);
                     }
 
-                    nextTag = dcmio.Tag.readTag(stream);
+                    nextTag = Tag.readTag(stream);
                     start += 4 + frameItemLength;
                 }
                 if (fragmentStream !== null) {
@@ -323,7 +328,7 @@ dcmio.BinaryRepresentation = class extends dcmio.ValueRepresentation {
     }
 }
 
-dcmio.ApplicationEntity = class extends dcmio.StringRepresentation {
+class ApplicationEntity extends StringRepresentation {
     constructor() {
         super("AE");
         this.maxLength = 16;
@@ -331,25 +336,25 @@ dcmio.ApplicationEntity = class extends dcmio.StringRepresentation {
         this.fillWith = "20";
     }
 
-    readBytes(stream, length) {
+    readBytes(stream, length, _syntax) {
         return stream.readString(length).trim();
     }
 }
 
-dcmio.CodeString = class extends dcmio.StringRepresentation {
+class CodeString extends StringRepresentation {
     constructor() {
         super("CS");
         this.maxLength = 16;
         this.padByte = "20";
     };
 
-    readBytes(stream, length) {
+    readBytes(stream, length, _syntax) {
         //return this.readNullPaddedString(stream, length).trim();
         return stream.readString(length).trim();
     }
 }
 
-dcmio.AgeString = class extends dcmio.StringRepresentation {
+class AgeString extends StringRepresentation {
     constructor() {
         super("AS");
         this.maxLength = 4;
@@ -359,7 +364,7 @@ dcmio.AgeString = class extends dcmio.StringRepresentation {
     }
 }
 
-dcmio.AttributeTag = class extends dcmio.ValueRepresentation {
+class AttributeTag extends ValueRepresentation {
     constructor() {
         super("AT");
         this.maxLength = 4;
@@ -368,9 +373,9 @@ dcmio.AttributeTag = class extends dcmio.ValueRepresentation {
         this.fixed = true;
     };
 
-    readBytes(stream, length) {
+    readBytes(stream, length, _syntax) {
         var group = stream.readUint16(), element = stream.readUint16();
-        return dcmio.tagFromNumbers(group, element).value;
+        return tagFromNumbers(group, element).value;
     }
 
     writeBytes(stream, value) {
@@ -378,7 +383,7 @@ dcmio.AttributeTag = class extends dcmio.ValueRepresentation {
     }
 }
 
-dcmio.DateValue = class extends dcmio.StringRepresentation {
+class DateValue extends StringRepresentation {
     constructor(value) {
       super("DA", value);
       this.maxLength = 18;
@@ -388,20 +393,20 @@ dcmio.DateValue = class extends dcmio.StringRepresentation {
     }
 }
 
-dcmio.DecimalString = class extends dcmio.StringRepresentation {
+class DecimalString extends StringRepresentation {
     constructor() {
       super("DS");
       this.maxLength = 16;
       this.padByte = "20";
     }
 
-    readBytes(stream, length) {
+    readBytes(stream, length, _syntax) {
       //return this.readNullPaddedString(stream, length).trim();
       return stream.readString(length).trim();
     }
 }
 
-dcmio.DateTime = class extends dcmio.StringRepresentation {
+class DateTime extends StringRepresentation {
     constructor() {
         super("DT");
         this.maxLength = 26;
@@ -409,7 +414,7 @@ dcmio.DateTime = class extends dcmio.StringRepresentation {
     }
 }
 
-dcmio.FloatingPointSingle = class extends dcmio.ValueRepresentation {
+class FloatingPointSingle extends ValueRepresentation {
     constructor() {
         super("FL");
         this.maxLength = 4;
@@ -418,7 +423,7 @@ dcmio.FloatingPointSingle = class extends dcmio.ValueRepresentation {
         this.defaultValue = 0.0;
     }
 
-    readBytes(stream, length) {
+    readBytes(stream, length, _syntax) {
         return stream.readFloat();
     }
 
@@ -427,7 +432,7 @@ dcmio.FloatingPointSingle = class extends dcmio.ValueRepresentation {
     }
 }
 
-dcmio.FloatingPointDouble = class extends dcmio.ValueRepresentation {
+class FloatingPointDouble extends ValueRepresentation {
     constructor() {
         super("FD");
         this.maxLength = 8;
@@ -436,7 +441,7 @@ dcmio.FloatingPointDouble = class extends dcmio.ValueRepresentation {
         this.defaultValue = 0.0;
     }
 
-    readBytes(stream, length) {
+    readBytes(stream, length, _syntax) {
         return stream.readDouble();
     }
 
@@ -445,81 +450,80 @@ dcmio.FloatingPointDouble = class extends dcmio.ValueRepresentation {
     }
 }
 
-dcmio.IntegerString = class extends dcmio.StringRepresentation {
+class IntegerString extends StringRepresentation {
     constructor() {
         super("IS");
         this.maxLength = 12
         this.padByte = "20";
     }
 
-    readBytes(stream, length) {
+    readBytes(stream, length, _syntax) {
         //return this.readNullPaddedString(stream, length);
         return stream.readString(length).trim();
     }
 }
 
-dcmio.LongString = class extends dcmio.StringRepresentation {
+class LongString extends StringRepresentation {
     constructor() {
         super("LO");
         this.maxCharLength = 64;
         this.padByte = "20";
     }
 
-    readBytes(stream, length) {
+    readBytes(stream, length, _syntax) {
         //return this.readNullPaddedString(stream, length).trim();
         return stream.readString(length).trim();
     }
 }
 
-dcmio.LongText = class extends dcmio.StringRepresentation {
+class LongText extends StringRepresentation {
     constructor() {
         super("LT");
         this.maxCharLength = 10240;
         this.padByte = "20";
     }
 
-    readBytes(stream, length) {
-        //return dcmio.rtrim(this.readNullPaddedString(stream, length));
-        return dcmio.rtrim(stream.readString(length));
+    readBytes(stream, length, _syntax) {
+        //return rtrim(this.readNullPaddedString(stream, length));
+        return rtrim(stream.readString(length));
     }
 }
 
-dcmio.PersonName = class extends dcmio.StringRepresentation {
+class PersonName extends StringRepresentation {
     constructor() {
         super("PN");
-        this.maxLength = null;
+        this.maxLength = undefined;
         this.padByte = "20";
-    }
-
-    checkLength(value) {
-        var cmps = value.split(/\^/);
-        for (var i in cmps) {
-            var cmp = cmps[i];
-            if (cmp.length > 64) return false;
+        this.checkLength = (value) => {
+            var cmps = value.split(/\^/);
+            for (var i in cmps) {
+                var cmp = cmps[i];
+                if (cmp.length > 64) return false;
+            }
+            return true;
         }
-        return true;
     }
 
-    readBytes(stream, length) {
-        //return dcmio.rtrim(this.readNullPaddedString(stream, length));
-        return dcmio.rtrim(stream.readString(length));
+    readBytes(stream, length, _syntax) {
+        //return rtrim(this.readNullPaddedString(stream, length));
+        return rtrim(stream.readString(length));
     }
 }
 
-dcmio.ShortString = class extends dcmio.StringRepresentation {
+class ShortString extends StringRepresentation {
     constructor() {
         super("SH");
         this.maxCharLength = 16;
         this.padByte = "20";
     }
 
-    readBytes(stream, length) {
+    readBytes(stream, length, _syntax) {
         //return this.readNullPaddedString(stream, length).trim();
         return stream.readString(length).trim();
     }
 }
 
-dcmio.SignedLong = class extends dcmio.ValueRepresentation {
+class SignedLong extends ValueRepresentation {
     constructor() {
         super("SL");
         this.maxLength = 4;
@@ -528,7 +532,7 @@ dcmio.SignedLong = class extends dcmio.ValueRepresentation {
         this.defaultValue = 0;
     }
 
-    readBytes(stream, length) {
+    readBytes(stream, length, _syntax) {
         return stream.readInt32();
     }
 
@@ -537,10 +541,10 @@ dcmio.SignedLong = class extends dcmio.ValueRepresentation {
     }
 }
 
-dcmio.SequenceOfItems = class extends dcmio.ValueRepresentation {
+class SequenceOfItems extends ValueRepresentation {
     constructor() {
         super("SQ");
-        this.maxLength = null;
+        this.maxLength = undefined;
         this.padByte = "00";
         this.noMultiple = true;
     }
@@ -549,10 +553,10 @@ dcmio.SequenceOfItems = class extends dcmio.ValueRepresentation {
         if (sqlength == 0x0) {
             return []; //contains no dataset
         } else {
-            var undefLength = sqlength == 0xffffffff, elements = [], read = 0;
+            var undefLength = sqlength == 0xffffffff, elements: Array<any> = [], read = 0;
 
             while (true) {
-                var tag = dcmio.readTag(stream), length = null;
+                var tag = readTag(stream);
                 read += 4;
 
                 if (tag.is(0xfffee0dd)) {
@@ -561,7 +565,7 @@ dcmio.SequenceOfItems = class extends dcmio.ValueRepresentation {
                 } else if (!undefLength && (read == sqlength)) {
                     break;
                 } else if (tag.is(0xfffee000)) {
-                    length = stream.readUint32();
+                    let length = stream.readUint32();
                     read += 4;
                     var itemStream = null, toRead = 0, undef = length == 0xffffffff;
 
@@ -602,7 +606,7 @@ dcmio.SequenceOfItems = class extends dcmio.ValueRepresentation {
                         if (undef)
                             stream.increment(8);
 
-                        var items = dcmio.DicomMessage.read(itemStream, syntax);
+                        var items = DicomMessage.read(itemStream, syntax);
                         elements.push(items);
                     }
                     if (!undefLength && (read == sqlength)) {
@@ -615,7 +619,8 @@ dcmio.SequenceOfItems = class extends dcmio.ValueRepresentation {
     }
 
     writeBytes(stream, value, syntax) {
-        var fields = [], startOffset = stream.offset, written = 0;
+        // var startOffset = stream.offset,
+        let written = 0;
         if (value) {
             for (var i = 0;i < value.length;i++) {
                 var item = value[i];
@@ -623,7 +628,7 @@ dcmio.SequenceOfItems = class extends dcmio.ValueRepresentation {
                 super.write(stream, "Uint16", 0xe000);
                 super.write(stream, "Uint32", 0xffffffff);
 
-                written += dcmio.DicomMessage.write(item, stream, syntax);
+                written += DicomMessage.write(item, stream, syntax);
 
                 super.write(stream, "Uint16", 0xfffe);
                 super.write(stream, "Uint16", 0xe00d);
@@ -636,12 +641,12 @@ dcmio.SequenceOfItems = class extends dcmio.ValueRepresentation {
         super.write(stream, "Uint32", 0x00000000);
         written += 8;
 
-        var totalLength = stream.offset - startOffset;
+        // var totalLength = stream.offset - startOffset;
         return super.writeBytes(stream, value, [written]);
     }
 }
 
-dcmio.SignedShort = class extends dcmio.ValueRepresentation {
+class SignedShort extends ValueRepresentation {
     constructor() {
         super("SS");
         this.maxLength = 2;
@@ -651,7 +656,7 @@ dcmio.SignedShort = class extends dcmio.ValueRepresentation {
         this.defaultValue = 0;
     }
 
-    readBytes(stream, length) {
+    readBytes(stream, length, _syntax) {
         return stream.readInt16();
     }
 
@@ -660,59 +665,59 @@ dcmio.SignedShort = class extends dcmio.ValueRepresentation {
     }
 }
 
-dcmio.ShortText = class extends dcmio.StringRepresentation {
+class ShortText extends StringRepresentation {
     constructor() {
         super("ST");
         this.maxCharLength = 1024;
         this.padByte = "20";
     }
 
-    readBytes(stream, length) {
+    readBytes(stream, length, _syntax) {
 
-        //return dcmio.rtrim(this.readNullPaddedString(stream, length));
-        return dcmio.rtrim(stream.readString(length));
+        //return rtrim(this.readNullPaddedString(stream, length));
+        return rtrim(stream.readString(length));
     }
 }
 
-dcmio.TimeValue = class extends dcmio.StringRepresentation {
+class TimeValue extends StringRepresentation {
     constructor() {
         super("TM");
         this.maxLength = 14;
         this.padByte = "20";
     }
 
-    readBytes(stream, length) {
-        return dcmio.rtrim(stream.readString(length));
+    readBytes(stream, length, _syntax) {
+        return rtrim(stream.readString(length));
     }
 }
 
-dcmio.UnlimitedCharacters = class extends dcmio.StringRepresentation {
+class UnlimitedCharacters extends StringRepresentation {
     constructor() {
         super("UC");
-        this.maxLength = null;
+        this.maxLength = undefined;
         this.multi = true;
         this.padByte = "20";
     }
 
-    readBytes(stream, length) {
-        return dcmio.rtrim(stream.readString(length));
+    readBytes(stream, length, _syntax) {
+        return rtrim(stream.readString(length));
     }
 }
 
-dcmio.UnlimitedText = class extends dcmio.StringRepresentation {
+class UnlimitedText extends StringRepresentation {
     constructor() {
         super("UT");
-        this.maxLength = null;
+        this.maxLength = undefined;
         this.padByte = "20";
     }
 
-    readBytes(stream, length) {
+    readBytes(stream, length, _syntax) {
         //return this.readNullPaddedString(stream, length);
-        return dcmio.rtrim(stream.readString(length));
+        return rtrim(stream.readString(length));
     }
 }
 
-dcmio.UnsignedShort = class extends dcmio.ValueRepresentation {
+class UnsignedShort extends ValueRepresentation {
     constructor() {
         super("US");
         this.maxLength = 2;
@@ -721,7 +726,7 @@ dcmio.UnsignedShort = class extends dcmio.ValueRepresentation {
         this.defaultValue = 0;
     }
 
-    readBytes(stream, length) {
+    readBytes(stream, length, _syntax) {
         return stream.readUint16();
     }
 
@@ -730,7 +735,7 @@ dcmio.UnsignedShort = class extends dcmio.ValueRepresentation {
     }
 }
 
-dcmio.UnsignedLong = class extends dcmio.ValueRepresentation {
+class UnsignedLong extends ValueRepresentation {
     constructor() {
         super("UL");
         this.maxLength = 4;
@@ -739,7 +744,7 @@ dcmio.UnsignedLong = class extends dcmio.ValueRepresentation {
         this.defaultValue = 0;
     }
 
-    readBytes(stream, length) {
+    readBytes(stream, length, _syntax) {
         return stream.readUint32();
     }
 
@@ -748,56 +753,56 @@ dcmio.UnsignedLong = class extends dcmio.ValueRepresentation {
     }
 }
 
-dcmio.UniqueIdentifier = class extends dcmio.StringRepresentation {
+class UniqueIdentifier extends StringRepresentation {
     constructor() {
         super("UI");
         this.maxLength = 64;
         this.padByte = "00";
     }
 
-    readBytes(stream, length) {
+    readBytes(stream, length, _syntax) {
         return this.readNullPaddedString(stream, length);
     }
 }
 
-dcmio.UniversalResource = class extends dcmio.StringRepresentation {
+class UniversalResource extends StringRepresentation {
     constructor() {
         super("UR");
-        this.maxLength = null;
+        this.maxLength = undefined;
         this.padByte = "20";
     }
 
-    readBytes(stream, length) {
+    readBytes(stream, length, _syntax) {
         return stream.readString(length);
     }
 }
 
-dcmio.UnknownValue = class extends dcmio.StringRepresentation {
+class UnknownValue extends StringRepresentation {
     constructor() {
         super("UN");
-        this.maxLength = null;
+        this.maxLength = undefined;
         this.padByte = "00";
         this.noMultiple = true;
     }
 
-    readBytes(stream, length) {
+    readBytes(stream, length, _syntax) {
         return stream.readString(length);
     }
 }
 
-dcmio.OtherWordString = class extends dcmio.BinaryRepresentation {
+class OtherWordString extends BinaryRepresentation {
     constructor() {
         super("OW");
-        this.maxLength = null;
+        this.maxLength = undefined;
         this.padByte = "00";
         this.noMultiple = true;
     }
 }
 
-dcmio.OtherByteString = class extends dcmio.BinaryRepresentation {
+class OtherByteString extends BinaryRepresentation {
     constructor() {
         super("OB");
-        this.maxLength = null;
+        this.maxLength = undefined;
         this.padByte = "00";
         this.noMultiple = true;
     }

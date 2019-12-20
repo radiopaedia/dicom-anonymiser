@@ -5,9 +5,14 @@
   "author": "plwp",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "build": "tsc && webpack"
   },
-  "dependencies": {
-    "express": "^4.16.1"
+  "devDependencies": {
+    "express": "^4.17.1",
+    "file-saver": "^2.0.2",
+    "typescript": ">3.5.2",
+    "webpack": "^4.41.4",
+    "webpack-cli": "^3.3.10"
   }
 }

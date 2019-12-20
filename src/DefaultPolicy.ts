@@ -1,5 +1,4 @@
-var dcmanon = dcmanon || {};
-dcmanon.policy = {
+export default {
     // A few examples of different actions that we can do...
     "default" : {"action":"remove", "description":"The default policy is to remove unspecified tags"},
     "00100010": {"action":"replace", "value":["ANON^ANON"], "description":"Patient name will be replaced"},
