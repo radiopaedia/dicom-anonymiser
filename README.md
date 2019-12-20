@@ -6,5 +6,5 @@ Folder structure:
 
  * /src: Original typescript files
  * /lib: Compiled javascripts
- * /public: Browser demo of the project.
+ * /docs: Browser demo of the project.
 
