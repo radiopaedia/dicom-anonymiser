@@ -1,4 +1,4 @@
-# dicomanon
+# DICOManon
 
 With the generous support of the [Advanced Radiology Services Foundation (ARSF)](https://bitly.com/ARSFrad), Radiopaedia is building support to upload cases as DICOM rather than requiring files to be exported to JPG/PNG. A critically important part of this project is to ensure that no patient data is inadvertently sent to our servers. We have, therefore, developed a DICOM anonymiser and have made that available as an open source project so that anyway can review the code we are running. 
 
@@ -6,7 +6,7 @@ Additionally, we have built [this page](https://radiopaedia.org/standalone_dicom
 
 We’d love to hear any feedback you may have. Just write to general@radiopaedia.org
 
-## Folder structure:
+## Folder structure
 
  * /src: Original typescript files
  * /lib: Compiled javascripts
