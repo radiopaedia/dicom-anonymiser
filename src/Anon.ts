@@ -1,5 +1,5 @@
 import policy from './DefaultPolicy';
-import sjcl from './sjcl.sha512'
+import sjcl from './sjcl.sha512';
 // Prefix from Medical Connections
 const UIDPREFIX = "1.2.826.0.1.3680043.10.341.";
 // We want to keep the hash algorithm the same to preserve references.
@@ -34,6 +34,7 @@ export default function anonymize(dict) {
     for(const key of Object.keys(dict)) {
         // Use default action or action specified in policy
         var rule = policy["default"];
+        //what happens if key is not in policy? ???
         if (key in policy) { rule = policy[key]; }
         var action = rule["action"];
         // For keep actions we can just pass the tag accross...
