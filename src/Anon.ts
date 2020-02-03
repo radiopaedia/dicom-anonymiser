@@ -26,6 +26,15 @@ function randomUid() {
     return UIDPREFIX + "777." + rando;
 };
 
+/**
+* Generate a randomised Patient ID which of <= 8 chars
+*/
+function randomPatientID() {
+	const max: number = Math.pow(36, 8);
+	var id: string = (Math.floor(Math.random() * max)).toString(36).toUpperCase();
+	return id;
+};
+
 // TODO: Test that there's no personal data stored outside the "Value" for a
 // given tag. This should be the case, and we're making the assumption that the
 // user is not maliciously trying to hide data.
