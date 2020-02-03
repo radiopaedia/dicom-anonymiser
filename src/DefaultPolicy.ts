@@ -2,7 +2,8 @@ export default {
     // A few examples of different actions that we can do...
     "default" : {"action":"remove", "description":"The default policy is to remove unspecified tags"},
     "00100010": {"action":"replace", "value":["ANON^ANON"], "description":"Patient name will be replaced"},
-    "0020000D": {"action":"regenerate", "method":"random","description":"Study UID is randomised."},
+	"00100020": {"action":"replace", "value":["REMOVED"], "description":"Patient ID will be replaced"},
+    "0020000D": {"action":"regenerate", "method":"hash","description":"Study UID is hashed to preserve structure."},
     "0020000E": {"action":"regenerate", "method":"hash","description":"Series UID is hashed to preserve relationships."},
     "00200052": {"action":"regenerate", "method":"hash","description":"Frame of reference is hashed to preserve relationships."},
     "00080016": {"action":"keep", "description":"SOP Class UID"},
