@@ -1,0 +1,3 @@
+enumerated values for :
+  Modality
+  View position (0018, 5101)
