@@ -146,9 +146,9 @@ function dxDetectorModulePolicy() {
   };
 }
 
-function  aquisitionContextModulePolicy() {
+function  AcquisitionContextModulePolicy() {
   return {
-    "00400555": {"action":"replace", "value":[],"description":"Aquisition Context Sequence"}
+    "00400555": {"action":"replace", "value":[],"description":"Acquisition Context Sequence"}
   };
 }
 
@@ -204,6 +204,174 @@ function  ctImageModulePolicy() {
   };
 }
 
+function  cineModulePolicy() {
+  return {
+    "00181063": {"action":"keep", "description":"Frame Time"},
+    "00181065": {"action":"keep", "description":"Frame Time Vector"},
+    "003A0300": {"action":"replace", "value":[], "description":"Multiplexed Audio Channels Description"}
+  };
+}
+
+function  mutliFrameModulePolicy() {
+  return {
+    "00280008": {"action":"keep", "description":"Number of Frames"},
+    "00280009": {"action":"keep", "description":"Frame Increment Pointer"}
+  };
+}
+
+function  paletteColorLookupTablePolicy() {
+  return {
+    "00281101": {"action":"keep", "description":"Red Palette Color Lookup Table Descriptor"},
+    "00281102": {"action":"keep", "description":"Green Palette Color Lookup Table Descriptor"},
+    "00281103": {"action":"keep", "description":"Blue Palette Color Lookup Table Descriptor"},
+    "00281201": {"action":"keep", "description":"Red Palette Color Lookup Table Data"},
+    "00281202": {"action":"keep", "description":"Green Palette Color Lookup Table Data"},
+    "00281203": {"action":"keep", "description":"Blue Palette Color Lookup Table Data"},
+    "00281221": {"action":"keep", "description":"Segmented Red Palette Color Lookup Table Data"},
+    "00281222": {"action":"keep", "description":"Segmented Blue Palette Color Lookup Table Data"},
+    "00281223": {"action":"keep", "description":"Segmented Green Palette Color Lookup Table Data"}
+  };
+}
+
+function  ultrasoundImageModulePolicy() {
+  return {
+    "00280002": {"action":"keep", "description":"Samples per pixel"},
+    "00280004": {"action":"keep", "description":"Photometric Interpretation"},
+    "00280100": {"action":"keep", "description":"Bits Allocated"},
+    "00280101": {"action":"keep", "description":"Bits Stored"},
+    "00280102": {"action":"keep", "description":"High Bit, required to decode pixel data"},
+    "00280006": {"action":"keep", "description":"Planar Configuration"},
+    "00280103": {"action":"keep", "description":"Pixel Representation"},
+    "00280009": {"action":"keep", "description":"Frame Increment Pointer"},
+    "00080008": {"action":"replace", "value":[], "description":"Image Type"},
+    "00282110": {"action":"keep", "description":"Lossy Image Compression"}
+    "00082124": {"action":"replace", "value":[], "description":"Number of Stages"},
+    "0008212A": {"action":"replace", "value":[], "description":"Number of Views in Stage"}
+  };
+}
+
+function  mrImageModulePolicy() {
+  return {
+    "00080008": {"action":"keep", "description":"Image Type"},
+    "00280002": {"action":"keep", "description":"Samples per pixel"},
+    "00280004": {"action":"keep", "description":"Photometric Interpretation"},
+    "00280100": {"action":"keep", "description":"Bits Allocated"},
+    "00280101": {"action":"keep", "description":"Bits Stored"},
+    "00180020": {"action":"keep", "description":"Scanning Sequence"},
+    "00180021": {"action":"keep", "description":"Sequence Variant"},
+    "00180022": {"action":"keep", "description":"Scan Options"},// Type 2 but might want to display
+    "00180023": {"action":"keep", "description":"MR Acquisition Type"},// Type 2 but might want to display
+    "00180080": {"action":"replace", "value":[], "description":"Repetition Time"},
+    "00180081": {"action":"replace", "value":[], "description":"Echo Time"},
+    "00180091": {"action":"replace", "value":[], "description":"Echo Train Length"},
+    "00180082": {"action":"replace", "value":[], "description":"Inversion Time"},
+    "00181060": {"action":"replace", "value":[], "description":"Trigger Time"}
+  };
+}
+
+function  mrSeriesModulePolicy() {
+  return {
+    "00080060": {"action":"keep", "description":"Modality"}
+  };
+}
+
+function  enhancedGeneralEquipmentModulePolicy() {
+  return {
+    "00080070": {"action":"replace", "value":["REMOVED"], "description":"Manufacturer"},
+    "00081090": {"action":"replace", "value":["REMOVED"], "description":"Manufacturer's Model Name"},
+    "00181000": {"action":"replace", "value":["REMOVED"], "description":"Device Serial Number"},
+    "00181020": {"action":"replace", "value":["REMOVED"], "description":"Software Versions"}
+  };
+}
+
+function multiframeFunctionalGroupsSequenceModulePolicy() {
+  return {
+    "00200013": {"action":"keep", "description":"Instance Number"},
+    "00080023": {"action":"replace", "value":["19700101"], "description":"Content Date"},
+    "00080033": {"action":"replace", "value":["0000"], "description":"Content Time"},
+    "00280008": {"action":"keep", "description":"Number of Frames"}
+  };
+}
+
+function multiframeDimensionModulePolicy() {
+  return {
+    // TODO: We don't have a way to easily deal with nested tags right now.
+    // For now we'll just wipe this since it has a UID in there somewhere which could
+    // trace back to the institute and time/date where this was created.
+  };
+}
+
+function mrSpectroscopyModulePolicy() {
+  return {
+    "00080008": {"action":"keep", "description":"Image Type"},
+    "00089206": {"action":"keep", "description":"Volumetric Properties"},
+    "00089207": {"action":"keep", "description":"Volume Based Calculation Technique"},
+    "00089208": {"action":"keep", "description":"Complex Image Component"},
+    "00089209": {"action":"keep", "description":"Acquisition Contrast"},
+    "00189098": {"action":"keep", "description":"Transmitter Frequency"},
+    "00189052": {"action":"keep", "description":"Spectral Width"},
+    "00189053": {"action":"keep", "description":"Chemical Shift Reference"},
+    "00189126": {"action":"keep", "description":"Volume Localization Sequence"},
+    "00189059": {"action":"keep", "description":"Decoupling"},
+    "00189060": {"action":"keep", "description":"Decoupled Nucleus"},
+    "00189061": {"action":"keep", "description":"Decoupled Frequency"},
+    "00189062": {"action":"keep", "description":"Decoupling Method"},
+    "00189063": {"action":"keep", "description":"Decoupling Chemical Shift Reference"},
+    "00189065": {"action":"keep", "description":"Time Domain Fitting"},
+    "00189066": {"action":"keep", "description":"Number of Zero Fills"},
+    "00189067": {"action":"keep", "description":"Baseline Correction"},
+    "00189101": {"action":"keep", "description":"Frequency Correction"},
+    "00189198": {"action":"keep", "description":"First Order Phase Correction"},
+    "00189199": {"action":"keep", "description":"Water Referenced Phase Correction"}
+    // Removed referenced image sequence (again, because it contains UID)
+  };
+}
+
+function mrSpectroscopyDataModulePolicy() {
+  return {
+    "00280010": {"action":"keep", "description":"Rows"},
+    "00280011": {"action":"keep", "description":"Columns"},
+    "00289001": {"action":"keep", "description":"Data Point Rows"},
+    "00289002": {"action":"keep", "description":"Data Point Columns"},
+    "00289108": {"action":"keep", "description":"Data Representation"},
+    "00289003": {"action":"keep", "description":"Signal Domain Columns"},
+    "00289235": {"action":"keep", "description":"Signal Domain Rows"},
+    "56000010": {"action":"keep", "description":"First Order Phase Correction Angle"},
+    "56000020": {"action":"keep", "description":"Spectroscopy Data"}
+  };
+}
+
+function xRayImageModulePolicy() {
+  return {
+    "00282110": {"action":"keep", "description":"Lossy Image Compression"},
+    "00080008": {"action":"keep", "description":"Image Type"},
+    "00281040": {"action":"keep", "description":"Pixel intensity relationship"},
+    "00280002": {"action":"keep", "description":"Samples per pixel."},
+    "00280004": {"action":"keep", "description":"Photometric Interpretation"},
+    "00280100": {"action":"keep", "description":"Bits Allocated"},
+    "00280101": {"action":"keep", "description":"Bits Stored"},
+    "00280102": {"action":"keep", "description":"High Bit, required to decode pixel data"},
+    "00280103": {"action":"keep", "description":"Pixel Representation"}
+  };
+}
+
+function  xRayAcquisitionModulePolicy() {
+  return {
+    "00180060": {"action":"replace", "value":[], "description":"KVP"},
+    "00181155": {"action":"keep", "description":"Radiation Setting"},
+    "00181151": {"action":"replace", "value":[], "description":"X-Ray Tube Current"},
+    "00181150": {"action":"replace", "value":[], "description":"Exposure Time"},
+    "00181152": {"action":"replace", "value":[], "description":"Exposure"},
+    "00280030": {"action":"keep", "description":"Pixel Spacing"},
+  };
+}
+
+function  xaPositionerModulePolicy() {
+  return {
+    // Technically the module is mandatory but contains no type-1 or 2 fields
+  };
+}
+
 /******************************************************************************\
       SOP POLICIES
       These are policies for supported SOP Classes made up of module policies.
@@ -222,7 +390,7 @@ export default function digitalXRayPolicy(): IPolicy {
     dxAnatomyImagedModulePolicy(),
     dxImageModulePolicy(),
     dxDetectorModulePolicy(),
-    aquisitionContextModulePolicy(),
+    AcquisitionContextModulePolicy(),
     sopCommonModulePolicy(),
     {
         "default" : {"action":"remove", "description":"The default policy is to remove unspecified tags"},
@@ -246,7 +414,7 @@ export default function digitalMammographyXRayPolicy(): IPolicy {
     dxImageModulePolicy(),
     dxDetectorModulePolicy(),
     mammographyImageModulePolicy(),
-    aquisitionContextModulePolicy(),
+    AcquisitionContextModulePolicy(),
     sopCommonModulePolicy(),
     {
         "default" : {"action":"remove", "description":"The default policy is to remove unspecified tags"},
@@ -267,6 +435,127 @@ export default function ctImagePolicy(): IPolicy {
     imagePlaneModulePolicy(),
     imagePixelModulePolicy(),
     ctImageModulePolicy(),
+    sopCommonModulePolicy(),
+    {
+        "default" : {"action":"remove", "description":"The default policy is to remove unspecified tags"},
+        "00080016": {"action":"replace", "value":[classUID],"description":"SOP Class UID"}
+    }
+  );
+};
+
+export default function ultrasoundMultiframeImagePolicy(): IPolicy {
+  var classUID = "1.2.840.10008.5.1.4.1.1.3.1";
+  return addPolicies(
+    patientModulePolicy(),
+    generalStudyModulePolicy(),
+    generalSeriesModulePolicy(),
+    frameOfReferenceModulePolicy(),
+    generalEquipmentModulePolicy(),
+    generalImageModulePolicy(),
+    imagePixelModulePolicy(),
+    cineModulePolicy(),
+    mutliFrameModulePolicy(),
+    paletteColorLookupTablePolicy(),
+    ultrasoundImageModulePolicy(),
+    sopCommonModulePolicy(),
+    {
+        "default" : {"action":"remove", "description":"The default policy is to remove unspecified tags"},
+        "00080016": {"action":"replace", "value":[classUID],"description":"SOP Class UID"}
+    }
+  );
+};
+
+export default function mrImagePolicy(): IPolicy {
+  var classUID = "1.2.840.10008.5.1.4.1.1.4";
+  return addPolicies(
+    patientModulePolicy(),
+    generalStudyModulePolicy(),
+    generalSeriesModulePolicy(),
+    frameOfReferenceModulePolicy(),
+    generalEquipmentModulePolicy(),
+    generalImageModulePolicy(),
+    imagePlaneModulePolicy(),
+    imagePixelModulePolicy(),
+    mrImageModulePolicy(),
+    sopCommonModulePolicy(),
+    {
+        "default" : {"action":"remove", "description":"The default policy is to remove unspecified tags"},
+        "00080016": {"action":"replace", "value":[classUID],"description":"SOP Class UID"}
+    }
+  );
+};
+
+export default function mrSpectroscopyImagePolicy(): IPolicy {
+  var classUID = "1.2.840.10008.5.1.4.1.1.4.2";
+  return addPolicies(
+    patientModulePolicy(),
+    generalStudyModulePolicy(),
+    generalSeriesModulePolicy(),
+    mrSeriesModulePolicy(),
+    frameOfReferenceModulePolicy(),
+    generalEquipmentModulePolicy(),
+    enhancedGeneralEquipmentModulePolicy(),
+    multiframeFunctionalGroupsSequenceModulePolicy(),
+    multiframeDimensionModulePolicy(),
+    AcquisitionContextModulePolicy(),
+    mrSpectroscopyModulePolicy(),
+    mrSpectroscopyDataModulePolicy(),
+    sopCommonModulePolicy(),
+    {
+        "default" : {"action":"remove", "description":"The default policy is to remove unspecified tags"},
+        "00080016": {"action":"replace", "value":[classUID],"description":"SOP Class UID"}
+    }
+  );
+};
+
+export default function ultrasoundImagePolicy(): IPolicy {
+  var classUID = "1.2.840.10008.5.1.4.1.1.6.1";
+  return addPolicies(
+    patientModulePolicy(),
+    generalStudyModulePolicy(),
+    generalSeriesModulePolicy(),
+    generalEquipmentModulePolicy(),
+    generalImageModulePolicy(),
+    imagePixelModulePolicy(),
+    ultrasoundImageModulePolicy(),
+    sopCommonModulePolicy(),
+    {
+        "default" : {"action":"remove", "description":"The default policy is to remove unspecified tags"},
+        "00080016": {"action":"replace", "value":[classUID],"description":"SOP Class UID"}
+    }
+  );
+};
+
+export default function xRayAngiographicImagePolicy(): IPolicy {
+  var classUID = "1.2.840.10008.5.1.4.1.1.12.1";
+  return addPolicies(
+    patientModulePolicy(),
+    generalStudyModulePolicy(),
+    generalSeriesModulePolicy(),
+    generalEquipmentModulePolicy(),
+    generalImageModulePolicy(),
+    imagePixelModulePolicy(),
+    xRayImageModulePolicy(),
+    xRayAcquisitionModulePolicy(),
+    sopCommonModulePolicy(),
+    {
+        "default" : {"action":"remove", "description":"The default policy is to remove unspecified tags"},
+        "00080016": {"action":"replace", "value":[classUID],"description":"SOP Class UID"}
+    }
+  );
+};
+
+export default function xRayRadiofluoroscopicImagePolicy(): IPolicy {
+  var classUID = "1.2.840.10008.5.1.4.1.1.12.2";
+  return addPolicies(
+    patientModulePolicy(),
+    generalStudyModulePolicy(),
+    generalSeriesModulePolicy(),
+    generalEquipmentModulePolicy(),
+    generalImageModulePolicy(),
+    imagePixelModulePolicy(),
+    xRayImageModulePolicy(),
+    xRayAcquisitionModulePolicy(),
     sopCommonModulePolicy(),
     {
         "default" : {"action":"remove", "description":"The default policy is to remove unspecified tags"},
