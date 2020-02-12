@@ -38,3 +38,7 @@
 
   // Dealbreakers...
   "00280301": {"action":"keep", "description":"Burned in Annotation"}, // Autofail if anything but NO
+  "00280302": {"action":"keep", "description":"Recognizable Visual Features"},
+
+
+  /// for blacklist --- image comments 00204000
