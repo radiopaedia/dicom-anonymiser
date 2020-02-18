@@ -1,5 +1,6 @@
-import policy from './DefaultPolicy';
-import sjcl from './sjcl.sha512'
+import policyFor from './Policies';
+import validate from './Validator';
+import sjcl from './sjcl.sha512';
 // Prefix from Medical Connections
 const UIDPREFIX = "1.2.826.0.1.3680043.10.341.";
 // We want to keep the hash algorithm the same to preserve references.
@@ -35,42 +36,52 @@ function randomPatientID() {
 	return id;
 };
 
-// TODO: Test that there's no personal data stored outside the "Value" for a
-// given tag. This should be the case, and we're making the assumption that the
-// user is not maliciously trying to hide data.
-export default function anonymize(dict) {
-    var newDict = {};
-    for(const key of Object.keys(dict)) {
-        // Use default action or action specified in policy
-        var rule = policy["default"];
-        if (key in policy) { rule = policy[key]; }
-        var action = rule["action"];
-        // For keep actions we can just pass the tag accross...
-        if (action == "keep") {
-            newDict[key] = dict[key];
-        // TODO: I'm going to assume we're only regenerating UIDs and they
-        // always have a VM (multiplicity) of 1, which may be a bad assumption
-        } else if (action == "regenerate") {
-            var oldTag = cloneTag(dict[key]);
-            if (rule["method"] == "random") {
-                oldTag["Value"] = [randomUid()];
-            } else if (rule["method"] == "hash") {
-                oldTag["Value"] = [hashedUid(oldTag["Value"][0])];
-            }
-            newDict[key] = oldTag;
-        // Then to remove we're just not going to add anything for now.
-        // There could be different methods to remove (e.g. just clear the value)
-        } else if (action == "remove") {
-        // Replacement can be used for tags that require a value..
-        } else if (action == "replace") {
-            oldTag = cloneTag(dict[key]);
-            // We're assuming the policy is correct for VR, etc.
-            oldTag["Value"] = rule["value"];
-            newDict[key] = oldTag;
-        }
-    }
+function applyPolicy(dcm, policy){
+  var newDcm = {};
+  for(const key of Object.keys(dcm)) {
+      console.log("VR:" + dcm[key]["VR"] + " val:" + dcm[key]["Value"] );
+      // Use default action or action specified in policy
+      var rule = policy["default"];
+      if (key in policy) { rule = policy[key]; }
+      var action = rule["action"];
+      // For keep actions we can just pass the tag accross...
+      if (action == "keep") {
+          newDcm[key] = dcm[key];
+      // TODO: I'm going to assume we're only regenerating UIDs and they
+      // always have a VM (multiplicity) of 1, which may be a bad assumption
+      } else if (action == "regenerate") {
+          var oldTag = cloneTag(dcm[key]);
+          if (rule["method"] == "random") {
+              oldTag["Value"] = [randomUid()];
+          } else if (rule["method"] == "hash") {
+              oldTag["Value"] = [hashedUid(oldTag["Value"][0])];
+          }
+          newDcm[key] = oldTag;
+      // Then to remove we're just not going to add anything for now.
+      // There could be different methods to remove (e.g. just clear the value)
+      } else if (action == "remove") {
+      // Replacement can be used for tags that require a value..
+      } else if (action == "replace") {
+          oldTag = cloneTag(dcm[key]);
+          // We're assuming the policy is correct for VR, etc.
+          oldTag["Value"] = rule["value"];
+          newDcm[key] = oldTag;
+      }
+  }
 
-    return newDict;
+  return newDcm;
+};
+
+// This is the main anonymization function.
+export default function anonymize(dcm) {
+    // Get the policy for this SOP Class
+    var sopClassUid = dcm['00080016'];
+    console.log("Getting Policy for " + sopClassUid);
+    var policy = policyFor(sopClassUid);
+    // Apply the anonymization policy.
+    newDcm = applyPolicy(dcm, policy);
+
+    issues = validate(newDcm);/////////TODO
 };
 
 const cloneTag = function(oldTag) {
@@ -79,4 +90,3 @@ const cloneTag = function(oldTag) {
         vr: "" + oldTag.vr,
     };
 }
-
