@@ -14,7 +14,7 @@
   random or cryptographically hashed values.
 ******************************************************************************/
 
-export default interface IPolicy {
+export interface IPolicy {
   [tagId: string]: any;
 }
 
@@ -28,7 +28,7 @@ function addPolicy(base: IPolicy, overlay: IPolicy): IPolicy {
 }
 
 function addPolicies(...policies: IPolicy[]): IPolicy {
-  if (policies.length < 1){ return null; }
+  if (policies.length < 1){ return {"default":{"action":"remove", "description":"remove EVERYTHINNNGG!!!"}}}
   // Add all the policies together
   var base = policies[0];
   for (var i = 1; i < policies.length; i++) {
@@ -138,8 +138,8 @@ function imagePixelModulePolicy(): IPolicy {
     "00280102": {"action":"keep", "description":"High Bit, required to decode pixel data"},
     "00280103": {"action":"keep", "description":"Pixel Representation"},
     "00280006": {"action":"keep", "description":"Planar Configuration"}, // Type 1C
-    "00280034": {"action":"keep", "description":"Pixel Aspect Ratio"} // Type 1C
-    "7FE00010": {"action":"keep", "description":"Pixel Data"}, // We need this or we won't have an image
+    "00280034": {"action":"keep", "description":"Pixel Aspect Ratio"}, // Type 1C
+    "7FE00010": {"action":"keep", "description":"Pixel Data"} // We need this or we won't have an image
   };
 }
 
@@ -244,7 +244,7 @@ function  ultrasoundImageModulePolicy() {
     "00280103": {"action":"keep", "description":"Pixel Representation"},
     "00280009": {"action":"keep", "description":"Frame Increment Pointer"},
     "00080008": {"action":"replace", "value":[], "description":"Image Type"},
-    "00282110": {"action":"keep", "description":"Lossy Image Compression"}
+    "00282110": {"action":"keep", "description":"Lossy Image Compression"},
     "00082124": {"action":"replace", "value":[], "description":"Number of Stages"},
     "0008212A": {"action":"replace", "value":[], "description":"Number of Views in Stage"}
   };
@@ -391,7 +391,7 @@ function xRay3DImageModulePolicy() {
     "00280102": {"action":"keep", "description":"High Bit, required to decode pixel data"},
     "00280002": {"action":"keep", "description":"Samples per pixel."},
     "00280004": {"action":"keep", "description":"Photometric Interpretation"},
-    "00189004": {"action":"keep", "description":"Content Qualification"}
+    "00189004": {"action":"keep", "description":"Content Qualification"},
     "00280301": {"action":"keep", "description":"Burned In Annotation"},
     "00280302": {"action":"keep", "description":"Recognizable Visual Features"},
     "00282110": {"action":"keep", "description":"Lossy Image Compression"},
@@ -504,7 +504,7 @@ function  petImageModulePolicy() {
     "00280101": {"action":"keep", "description":"Bits Stored"},
     "00280102": {"action":"keep", "description":"High Bit, required to decode pixel data"},
     "00281040": {"action":"keep", "description":"Pixel intensity relationship"},
-    "00280103": {"action":"keep", "description":"Pixel Representation"}
+    "00280103": {"action":"keep", "description":"Pixel Representation"},
     "00281052": {"action":"keep", "description":"Rescale Intercept"},
     "00281053": {"action":"keep", "description":"Rescale Slope"},
     "00541300": {"action":"keep", "description":"Frame Reference Time"},

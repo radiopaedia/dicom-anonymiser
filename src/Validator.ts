@@ -7,12 +7,12 @@ import TagData from './TagData';
 * information leak, and 3 being any abnormality, and a text description.
 **/
 
-export default interface IValidatorWarning {
+export interface IValidatorWarning {
   level: number;
   text: string;
 }
 
-export default function supportedSOPClasses(): string[] {
+export function supportedSOPClasses(): string[] {
   return [
     "1.2.840.10008.5.1.4.1.1.1.1", // Digital X-Ray Image - For Presentation
     "1.2.840.10008.5.1.4.1.1.1.1.1", // Digital X-Ray Image - For Processing
@@ -39,7 +39,7 @@ export default function supportedSOPClasses(): string[] {
 }
 
 function validateAplicationEntityVR(tag): IValidatorWarning[]{
-  let values = tag["Value"];
+  //let values = tag["Value"];
   let warnings = Array<IValidatorWarning>();
   // This is a pretty broadly defined VR
   return warnings;
@@ -76,7 +76,7 @@ function validateCodeStringVR(tag): IValidatorWarning[]{
   let warnings = Array<IValidatorWarning>();
   for(var i = 0; i < values.length; i++) {
     // Code string values should be uppercase.
-    if (/[a-z]/.test(value[i]))) {
+    if (/[a-z]/.test(values[i])) {
         warnings.push({level:3, text:values[i] + " is not an expected value for codestring"});
     }
   }
@@ -103,7 +103,7 @@ function validateDecimalStringVR(tag): IValidatorWarning[]{
   {
     // Valid chars are 0-9, e, E - +
     // Just a quick test for bad chars.
-    if (/[a-d]/.test(value[i]) || /[f-z]/.test(value[i]) || /[A-D]/.test(value[i]) || /[F-Z]/.test(value[i])) {
+    if (/[a-d]/.test(values[i]) || /[f-z]/.test(values[i]) || /[A-D]/.test(values[i]) || /[F-Z]/.test(values[i])) {
         warnings.push({level:3, text:values[i] + " is not an expected value for a decimal string"});
     }
   }
@@ -134,10 +134,11 @@ function validateFloatingPointDoubleVR(tag): IValidatorWarning[]{
 
 function validateIntegerStringVR(tag): IValidatorWarning[]{
   let warnings = Array<IValidatorWarning>();
+  let values = tag["Value"];
   for(var i = 0; i < values.length; i++) {
     // Valid chars are 0-9, e, E - +
     // Just a quick test for bad chars.
-    if (/[a-d]/.test(value[i]) || /[f-z]/.test(value[i]) || /[A-D]/.test(value[i]) || /[F-Z]/.test(value[i])) {
+    if (/[a-d]/.test(values[i]) || /[f-z]/.test(values[i]) || /[A-D]/.test(values[i]) || /[F-Z]/.test(values[i])) {
         warnings.push({level:3, text:values[i] + " is not an expected value for a integer string"});
     }
   }
@@ -146,10 +147,11 @@ function validateIntegerStringVR(tag): IValidatorWarning[]{
 
 function validateLongStringVR(tag): IValidatorWarning[]{
   let warnings = Array<IValidatorWarning>();
+  let values = tag["Value"];
   for(var i = 0; i < values.length; i++) {
     // Valid chars are 0-9, e, E - +
     // Just a quick test for bad chars.
-    if (/[a-d]/.test(value[i]) || /[f-z]/.test(value[i]) || /[A-D]/.test(value[i]) || /[F-Z]/.test(value[i])) {
+    if (/[a-d]/.test(values[i]) || /[f-z]/.test(values[i]) || /[A-D]/.test(values[i]) || /[F-Z]/.test(values[i])) {
         warnings.push({level:3, text:values[i] + " is not an expected value for a long string"});
     }
   }
@@ -231,11 +233,12 @@ function validateTimeVR(tag): IValidatorWarning[]{
   for(var i = 0; i < values.length; i++)
   {
     // Just a quick test for bad chars.
-    if (/[a-d]/.test(value[i]) || /[f-z]/.test(value[i]) || /[A-D]/.test(value[i]) || /[F-Z]/.test(value[i]))
+    if (/[a-d]/.test(values[i]) || /[f-z]/.test(values[i]) || /[A-D]/.test(values[i]) || /[F-Z]/.test(values[i]))
     {
         warnings.push({level:3, text:values[i] + " is not an expected value for a time string"});
     }
   }
+  return warnings;
 };
 
 function validateUIDVR(tag): IValidatorWarning[]{
@@ -243,7 +246,7 @@ function validateUIDVR(tag): IValidatorWarning[]{
   let warnings =  Array<IValidatorWarning>();
   for(var i = 0; i < values.length; i++) {
     // Just a quick test for bad chars.
-    if (/[a-z]/.test(value[i]) || /[A-Z]/.test(value[i])) {
+    if (/[a-z]/.test(values[i]) || /[A-Z]/.test(values[i])) {
         warnings.push({level:3, text:values[i] + " is not an expected value for a UID"});
     }
   }
@@ -256,12 +259,18 @@ function validateUnsignedLongVR(tag): IValidatorWarning[]{
   return Array<IValidatorWarning>();
 };
 
-function checkMultiplicity(tag): IValidatorWarning[]{
-  //TODO
-  return  Array<IValidatorWarning>();
+function validateUndefinedVR(tag): IValidatorWarning[]{
+  var warnings = Array<IValidatorWarning>();
+  warnings.push({level:3, text:"Tag's VR field is undefined"})
+  return warnings;
 };
 
-let validateVRType = {
+//function checkMultiplicity(tag): IValidatorWarning[]{
+//  //TODO
+//  return  Array<IValidatorWarning>();
+//};
+
+let validateDict = {
   "AE":validateAplicationEntityVR,
   "AS":validateAgeStringVR,
   "AR":validateAttributeTagVR,
@@ -285,14 +294,16 @@ let validateVRType = {
   "ST":validateShortTextVR,
   "TM":validateTimeVR,
   "UI":validateUIDVR,
-  "UL":validateUnsignedLongVR
+  "UL":validateUnsignedLongVR,
+  undefined:validateUndefinedVR
 };
 
-export default function validate(dcm): {
+export default function validate(dcm) {
   let warnings = Array<IValidatorWarning>();
   for(const key of Object.keys(dcm)){
-    console.log("VR:" + dcm[key]["VR"] + " val:" + dcm[key]["Value"] );
-    warnings = warnings.concat(validateVRType[dcm[key]["VR"]](dcm[key]))
+    console.log("key:" + key + " keykeys:" + Object.keys(dcm[key]));
+    console.log("VR:" + dcm[key]["vr"] + " val:" + dcm[key]["Value"] );
+    warnings = warnings.concat(validateDict[dcm[key]["vr"]](dcm[key]))
   }
 
   return warnings;

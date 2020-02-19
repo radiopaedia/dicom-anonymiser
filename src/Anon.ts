@@ -39,7 +39,7 @@ function randomPatientID() {
 function applyPolicy(dcm, policy){
   var newDcm = {};
   for(const key of Object.keys(dcm)) {
-      console.log("VR:" + dcm[key]["VR"] + " val:" + dcm[key]["Value"] );
+      console.log("inpit: VR:" + dcm[key]["vr"] + " val:" + dcm[key]["Value"] );
       // Use default action or action specified in policy
       var rule = policy["default"];
       if (key in policy) { rule = policy[key]; }
@@ -76,12 +76,12 @@ function applyPolicy(dcm, policy){
 export default function anonymize(dcm) {
     // Get the policy for this SOP Class
     var sopClassUid = dcm['00080016'];
-    console.log("Getting Policy for " + sopClassUid);
-    var policy = policyFor(sopClassUid);
+    console.log("Getting Policy for " + sopClassUid["Value"][0]);
+    var policy = policyFor(sopClassUid["Value"][0]);
     // Apply the anonymization policy.
-    newDcm = applyPolicy(dcm, policy);
+    var newDcm = applyPolicy(dcm, policy);
 
-    issues = validate(newDcm);/////////TODO
+    var warnings = validate(newDcm);
 };
 
 const cloneTag = function(oldTag) {
