@@ -26,6 +26,11 @@ function randomUid() {
     return UIDPREFIX + "777." + rando;
 };
 
+//CMHM new function to check that what is in fields is proper
+
+
+
+
 // TODO: Test that there's no personal data stored outside the "Value" for a
 // given tag. This should be the case, and we're making the assumption that the
 // user is not maliciously trying to hide data.
@@ -33,8 +38,9 @@ export default function anonymize(dict) {
     var newDict = {};
     for(const key of Object.keys(dict)) {
         // Use default action or action specified in policy
+    //CONSIDER MOVING NEXT LINE OUTSIDE THE LOOP! (CMHM)
         var rule = policy["default"];
-        //what happens if key is not in policy? ???
+        //what happens if key is not in policy? ??? (CMHM)
         if (key in policy) { rule = policy[key]; }
         var action = rule["action"];
         // For keep actions we can just pass the tag accross...
