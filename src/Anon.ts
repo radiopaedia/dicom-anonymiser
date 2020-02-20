@@ -39,10 +39,11 @@ function randomPatientID() {
 function applyPolicy(dcm, policy){
   var newDcm = {};
   for(const key of Object.keys(dcm)) {
-      console.log("inpit: VR:" + dcm[key]["vr"] + " val:" + dcm[key]["Value"] );
+      //console.log("inpit: VR:" + dcm[key]["vr"] + " val:" + dcm[key]["Value"] );
       // Use default action or action specified in policy
       var rule = policy["default"];
       if (key in policy) { rule = policy[key]; }
+      console.log("using rule: " + rule["action"] + " : " + rule["description"]);
       var action = rule["action"];
       // For keep actions we can just pass the tag accross...
       if (action == "keep") {
@@ -81,7 +82,8 @@ export default function anonymize(dcm) {
     // Apply the anonymization policy.
     var newDcm = applyPolicy(dcm, policy);
 
-    var warnings = validate(newDcm);
+    //var warnings = validate(newDcm);
+    return newDcm;
 };
 
 const cloneTag = function(oldTag) {

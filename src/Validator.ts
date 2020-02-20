@@ -151,9 +151,7 @@ function validateLongStringVR(tag): IValidatorWarning[]{
   for(var i = 0; i < values.length; i++) {
     // Valid chars are 0-9, e, E - +
     // Just a quick test for bad chars.
-    if (/[a-d]/.test(values[i]) || /[f-z]/.test(values[i]) || /[A-D]/.test(values[i]) || /[F-Z]/.test(values[i])) {
-        warnings.push({level:3, text:values[i] + " is not an expected value for a long string"});
-    }
+    warnings.push({level:4, text:"Long strings may include personal data."});
   }
   return warnings;
 };
@@ -259,6 +257,11 @@ function validateUnsignedLongVR(tag): IValidatorWarning[]{
   return Array<IValidatorWarning>();
 };
 
+function validateUnsignedShortVR(tag): IValidatorWarning[]{
+  //TODO (Probably a cast?)
+  return Array<IValidatorWarning>();
+};
+
 function validateUndefinedVR(tag): IValidatorWarning[]{
   var warnings = Array<IValidatorWarning>();
   warnings.push({level:3, text:"Tag's VR field is undefined"})
@@ -295,15 +298,18 @@ let validateDict = {
   "TM":validateTimeVR,
   "UI":validateUIDVR,
   "UL":validateUnsignedLongVR,
+  "US":validateUnsignedShortVR,
   undefined:validateUndefinedVR
 };
 
 export default function validate(dcm) {
-  let warnings = Array<IValidatorWarning>();
+  var warnings = {};
   for(const key of Object.keys(dcm)){
-    console.log("key:" + key + " keykeys:" + Object.keys(dcm[key]));
-    console.log("VR:" + dcm[key]["vr"] + " val:" + dcm[key]["Value"] );
-    warnings = warnings.concat(validateDict[dcm[key]["vr"]](dcm[key]))
+    var vrKey = dcm[key]["vr"];
+    if (validateDict[vrKey] == undefined) {vrKey = undefined};
+    console.log(vrKey + " : " + validateDict[vrKey]);
+    var warningsList = validateDict[vrKey](dcm[key]);
+    warnings[key] = warningsList;
   }
 
   return warnings;
