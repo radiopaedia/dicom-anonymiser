@@ -310,6 +310,39 @@ export default function validate(dcm) {
     console.log(vrKey + " : " + validateDict[vrKey]);
     var warningsList = validateDict[vrKey](dcm[key]);
     warnings[key] = warningsList;
+
+    // Check if the annotations are burnt in:
+    if (key == "00280301") {
+      var values = dcm[key]["Value"];
+      for(var i = 0; i < values.length; i++) {
+        // Just a quick test for bad chars.
+        if (values[i] != "NO") {
+            warnings["00280301"] = [{level:1, text:"Image contains burnt-in annotations which cannot be anonymized."}];
+        }
+      }
+    }
+
+    // Check if the there are recognizable features
+    if (key == "00280302") {
+      var values = dcm[key]["Value"];
+      for(var i = 0; i < values.length; i++) {
+        // Just a quick test for bad chars.
+        if (values[i] == "YES") {
+            warnings["00280302"] = [{level:1, text:"Image contains recognizable visual features which cannot be anonymized."}];
+        }
+      }
+    }
+
+    // Check if the there are recognizable features
+    if (key == "00120062") {
+      var values = dcm[key]["Value"];
+      for(var i = 0; i < values.length; i++) {
+        // Just a quick test for bad chars.
+        if (values[i] == "NO") {
+            warnings["00120062"] = [{level:1, text:"Image has not had personal data removed."}];
+        }
+      }
+    }
   }
 
   return warnings;

@@ -1,6 +1,9 @@
 import policyFor from './Policies';
-import validate from './Validator';
 import sjcl from './sjcl.sha512';
+import Validator from './Validator'
+import {CodeString, LongString} from './ValueRepresentation'
+import DicomDict from './Message'
+
 // Prefix from Medical Connections
 const UIDPREFIX = "1.2.826.0.1.3680043.10.341.";
 // We want to keep the hash algorithm the same to preserve references.
@@ -81,6 +84,23 @@ export default function anonymize(dcm) {
     var policy = policyFor(sopClassUid["Value"][0]);
     // Apply the anonymization policy.
     var newDcm = applyPolicy(dcm, policy);
+
+    // Check that we don't have ay dealbreaker warnings...
+    var warnings = Validator(newDcm);
+    var worked = true;
+    for(const key of Object.keys(warnings)){
+      for(const warning of warnings[key]) {
+        worked = worked && warning.level > 1;
+      }
+    }
+    // Add Patient Identity Removed tag (0012,0062)
+    if(worked) {
+      newDcm["00120062"] = {vr:"CS", Value: ["YES"]};
+    } else {
+      newDcm["00120062"] = {vr:"CS", Value: ["NO"]};
+    }
+    // Add Patient Identity Removal Method tag (0012,0062)
+    newDcm["00120063"] = {vr:"LO", Value:["Radiopaedia Dicom Anonymizer. https://github.com/radiopaedia/dicomanon"]};;
 
     //var warnings = validate(newDcm);
     return newDcm;

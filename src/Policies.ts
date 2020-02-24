@@ -155,7 +155,7 @@ function patientModulePolicy(): IPolicy {
 function  sopCommonModulePolicy() {
   return {
     "00080016": {"action":"keep", "description":"SOP Class UID"},
-    "0020000D": {"action":"regenerate", "method":"random", "description":"SOP Storage Instance UID is hashed to preserve structure."}
+    "0020000D": {"action":"regenerate", "method":"hash", "description":"SOP Storage Instance UID is hashed to preserve structure."}
   };
 }
 
