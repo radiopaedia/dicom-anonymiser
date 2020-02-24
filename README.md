@@ -27,6 +27,7 @@ The application explicitly supports the following DICOM SOP Classes:
  * 1.2.840.10008.5.1.4.1.1.13.1.1 (XRay 3D Angiographic Image)
  * 1.2.840.10008.5.1.4.1.1.20 (Nuclear Medicine Image)
  * 1.2.840.10008.5.1.4.1.1.128 (Positron Emission Tomography Image)
+ 
 (Other image types can be anonymized, however some functional information may be stripped)
 
 The DICOManon policy (src/Policies.ts) for a given SOP Class can either remove, replace or regenerate a tag value.
