@@ -52,7 +52,7 @@ export default {
     "name": "Maximum Memory Allocation",
     "key": "MaximumMemoryAllocation",
     "vr": "IS",
-    "valueRepresentation": "1",
+    "vm": "1",
     "retired": false
   },
   "20000062": {

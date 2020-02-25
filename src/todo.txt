@@ -1,0 +1,44 @@
+  // Check enumerated values
+  Modality
+  View position (0018, 5101)
+  Presentation Intent Type (0008,0068)
+  "00200062": {"action":"keep", "description":"Image Laterality"},
+  "00080008": {"action":"keep", "description":"Image Type"}, //digitalxray
+  "00080008": {"action":"keep", "description":"Image Type"}, //mammogram
+  "00282110": {"action":"keep", "description":"Lossy Image Compression"},
+  "00281040": {"action":"keep", "description":"Pixel intensity relationship"},
+  //mammography
+    "00081508": {"action":"keep", "description":"PositionerType"},
+    "00081508": {"action":"keep", "description":"PositionerType"},
+    "00200062": {"action":"keep", "description":"ImageLaterality"},
+    "00400318": {"action":"keep", "description":"OrganExposed"},
+  // ctImage
+    "00080008": {"action":"keep", "description":"Image Type"},
+
+
+  //Check conditionals:
+  "00280006": {"action":"keep", "description":"Planar Configuration"}, // Type 1C
+  "00280034": {"action":"keep", "description":"Pixel Aspect Ratio"}, // Type 1C
+  "00281054": {"action":"keep", "description":"Rescale Type"},
+  "20500020": {"action":"keep", "description":"Presentation LUT Shape"},
+
+  // Check types
+  "00280102": {"action":"keep", "description":"High Bit, required to decode pixel data"}, // ushort
+  "00281041": {"action":"keep", "description":"Pixel intensity relationship sign"},
+  "00281052": {"action":"keep", "description":"Rescale Intercept"},
+  "00281053": {"action":"keep", "description":"Rescale Slope"},
+  "00282112": {"action":"keep", "description":"Lossy Image Compression Ratio"},
+  "00281050": {"action":"keep", "description":"Window Center"}, // Type 1C, Handy for viewing
+  "00281051": {"action":"keep", "description":"Window Width"}, // Type 1C, handy for viewing
+  "00181164": {"action":"keep", "description":"Imager pixel spacing"},
+  "00280030": {"action":"keep", "description":"Pixel Spacing"},
+  "00200037": {"action":"keep", "description":"Image Orientation (Patient)"},
+  "00200032": {"action":"keep", "description":"Image Position (Patient)"},
+  "00180050": {"action":"keep", "description":"Slice Thickness"} // Type 2 but useful
+
+  // Dealbreakers...
+  "00280301": {"action":"keep", "description":"Burned in Annotation"}, // Autofail if anything but NO
+  "00280302": {"action":"keep", "description":"Recognizable Visual Features"},
+
+
+  /// for blacklist --- image comments 00204000

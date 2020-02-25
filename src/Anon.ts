@@ -1,5 +1,9 @@
-import policy from './DefaultPolicy';
-import sjcl from './sjcl.sha512'
+import policyFor from './Policies';
+import sjcl from './sjcl.sha512';
+import Validator from './Validator'
+import {CodeString, LongString} from './ValueRepresentation'
+import DicomDict from './Message'
+
 // Prefix from Medical Connections
 const UIDPREFIX = "1.2.826.0.1.3680043.10.341.";
 // We want to keep the hash algorithm the same to preserve references.
@@ -26,42 +30,80 @@ function randomUid() {
     return UIDPREFIX + "777." + rando;
 };
 
-// TODO: Test that there's no personal data stored outside the "Value" for a
-// given tag. This should be the case, and we're making the assumption that the
-// user is not maliciously trying to hide data.
-export default function anonymize(dict) {
-    var newDict = {};
-    for(const key of Object.keys(dict)) {
-        // Use default action or action specified in policy
-        var rule = policy["default"];
-        if (key in policy) { rule = policy[key]; }
-        var action = rule["action"];
-        // For keep actions we can just pass the tag accross...
-        if (action == "keep") {
-            newDict[key] = dict[key];
-        // TODO: I'm going to assume we're only regenerating UIDs and they
-        // always have a VM (multiplicity) of 1, which may be a bad assumption
-        } else if (action == "regenerate") {
-            var oldTag = cloneTag(dict[key]);
-            if (rule["method"] == "random") {
-                oldTag["Value"] = [randomUid()];
-            } else if (rule["method"] == "hash") {
-                oldTag["Value"] = [hashedUid(oldTag["Value"][0])];
-            }
-            newDict[key] = oldTag;
-        // Then to remove we're just not going to add anything for now.
-        // There could be different methods to remove (e.g. just clear the value)
-        } else if (action == "remove") {
-        // Replacement can be used for tags that require a value..
-        } else if (action == "replace") {
-            oldTag = cloneTag(dict[key]);
-            // We're assuming the policy is correct for VR, etc.
-            oldTag["Value"] = rule["value"];
-            newDict[key] = oldTag;
-        }
-    }
+/**
+* Generate a randomised Patient ID which of <= 8 chars
+*/
+function randomPatientID() {
+	const max: number = Math.pow(36, 8);
+	var id: string = (Math.floor(Math.random() * max)).toString(36).toUpperCase();
+	return id;
+};
 
-    return newDict;
+function applyPolicy(dcm, policy){
+  var newDcm = {};
+  for(const key of Object.keys(dcm)) {
+      //console.log("inpit: VR:" + dcm[key]["vr"] + " val:" + dcm[key]["Value"] );
+      // Use default action or action specified in policy
+      var rule = policy["default"];
+      if (key in policy) { rule = policy[key]; }
+      console.log("using rule: " + rule["action"] + " : " + rule["description"]);
+      var action = rule["action"];
+      // For keep actions we can just pass the tag accross...
+      if (action == "keep") {
+          newDcm[key] = dcm[key];
+      // TODO: I'm going to assume we're only regenerating UIDs and they
+      // always have a VM (multiplicity) of 1, which may be a bad assumption
+      } else if (action == "regenerate") {
+          var oldTag = cloneTag(dcm[key]);
+          if (rule["method"] == "random") {
+              oldTag["Value"] = [randomUid()];
+          } else if (rule["method"] == "hash") {
+              oldTag["Value"] = [hashedUid(oldTag["Value"][0])];
+          }
+          newDcm[key] = oldTag;
+      // Then to remove we're just not going to add anything for now.
+      // There could be different methods to remove (e.g. just clear the value)
+      } else if (action == "remove") {
+      // Replacement can be used for tags that require a value..
+      } else if (action == "replace") {
+          oldTag = cloneTag(dcm[key]);
+          // We're assuming the policy is correct for VR, etc.
+          oldTag["Value"] = rule["value"];
+          newDcm[key] = oldTag;
+      }
+  }
+
+  return newDcm;
+};
+
+// This is the main anonymization function.
+export default function anonymize(dcm) {
+    // Get the policy for this SOP Class
+    var sopClassUid = dcm['00080016'];
+    console.log("Getting Policy for " + sopClassUid["Value"][0]);
+    var policy = policyFor(sopClassUid["Value"][0]);
+    // Apply the anonymization policy.
+    var newDcm = applyPolicy(dcm, policy);
+
+    // Check that we don't have ay dealbreaker warnings...
+    var warnings = Validator(newDcm);
+    var worked = true;
+    for(const key of Object.keys(warnings)){
+      for(const warning of warnings[key]) {
+        worked = worked && warning.level > 1;
+      }
+    }
+    // Add Patient Identity Removed tag (0012,0062)
+    if(worked) {
+      newDcm["00120062"] = {vr:"CS", Value: ["YES"]};
+    } else {
+      newDcm["00120062"] = {vr:"CS", Value: ["NO"]};
+    }
+    // Add Patient Identity Removal Method tag (0012,0062)
+    newDcm["00120063"] = {vr:"LO", Value:["Radiopaedia Dicom Anonymizer. https://github.com/radiopaedia/dicomanon"]};;
+
+    //var warnings = validate(newDcm);
+    return newDcm;
 };
 
 const cloneTag = function(oldTag) {
@@ -70,4 +112,3 @@ const cloneTag = function(oldTag) {
         vr: "" + oldTag.vr,
     };
 }
-

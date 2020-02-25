@@ -48,7 +48,7 @@
     </script>
     <script type="text/javascript">
     // Converts JSON Dicom model to an HTML table
-    function jsonTable(data) {
+    function jsonTable(data, warnings) {
         var html = '<div style="width:600px; overflow:auto"><table >';
         html += '<tr>';
         var flag = 0;
@@ -57,7 +57,21 @@
         });
         html += '</tr>';
          $.each(data, function(index, value){
-             html += '<tr>';
+             if (warnings[index] == undefined || warnings[index].length == 0) {
+               html += '<tr>';
+             } else {
+               if (warnings[index][0].level == 4) {
+                 html += '<tr style="background-color:lightblue" title="' + warnings[index][0].text + '">';
+               } else if (warnings[index][0].level == 3) {
+                 html += '<tr style="background-color:yellow" title="' + warnings[index][0].text + '">';
+               } else if (warnings[index][0].level == 2) {
+                 html += '<tr style="background-color:orange" title="' + warnings[index][0].text + '">';
+               } else if (warnings[index][0].level == 1) {
+                 html += '<tr style="background-color:red" title="' + warnings[index][0].text + '">';
+               }
+
+             }
+
              if (dcmio.TagData[index.toLowerCase()]){
                   html += '<td title = "' + dcmio.TagData[index.toLowerCase()]["key"] + '">';
              } else {
@@ -81,10 +95,13 @@
                 var startTime = new Date();
                 dicomData = dcmio.Message.readFile(e.target.result);
                 var readIn = (new Date()) - startTime;
-
-                var beforeTable = jsonTable(dicomData.dict);
-                dicomData.dict = dcmio.Anonymize(dicomData.dict, dcmio.DefaultPolicy);
-                var afterTable = jsonTable(dicomData.dict);
+                // You can validate the original data if you want to see validation warnings.
+                // These are seperate from the whitelist policy and are only a double-check based on value type.
+                var warnings = {}//dcmio.Validator(dicomData.dict);
+                var beforeTable = jsonTable(dicomData.dict, warnings);
+                dicomData.dict = dcmio.Anonymize(dicomData.dict);
+                warnings = dcmio.Validator(dicomData.dict);
+                var afterTable = jsonTable(dicomData.dict, warnings);
 
                 $('#before').html("<h2>Before</h2>" + beforeTable);
                 $('#after').html("<h2>After</h2>" + afterTable);
