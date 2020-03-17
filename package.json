@@ -10,7 +10,6 @@
     "build": "tsc && webpack"
   },
   "devDependencies": {
-    "express": "^4.17.1",
     "file-saver": "^2.0.2",
     "ts-loader": "^6.2.1",
     "typescript": "^3.7.5",
@@ -18,5 +17,7 @@
     "webpack-cli": "^3.3.11",
     "webpack-node-externals": "^1.7.2"
   },
-  "dependencies": {}
+  "dependencies": {
+    "express": "^4.17.1"
+  }
 }
