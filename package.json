@@ -1,10 +1,10 @@
 {
   "name": "dicomanon",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "license": "AGPL-3.0-only",
   "description": "Radiopaedia Dicom Anonamizer",
   "author": "plwp",
-  "main": "server.js",
+  "main": "lib/index.js",
   "scripts": {
     "start": "node server.js",
     "build": "tsc && webpack"
