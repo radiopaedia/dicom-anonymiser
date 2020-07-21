@@ -26,9 +26,9 @@ app.use(
 );
 app.use('/docs', express.static('docs'))
 
-const index = fs.readFileSync('docs/index.html').toString()
 // The following middleware would not be invoked until the latest build is finished.
 app.use('/', (req, res) => {
+  const index = fs.readFileSync('docs/index.html').toString()
   const markup = []
   const assets = res.locals.webpackStats.compilation.assets
   for (const asset of Object.keys(assets)) {

@@ -3,88 +3,13 @@
 <head>
     <title>DICOM anonymiser</title>
     <script type="text/javascript" src="./main.js"></script>
-
+    <style>
+    tr {
+        outline: 1px solid #AAA;
+    }
+    </style>
     <script type="text/javascript" src="/docs/jquery-2.2.4.min.js"></script>
     <script type="text/javascript">
-    // File drop functionality as borrowed from dcmio example.
-        $.fn.extend({
-            filedrop: function (options) {
-                var defaults = {
-                    callback : null
-                }
-                options =  $.extend(defaults, options)
-                return this.each(function() {
-                    var files = []
-                    var $this = $(this)
-
-                    // Stop default browser actions
-                    $this.bind('dragover dragleave', function(event) {
-                        event.stopPropagation()
-                        event.preventDefault()
-                    })
-
-                    // Catch drop event
-                    $this.bind('drop', function(event) {
-                        // Stop default browser actions
-                        event.stopPropagation()
-                        event.preventDefault()
-
-                        // Get all files that are dropped
-                        files = event.originalEvent.target.files || event.originalEvent.dataTransfer.files
-
-                        // Convert uploaded file to data URL and pass trought callback
-                        if(options.callback) {
-                            var reader = new FileReader()
-                            reader.onload = function(event) {
-                                options.callback(event.target.result)
-                            }
-                            reader.readAsArrayBuffer(files[0])
-                        }
-                        return false
-                    })
-                })
-            }
-        })
-    </script>
-    <script type="text/javascript">
-    // Converts JSON Dicom model to an HTML table
-    function jsonTable(data, warnings) {
-        var html = '<div style="width:600px; overflow:auto"><table >';
-        html += '<tr>';
-        var flag = 0;
-        $.each(data[0], function(index, value){
-            html += '<th>'+index+'</th>';
-        });
-        html += '</tr>';
-         $.each(data, function(index, value){
-             if (warnings[index] == undefined || warnings[index].length == 0) {
-               html += '<tr>';
-             } else {
-               if (warnings[index][0].level == 4) {
-                 html += '<tr style="background-color:lightblue" title="' + warnings[index][0].text + '">';
-               } else if (warnings[index][0].level == 3) {
-                 html += '<tr style="background-color:yellow" title="' + warnings[index][0].text + '">';
-               } else if (warnings[index][0].level == 2) {
-                 html += '<tr style="background-color:orange" title="' + warnings[index][0].text + '">';
-               } else if (warnings[index][0].level == 1) {
-                 html += '<tr style="background-color:red" title="' + warnings[index][0].text + '">';
-               }
-
-             }
-
-             if (dcmio.TagData[index.toLowerCase()]){
-                  html += '<td title = "' + dcmio.TagData[index.toLowerCase()]["key"] + '">';
-             } else {
-                  html += '<td title="unknown">';
-             }
-             html +=  index + '</td>';
-             html += '<td>' + JSON.stringify(data[index]["Value"])+'</td>';
-             html += '<tr>';
-         });
-         html += '</table></div>';
-         return html;
-    }
-
     $(function(){
         var dicomData = null;
         $('#select').change(function(evt) {
@@ -98,15 +23,45 @@
                 // You can validate the original data if you want to see validation warnings.
                 // These are seperate from the whitelist policy and are only a double-check based on value type.
                 var warnings = {}//dcmio.Validator(dicomData.dict);
-                var beforeTable = jsonTable(dicomData.dict, warnings);
+                var beforeData = JSON.parse(JSON.stringify(dicomData.dict))
                 dicomData.dict = dcmio.Anonymize(dicomData.dict);
                 warnings = dcmio.Validator(dicomData.dict);
-                var afterTable = jsonTable(dicomData.dict, warnings);
 
-                $('#before').html("<h2>Before</h2>" + beforeTable);
-                $('#after').html("<h2>After</h2>" + afterTable);
+                const renderKey = (index) => {
+                    if (dcmio.TagData[index.toLowerCase()]){
+                        return index + JSON.stringify(dcmio.TagData[index.toLowerCase()]["key"]);
+                    } else {
+                        return index
+                    }
+                }
+                const renderData = (data) => data ? JSON.stringify(data.Value) : ""
+                const rows = Object.keys(beforeData).map((k) =>
+                    `<tr>
+                        <td>${renderKey(k)}</td>
+                        <td>${renderData(beforeData[k])}</td>
+                        <td>${renderData(dicomData.dict[k])}</td>
+                        <td>${(warnings[k] || []).map((warning) =>
+                            `<span class="warning-level${warning.level}">${JSON.stringify(warning.text)}</span>`
+                        ).join("<br/>\n")}</td>
+                    </tr>`
+                )
+                var maintable = `
+                    <thead>
+                        <tr>
+                            <td>Item</td>
+                            <td>Before</td>
+                            <td>After</td>
+                            <td>Warnings</td>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rows}
+                    </tbody>
+                `
+                $('#table').html(maintable)
 
                 $('#read-time').html("Read in "+readIn+"ms");
+                $('#convertToDicom').show()
             }
             reader.readAsArrayBuffer(files[0]);
         });
@@ -134,22 +89,13 @@
         });
     });
     </script>
-    <style type="text/css">
-    #jsonContent {
-        width: 800px;
-        height: 800px;
-    }
-    </style>
 </head>
 <body>
 <div class="wrapper">
     <input type="file" value="Select dicom" id="select"></input>
     <span id="read-time"></span>
-    <div style="width: 1200px; overflow: auto; margin:10px">
-      <div style="width: 600px; height:500px; float: left;"id="before"></div>
-      <div style="margin-left: 620px; height:500px;" id="after"></div>
-    </div>
-    <div><button id="convertToDicom">Save To DICOM</button><span id="write-time"></span></div>
+    <div><button id="convertToDicom" style="display: none">Save To DICOM</button><span id="write-time"></span></div>
+    <table style="width: 100%" id="table"></table>
 </div>
 </body>
 </html>
