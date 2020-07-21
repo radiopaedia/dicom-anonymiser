@@ -1,1 +1,1 @@
-export default function anonymize(dict: any): {};
+export default function anonymize(dcm: any): {};

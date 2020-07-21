@@ -5,7 +5,7 @@ export declare class DicomDict {
     dict: object;
     constructor(meta: any);
     upsertTag(tag: any, vr: any, values: any): void;
-    write(dict?: object): any;
+    write(dict?: object): ArrayBuffer;
 }
 export default class DicomMessage {
     static read(bufferStream: any, syntax: any, length?: number): {};
