@@ -11,6 +11,7 @@
     <script type="text/javascript" src="/docs/jquery-2.2.4.min.js"></script>
     <script type="text/javascript">
     $(function(){
+        var dcmio = window.dicomanon.dcmio
         var dicomData = null;
         $('#select').change(function(evt) {
             var e = evt.originalEvent, files = e.target.files;
@@ -84,7 +85,7 @@
 
                 //var str = new ReadBufferStream(buffer);
                 //str.increment(128);console.log(str.readUint8());
-                window.saveAs(new Blob([buffer], {type: "application/dicom"}), "test.dcm", true);
+                window.dicomanon.saveAs(new Blob([buffer], {type: "application/dicom"}), "test.dcm", true);
             }
         });
     });
