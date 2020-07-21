@@ -27,11 +27,25 @@ The application explicitly supports the following DICOM SOP Classes:
  * 1.2.840.10008.5.1.4.1.1.13.1.1 (XRay 3D Angiographic Image)
  * 1.2.840.10008.5.1.4.1.1.20 (Nuclear Medicine Image)
  * 1.2.840.10008.5.1.4.1.1.128 (Positron Emission Tomography Image)
- 
+
 (Other image types can be anonymized, however some functional information may be stripped)
 
 The DICOManon policy (src/Policies.ts) for a given SOP Class can either remove, replace or regenerate a tag value.
 DICOM uses UIDs to structure a series across multiple files. Where necessary, these UIDS are regenerated using a cryptographically secure SHA-512 hash. Regenerated UIDS can be identified by the prefix "1.2.826.0.1.3680043.10.341." and do not include personal information.
+
+
+### Usage
+
+```js
+  import * as dcmio from "dicomanon"
+  var reader = new FileReader()
+  reader.onload = function(e) {
+      dicomData = dcmio.Message.readFile(e.target.result);
+      dicomData.dict = dcmio.Anonymize(dicomData.dict);
+      warnings = dcmio.Validator(dicomData.dict);
+      var buffer = dicomData.write();
+  }
+```
 
 ### Limitations
 The DICOManon application won't be able to identify or remove burnt-in information within an image, and works under the assumption that input images are DICOM standard conformant. We recommend manually reviewing the output of the tool before sharing any images.
