@@ -21,7 +21,8 @@ function normalizeAssets(assets) {
 // paths for everything.
 app.use(
   middleware(compiler, {
-    serverSideRender: true
+    serverSideRender: true,
+    writeToDisk: true,
   })
 );
 app.use('/docs', express.static('docs'))
