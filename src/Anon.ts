@@ -42,11 +42,9 @@ function randomPatientID() {
 function applyPolicy(dcm, policy){
   var newDcm = {};
   for(const key of Object.keys(dcm)) {
-      //console.log("inpit: VR:" + dcm[key]["vr"] + " val:" + dcm[key]["Value"] );
       // Use default action or action specified in policy
       var rule = policy["default"];
       if (key in policy) { rule = policy[key]; }
-      console.log("using rule: " + rule["action"] + " : " + rule["description"]);
       var action = rule["action"];
       // For keep actions we can just pass the tag accross...
       if (action == "keep") {
@@ -80,7 +78,6 @@ function applyPolicy(dcm, policy){
 export default function anonymize(dcm) {
     // Get the policy for this SOP Class
     var sopClassUid = dcm['00080016'];
-    console.log("Getting Policy for " + sopClassUid["Value"][0]);
     var policy = policyFor(sopClassUid["Value"][0]);
     // Apply the anonymization policy.
     var newDcm = applyPolicy(dcm, policy);

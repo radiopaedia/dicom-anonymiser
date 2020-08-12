@@ -61,8 +61,8 @@ export default class ValueRepresentation {
       if (this.fixed && this.maxLength) {
         if (!length)
           return this.defaultValue;
-        if (this.maxLength != length)
-          console.log("Invalid length for fixed length tag, vr " + this.type + ", length " + this.maxLength + " != " + length);
+        // if (this.maxLength != length)
+        //   console.log("Invalid length for fixed length tag, vr " + this.type + ", length " + this.maxLength + " != " + length);
       }
       return this.readBytes(stream, length, syntax);
     }
@@ -146,9 +146,10 @@ export default class ValueRepresentation {
 
           var errmsg = "Value exceeds max length, vr: " + this.type + ", value: " + checkValue + ", length: " + displaylen;
           if (!valid) {
-            if(isString)
-                console.log(errmsg)
-            else
+            // if(isString)
+                // console.log(errmsg)
+            // else
+            if (!isString)
                 throw new Error(errmsg);
           }
           total += checklen;

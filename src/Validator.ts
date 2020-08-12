@@ -307,7 +307,6 @@ export default function validate(dcm) {
   for(const key of Object.keys(dcm)){
     var vrKey = dcm[key]["vr"];
     if (validateDict[vrKey] == undefined) {vrKey = undefined};
-    console.log(vrKey + " : " + validateDict[vrKey]);
     var warningsList = validateDict[vrKey](dcm[key]);
     warnings[key] = warningsList;
 
