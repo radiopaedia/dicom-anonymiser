@@ -98,7 +98,10 @@ export default function anonymize(dcm) {
     }
     // Add Patient Identity Removal Method tag (0012,0062)
     newDcm["00120063"] = {vr:"LO", Value:["Radiopaedia Dicom Anonymizer. https://github.com/radiopaedia/dicomanon"]};;
-
+	
+	// Change VR to UR to avoid trimming of pixel data (older standard uses the vr UC, which is trimmed.
+	newDcm["7FE00010"].vr = "UR";
+	
     //var warnings = validate(newDcm);
     return newDcm;
 };
