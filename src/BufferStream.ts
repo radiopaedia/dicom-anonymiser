@@ -221,7 +221,7 @@ export class BufferStream {
     readHex(length) {
         var hexString = '';
         for (var i = 0;i < length;i++) {
-            hexString += this.readUint8().toString(16);
+            hexString += this.readUint8().toString(16).padStart(2, '0');
         }
         return hexString;
     }
