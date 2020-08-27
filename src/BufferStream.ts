@@ -182,6 +182,12 @@ export class BufferStream {
         return arr;
     }
 
+    readInt8() {
+        var val = this.view.getInt8(this.offset);
+        this.increment(1);
+        return val;
+    }
+
     readInt16() {
         var val = this.view.getInt16(this.offset, this.isLittleEndian);
         this.increment(2);
