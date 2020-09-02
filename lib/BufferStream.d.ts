@@ -22,6 +22,7 @@ export declare class BufferStream {
     readUint8(): number;
     readUint8Array(length: any): Uint8Array;
     readUint16Array(length: any): Uint16Array;
+    readInt8(): number;
     readInt16(): number;
     readInt32(): number;
     readFloat(): number;

@@ -5,6 +5,7 @@ import {
 import ValueRepresentation, {tagFromNumbers} from "./ValueRepresentation";
 import Tag from "./Tag";
 import DicomMetaDictionary from "./MetaDictionary";
+import dicomParser from "dicom-parser";
 
 const IMPLICIT_LITTLE_ENDIAN = "1.2.840.10008.1.2";
 const EXPLICIT_LITTLE_ENDIAN = "1.2.840.10008.1.2.1";
@@ -104,6 +105,10 @@ export default class DicomMessage {
       var dicomDict = new DicomDict(metaHeader);
       dicomDict.dict = objects;
 
+      let bf = Buffer.from(buffer)
+      let dataSet = dicomParser.parseDicom(bf)
+      let pd = dataSet.elements['x7fe00010']
+      dicomDict.dict['7FE00010'].Value[0] = bf.buffer
       return dicomDict;
     }
 
