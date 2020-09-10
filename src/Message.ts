@@ -21,7 +21,7 @@ const encapsulatedSyntaxes = [
 
 export class DicomDict {
   meta: any;
-  dict: object;
+  dict: Record<string, TagValue>;
     constructor(meta) {
       this.meta = meta;
       this.dict = {};
@@ -56,11 +56,10 @@ export class DicomDict {
 }
 
 export type TagValue = {
-  foo: typeof ValueRepresentation;
   vr: string;
   Value: Array<ValueRepresentation>
-
 }
+
 export default class DicomMessage {
     static read(bufferStream, syntax, length=0) {
         var dict = {};
@@ -68,7 +67,6 @@ export default class DicomMessage {
           var readInfo = DicomMessage.readTag(bufferStream, syntax);
 
           dict[readInfo.tag.toCleanString()] = {
-            foo: readInfo.vr,
             vr: readInfo.vr.type,
             Value: readInfo.values
           };
