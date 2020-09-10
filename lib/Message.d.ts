@@ -7,6 +7,11 @@ export declare class DicomDict {
     upsertTag(tag: any, vr: any, values: any): void;
     write(dict?: object): ArrayBuffer;
 }
+export declare type TagValue = {
+    foo: typeof ValueRepresentation;
+    vr: string;
+    Value: Array<ValueRepresentation>;
+};
 export default class DicomMessage {
     static read(bufferStream: any, syntax: any, length?: number): {};
     static _normalizeSyntax(syntax: any): any;

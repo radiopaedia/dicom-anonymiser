@@ -55,6 +55,12 @@ export class DicomDict {
     }
 }
 
+export type TagValue = {
+  foo: typeof ValueRepresentation;
+  vr: string;
+  Value: Array<ValueRepresentation>
+
+}
 export default class DicomMessage {
     static read(bufferStream, syntax, length=0) {
         var dict = {};
