@@ -123,7 +123,7 @@ export default class DicomMessage {
 
         written += tag.write(useStream, vrType, values, syntax);
       });
-
+      
       return written;
     }
 
@@ -181,6 +181,10 @@ export default class DicomMessage {
           values.push(vr.read(stream, vr.maxLength, syntax));
         }
       } else {
+        if (tag.isPixelDataTag()) {
+          console.log('stream.getBuffer.byteLength: ' + stream.getBuffer().byteLength);
+          console.log('length: ' + length);
+        }
         var val = vr.read(stream, length, syntax);
         if (!vr.isBinary() && singleVRs.indexOf(vr.type) == -1) {
           values = val.split(String.fromCharCode(0x5c));
@@ -188,13 +192,16 @@ export default class DicomMessage {
           values = val;
         } else if (vr.type == 'OW' || vr.type == 'OB') {
           values = val;
+          
         } else {
           values.push(val);
         }
       }
       stream.setEndian(oldEndian);
 
-
+      if (tag.isPixelDataTag()) {
+        console.log('read stream :' + stream.getBuffer().byteLength);
+      }
       return {tag: tag, vr: vr, values: values};
     }
 

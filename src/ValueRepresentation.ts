@@ -129,7 +129,6 @@ export default class ValueRepresentation {
 
     writeBytes(stream, value, lengths, isEncapsulated=false) {
       var valid = true, valarr = Array.isArray(value) ? value : [value], total = 0;
-
       for (var i = 0;i < valarr.length;i++) {
           let checkValue: string | number = valarr[i];
           let checklen = lengths[i], isString = false, displaylen = checklen;
@@ -143,12 +142,11 @@ export default class ValueRepresentation {
           } else if (this.maxLength) {
             valid = checklen <= this.maxLength;
           }
-
           var errmsg = "Value exceeds max length, vr: " + this.type + ", value: " + checkValue + ", length: " + displaylen;
           if (!valid) {
-            // if(isString)
-                // console.log(errmsg)
-            // else
+             if(isString)
+                 console.log(errmsg)
+             else
             if (!isString)
                 throw new Error(errmsg);
           }
@@ -157,7 +155,6 @@ export default class ValueRepresentation {
       if (this.allowMultiple()) {
         total += valarr.length ? valarr.length - 1 : 0;
       }
-
       //check for odd
       var written = total;
       if (total & 1) {
@@ -223,13 +220,11 @@ export class BinaryRepresentation extends ValueRepresentation {
             var fragmentSize = 1024 * 20,
                 frames = value.length;
             let startOffset: Array<number> = [];
-
             var binaryStream = new WriteBufferStream(1024 * 1024 * 20, stream.isLittleEndian);
             for (var i = 0;i < frames;i++) {
                 startOffset.push(binaryStream.size);
                 var frameBuffer = value[i], frameStream = new ReadBufferStream(frameBuffer),
                     fragmentsLength = Math.ceil(frameStream.size / fragmentSize);
-
                 for (var j = 0, fragmentStart = 0;j < fragmentsLength;j++) {
                     var fragmentEnd = fragmentStart + fragmentSize;
                     if (j == fragmentsLength - 1) {
@@ -243,7 +238,6 @@ export class BinaryRepresentation extends ValueRepresentation {
                     binaryStream.concat(fragStream);
                 }
             }
-
             stream.writeUint16(0xfffe);
             stream.writeUint16(0xe000);
             stream.writeUint32(startOffset.length * 4);
@@ -255,11 +249,12 @@ export class BinaryRepresentation extends ValueRepresentation {
             stream.writeUint16(0xe0dd);
             stream.writeUint32(0x0);
             var written = 8 + binaryStream.size + startOffset.length * 4 + 8;
+            
+
             if (written & 1) {
                 stream.writeHex(this.padByte);
                 written++;
             }
-
             return 0xffffffff;
         } else {
             var binaryData = value[0], binaryStream = new ReadBufferStream(binaryData);
@@ -269,10 +264,12 @@ export class BinaryRepresentation extends ValueRepresentation {
     }
 
     readBytes(stream, length, _syntax) {
+        console.log('reading binary rep');
         if (length == 0xffffffff) {
             var itemTagValue = Tag.readTag(stream), frames: Array<any> = [];
             if (itemTagValue.is(0xfffee000)) {
                 var itemLength = stream.readUint32(), numOfFrames = 1, offsets: Array<number> = [];
+                console.log('itemLength ' + itemLength)
                 if (itemLength > 0x0) {
                     //has frames
                     numOfFrames = itemLength / 4;
@@ -283,6 +280,8 @@ export class BinaryRepresentation extends ValueRepresentation {
                 } else {
                     offsets = [0];
                 }
+                console.log('offsets : ' + offsets);
+
                 var nextTag = Tag.readTag(stream), fragmentStream: any = null, start = 4,
                     frameOffset = offsets.shift();
 
@@ -324,6 +323,7 @@ export class BinaryRepresentation extends ValueRepresentation {
                 bytes = stream.readUint8Array(length);
             }*/
             bytes = stream.more(length).buffer;
+            console.log('bytes.len: ' + bytes.byteLength)
             return [bytes];
         }
     }
