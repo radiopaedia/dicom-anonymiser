@@ -4,7 +4,6 @@ RUN npm install -g yarn
 COPY package.json ./
 COPY yarn.lock ./
 RUN yarn install
-RUN yarn add jest
 
 COPY . .
 
