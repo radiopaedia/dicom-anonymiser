@@ -97,7 +97,7 @@ export default function anonymize(dcm) {
       newDcm["00120062"] = {vr:"CS", Value: ["NO"]};
     }
     // Add Patient Identity Removal Method tag (0012,0062)
-    newDcm["00120063"] = {vr:"LO", Value:["Radiopaedia Dicom Anonymizer. https://github.com/radiopaedia/dicomanon"]};;
+    newDcm["00120063"] = {vr:"LO", Value:["Radiopaedia Dicom Anonymizer. github.com/radiopaedia/dicomanon"]};;
 
     //var warnings = validate(newDcm);
     return newDcm;

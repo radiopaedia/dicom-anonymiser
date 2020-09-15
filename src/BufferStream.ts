@@ -131,6 +131,7 @@ export class BufferStream {
     }
 
     writeHex(value) {
+        //console.log('writeHex: ' + value );
         var len = value.length, blen = len / 2, startOffset = this.offset;
         this.checkSize(blen);
         for (var i = 0;i < len;i+=2) {
@@ -226,14 +227,19 @@ export class BufferStream {
 
     readHex(length) {
         var hexString = '';
-        for (var i = 0;i < length;i++) {
-            hexString += this.readUint8().toString(16).padStart(2, '0');
+        for (var i = 0; i < length; i++) {
+            let hexChar = this.readUint8().toString(16)
+            if (hexChar.length < 2) {
+                hexChar = '0' + hexChar;
+            }
+            hexString += hexChar;
         }
-        return hexString;
+        return hexString.toUpperCase();
     }
 
+
     checkSize(step) {
-        if (this.offset + step > this.buffer.byteLength) {
+        while (this.offset + step > this.buffer.byteLength) {
             //throw new Error("Writing exceeded the size of buffer");
             //resize
             var dst = new ArrayBuffer(this.buffer.byteLength * 2);

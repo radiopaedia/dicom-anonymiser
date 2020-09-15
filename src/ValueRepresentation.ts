@@ -130,7 +130,6 @@ export default class ValueRepresentation {
 
     writeBytes(stream, value, lengths, isEncapsulated=false) {
       var valid = true, valarr = Array.isArray(value) ? value : [value], total = 0;
-
       for (var i = 0;i < valarr.length;i++) {
           let checkValue: string | number = valarr[i];
           let checklen = lengths[i], isString = false, displaylen = checklen;
@@ -144,12 +143,11 @@ export default class ValueRepresentation {
           } else if (this.maxLength) {
             valid = checklen <= this.maxLength;
           }
-
           var errmsg = "Value exceeds max length, vr: " + this.type + ", value: " + checkValue + ", length: " + displaylen;
           if (!valid) {
-            // if(isString)
-                // console.log(errmsg)
-            // else
+             if(isString)
+                 console.log(errmsg)
+             else
             if (!isString)
                 throw new Error(errmsg);
           }
@@ -158,7 +156,6 @@ export default class ValueRepresentation {
       if (this.allowMultiple()) {
         total += valarr.length ? valarr.length - 1 : 0;
       }
-
       //check for odd
       var written = total;
       if (total & 1) {
@@ -230,7 +227,6 @@ export class BinaryRepresentation extends ValueRepresentation {
                 startOffset.push(binaryStream.size);
                 var frameBuffer = value[i], frameStream = new ReadBufferStream(frameBuffer),
                     fragmentsLength = Math.ceil(frameStream.size / fragmentSize);
-
                 for (var j = 0, fragmentStart = 0;j < fragmentsLength;j++) {
                     var fragmentEnd = fragmentStart + fragmentSize;
                     if (j == fragmentsLength - 1) {
@@ -244,7 +240,6 @@ export class BinaryRepresentation extends ValueRepresentation {
                     binaryStream.concat(fragStream);
                 }
             }
-
             stream.writeUint16(0xfffe);
             stream.writeUint16(0xe000);
             stream.writeUint32(startOffset.length * 4);
@@ -256,11 +251,12 @@ export class BinaryRepresentation extends ValueRepresentation {
             stream.writeUint16(0xe0dd);
             stream.writeUint32(0x0);
             var written = 8 + binaryStream.size + startOffset.length * 4 + 8;
+            
+
             if (written & 1) {
                 stream.writeHex(this.padByte);
                 written++;
             }
-
             return 0xffffffff;
         } else {
             var binaryData = value[0], binaryStream = new ReadBufferStream(binaryData);
@@ -272,22 +268,38 @@ export class BinaryRepresentation extends ValueRepresentation {
     readBytes(stream, length, _syntax) {
         if (length == 0xffffffff) {
             var itemTagValue = Tag.readTag(stream), frames: Array<any> = [];
+            /**
+             * There are three special SQ related Data Elements that are not ruled by the VR encoding rules conveyed
+             * by the Transfer Syntax. They shall be encoded as Implicit VR. These special Data Elements are Item (FFFE,E000),
+             * Item Delimitation Item (FFFE,E00D), and Sequence Delimitation Item (FFFE,E0DD).
+             * However, the Data Set within the Value Field of the Data Element Item (FFFE,E000) shall be encoded according 
+             * to the rules conveyed by the Transfer Syntax.
+             * 
+             * ^^^ Not sure what this means but here we are handling FFFE E000
+             */
             if (itemTagValue.is(0xfffee000)) {
                 var itemLength = stream.readUint32(), numOfFrames = 1, offsets: Array<number> = [];
                 if (itemLength > 0x0) {
-                    //has frames
+                    // There are frames (commonly the item length is 4 for a single frame?)
                     numOfFrames = itemLength / 4;
                     var i = 0;
                     while (i++ < numOfFrames) {
-                        offsets.push(stream.readUint32());
+                        const offset = stream.readUint32();
+                        offsets.push(offset);
                     }
                 } else {
                     offsets = [0];
                 }
+                // At this point I'm assuming offsets start at zero for single frames (through either method).
                 var nextTag = Tag.readTag(stream), fragmentStream: any = null, start = 4,
                     frameOffset = offsets.shift();
-
+                // Alright, so that means we have a bunch of binary data, encapsulated in a (FFFE,E000) tag.
+                // I think I get it...
+                var fragCount = 0;
+                var fragSizeRead = 0;
+                var iCount = 0;
                 while (nextTag.is(0xfffee000)) {
+                    // I guess this is for starting a new frame?
                     if (frameOffset == start) {
                         frameOffset = offsets.shift();
                         if (fragmentStream !== null) {
@@ -297,25 +309,30 @@ export class BinaryRepresentation extends ValueRepresentation {
                     }
                     var frameItemLength = stream.readUint32(),
                         thisStream = stream.more(frameItemLength);
-
+                    fragCount++;
+                    fragSizeRead+=frameItemLength;
+                    // Set the fragment stream to this stream on the first try
                     if (fragmentStream === null) {
                         fragmentStream = thisStream;
+                        // FIX! This offset wasn't being set causing us to overwrite the first fragment.
+                        fragmentStream.offset = thisStream.size;
                     } else {
+                        // For each encapsulted fragment, add it.
                         fragmentStream.concat(thisStream);
                     }
-
                     nextTag = Tag.readTag(stream);
                     start += 4 + frameItemLength;
                 }
+                // Then we seem to add the whole stream in as a fragment?
                 if (fragmentStream !== null) {
                     frames.push(fragmentStream.buffer);
                 }
-
+                // Not sure why we need to read off an extra 32 bits?
                 stream.readUint32();
             } else {
                 throw new Error("Item tag not found after undefined binary length");
             }
-
+            // Send back the frames.
             return frames;
         } else {
             var bytes;
