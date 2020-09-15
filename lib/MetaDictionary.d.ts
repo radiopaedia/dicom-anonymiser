@@ -47,6 +47,5 @@ export default class DicomMetaDictionary {
     static dictionary: Record<string, {
         name: string;
         vr: string;
-        version: string;
     }>;
 }
