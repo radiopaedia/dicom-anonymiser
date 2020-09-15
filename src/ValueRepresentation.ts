@@ -145,9 +145,9 @@ export default class ValueRepresentation {
           }
           var errmsg = "Value exceeds max length, vr: " + this.type + ", value: " + checkValue + ", length: " + displaylen;
           if (!valid) {
-             if(isString)
-                 console.log(errmsg)
-             else
+            //  if(isString)
+                //  console.log(errmsg)
+            //  else
             if (!isString)
                 throw new Error(errmsg);
           }
@@ -251,7 +251,7 @@ export class BinaryRepresentation extends ValueRepresentation {
             stream.writeUint16(0xe0dd);
             stream.writeUint32(0x0);
             var written = 8 + binaryStream.size + startOffset.length * 4 + 8;
-            
+
 
             if (written & 1) {
                 stream.writeHex(this.padByte);
@@ -272,9 +272,9 @@ export class BinaryRepresentation extends ValueRepresentation {
              * There are three special SQ related Data Elements that are not ruled by the VR encoding rules conveyed
              * by the Transfer Syntax. They shall be encoded as Implicit VR. These special Data Elements are Item (FFFE,E000),
              * Item Delimitation Item (FFFE,E00D), and Sequence Delimitation Item (FFFE,E0DD).
-             * However, the Data Set within the Value Field of the Data Element Item (FFFE,E000) shall be encoded according 
+             * However, the Data Set within the Value Field of the Data Element Item (FFFE,E000) shall be encoded according
              * to the rules conveyed by the Transfer Syntax.
-             * 
+             *
              * ^^^ Not sure what this means but here we are handling FFFE E000
              */
             if (itemTagValue.is(0xfffee000)) {

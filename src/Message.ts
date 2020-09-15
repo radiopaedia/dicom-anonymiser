@@ -127,21 +127,21 @@ export default class DicomMessage {
 
         written += tag.write(useStream, vrType, values, syntax);
       });
-      
+
       return written;
     }
 
     /**
      * Read a tag from a byte stream.
      * Tags are organised as follows:
-     * For explicit VR storage types 
+     * For explicit VR storage types
      * | group | element | vr | reserved | value length | value |
      * |   2   |    2    |  2 |     2    |      4       |  ...  |
      * And for implicit VR tags:
      * | group | element | value length | value |
      * |   2   |    2    |      4       |  ...  |
-     * @param stream 
-     * @param syntax 
+     * @param stream
+     * @param syntax
      */
     static readTag(stream, syntax): {tag: Tag, vr: ValueRepresentation, values: any} {
       var implicit = (syntax == IMPLICIT_LITTLE_ENDIAN),
@@ -166,8 +166,8 @@ export default class DicomMessage {
           vr = ValueRepresentation.createByTypeString(vrType);
         } catch(e) {
           //unknown tag
-          console.log('Tag is unknown : ' + group.toString(16) + ',' + element.toString(16));
-          
+          // console.log('Tag is unknown : ' + group.toString(16) + ',' + element.toString(16));
+
           if (length == 0xffffffff) {
             vrType = 'SQ';
           } else if (tag.isPixelDataTag()) {
@@ -177,7 +177,7 @@ export default class DicomMessage {
           } else {
             vrType = 'UN';
           }
-          console.log('Guessing VR is ' + vrType);
+          // console.log('Guessing VR is ' + vrType);
           vr = ValueRepresentation.createByTypeString(vrType);
         }
       } else {
@@ -216,7 +216,7 @@ export default class DicomMessage {
           values = val;
         } else if (vr.type == 'OW' || vr.type == 'OB') {
           values = val;
-          
+
         } else {
           values.push(val);
         }
