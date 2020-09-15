@@ -112,11 +112,7 @@ export default class Tag {
           written += 4;
         }
       }
-      if (this.isPixelDataTag()) {
-        console.log('write stream :' + tagStream.getBuffer().byteLength);
-        console.log('value length: ' + valueLength);
-        console.log('values :' + values );
-      }
+
       stream.concat(tagStream);
 
       stream.setEndian(oldEndian);

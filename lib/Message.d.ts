@@ -14,6 +14,18 @@ export default class DicomMessage {
     static readFile(buffer: any): DicomDict;
     static writeTagObject(stream: any, tagString: any, vr: any, values: any, syntax: any): void;
     static write(jsonObjects: any, useStream: any, syntax: any): number;
+    /**
+     * Read a tag from a byte stream.
+     * Tags are organised as follows:
+     * For explicit VR storage types
+     * | group | element | vr | reserved | value length | value |
+     * |   2   |    2    |  2 |     2    |      4       |  ...  |
+     * And for implicit VR tags:
+     * | group | element | value length | value |
+     * |   2   |    2    |      4       |  ...  |
+     * @param stream
+     * @param syntax
+     */
     static readTag(stream: any, syntax: any): {
         tag: Tag;
         vr: ValueRepresentation;

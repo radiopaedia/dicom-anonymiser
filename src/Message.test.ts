@@ -20,15 +20,18 @@ describe('Message tests...', () => {
                 dcm, written
             }
         }
-    
-        let inBuffer = readFileBuffer('C:\\code\\dicomanon-1\\1.dcm');
+        // Note: This test will fail if there's no test.dcm file in the current directory (base dir of the repo).
+        let inBuffer = readFileBuffer('test.dcm');
+        //console.log('---------------- First Read');
         let first = readDcm(inBuffer, 'first');
+        //console.log('---------------- Second Read');
         let second = readDcm(first.written, 'second');
+        //console.log('---------------- Third Read');
+        let third = readDcm(second.written, 'third');
 
         let wbs = new WriteBufferStream(first.dcm.dict['7FE00010'].Value[0].byteLength);
         DicomMessage.writeTagObject(wbs, '7FE00010', first.dcm.dict['7FE00010'].vr, first.dcm.dict['7FE00010'].Value, "1.2.840.10008.1.2.1");
-        console.log(first.written.byteLength)
-        console.log(second.written.byteLength)
-
+        expect(third.written.byteLength).toEqual(second.written.byteLength);
   });
+
 });

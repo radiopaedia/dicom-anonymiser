@@ -127,12 +127,25 @@ export default class DicomMessage {
       return written;
     }
 
+    /**
+     * Read a tag from a byte stream.
+     * Tags are organised as follows:
+     * For explicit VR storage types 
+     * | group | element | vr | reserved | value length | value |
+     * |   2   |    2    |  2 |     2    |      4       |  ...  |
+     * And for implicit VR tags:
+     * | group | element | value length | value |
+     * |   2   |    2    |      4       |  ...  |
+     * @param stream 
+     * @param syntax 
+     */
     static readTag(stream, syntax): {tag: Tag, vr: ValueRepresentation, values: any} {
-      var implicit = syntax == IMPLICIT_LITTLE_ENDIAN ? true : false,
-          isLittleEndian = (syntax == IMPLICIT_LITTLE_ENDIAN || syntax == EXPLICIT_LITTLE_ENDIAN) ? true : false;
-
+      var implicit = (syntax == IMPLICIT_LITTLE_ENDIAN),
+          isLittleEndian = (syntax == IMPLICIT_LITTLE_ENDIAN || syntax == EXPLICIT_LITTLE_ENDIAN);
+      // Set the appropriate endianess
       var oldEndian = stream.isLittleEndian;
       stream.setEndian(isLittleEndian);
+      // Read the group and element fields (these will be first 32 bits for all types).
       var group = stream.readUint16(),
           element = stream.readUint16(),
           tag = tagFromNumbers(group, element);
@@ -149,6 +162,8 @@ export default class DicomMessage {
           vr = ValueRepresentation.createByTypeString(vrType);
         } catch(e) {
           //unknown tag
+          console.log('Tag is unknown : ' + group.toString(16) + ',' + element.toString(16));
+          
           if (length == 0xffffffff) {
             vrType = 'SQ';
           } else if (tag.isPixelDataTag()) {
@@ -158,33 +173,38 @@ export default class DicomMessage {
           } else {
             vrType = 'UN';
           }
-
+          console.log('Guessing VR is ' + vrType);
           vr = ValueRepresentation.createByTypeString(vrType);
         }
       } else {
+        // For explicit types the next 2 bytes is the VR string
         vrType = stream.readString(2);
         vr = ValueRepresentation.createByTypeString(vrType);
         if (vr.isExplicit()) {
+          // For types OB, OW, SQ, UN we have a 2 byte reserved field
           stream.increment(2);
+          // Then a 32bit length
           length = stream.readUint32();
+          //console.log(vrType + ": len32=" + length.toString(16));
         } else {
+          // For other types we just have a 16bit length
           length = stream.readUint16();
+          //console.log(vrType + ": len16=" + length.toString(16));
         }
       }
 
       if (!(vr instanceof ValueRepresentation)) {throw new TypeError("Could not find a value representation")}
 
       var values: Array<ValueRepresentation> = [];
+      // If the vr is a binary sequence(?)
       if (vr.isBinary() && vr.maxLength && length > vr.maxLength && !vr.noMultiple) {
         var times = length / vr.maxLength, i = 0;
+        //console.log('Reading: ' + vr.type + ' ' + times + ' times');
         while (i++ < times) {
+          // Read the max length of the VR?
           values.push(vr.read(stream, vr.maxLength, syntax));
         }
       } else {
-        if (tag.isPixelDataTag()) {
-          console.log('stream.getBuffer.byteLength: ' + stream.getBuffer().byteLength);
-          console.log('length: ' + length);
-        }
         var val = vr.read(stream, length, syntax);
         if (!vr.isBinary() && singleVRs.indexOf(vr.type) == -1) {
           values = val.split(String.fromCharCode(0x5c));
@@ -199,9 +219,6 @@ export default class DicomMessage {
       }
       stream.setEndian(oldEndian);
 
-      if (tag.isPixelDataTag()) {
-        console.log('read stream :' + stream.getBuffer().byteLength);
-      }
       return {tag: tag, vr: vr, values: values};
     }
 
