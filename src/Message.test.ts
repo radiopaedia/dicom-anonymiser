@@ -29,8 +29,6 @@ describe('Message tests...', () => {
         //console.log('---------------- Third Read');
         let third = readDcm(second.written, 'third');
 
-        let wbs = new WriteBufferStream(first.dcm.dict['7FE00010'].Value[0].byteLength);
-        DicomMessage.writeTagObject(wbs, '7FE00010', first.dcm.dict['7FE00010'].vr, first.dcm.dict['7FE00010'].Value, "1.2.840.10008.1.2.1");
         expect(third.written.byteLength).toEqual(second.written.byteLength);
   });
 

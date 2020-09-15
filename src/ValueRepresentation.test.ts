@@ -11,8 +11,6 @@ describe('BinaryRepresentation tests...', () => {
     b1.writeString('1234567890ABCEF');
     b2.writeString('1234567890ABCEF');
     vr.writeBytes(buf, {b1, b2}, 'Who cares?', true);
-    console.log('donno');
-    //console.log(buf.readString(6));
     
   });
 });

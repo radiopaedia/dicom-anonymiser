@@ -2,11 +2,15 @@ import ValueRepresentation from "./ValueRepresentation";
 import Tag from "./Tag";
 export declare class DicomDict {
     meta: any;
-    dict: object;
+    dict: Record<string, TagValue>;
     constructor(meta: any);
     upsertTag(tag: any, vr: any, values: any): void;
-    write(dict?: object): ArrayBuffer;
+    write(dict?: Record<string, TagValue>): ArrayBuffer;
 }
+export declare type TagValue = {
+    vr: string;
+    Value: Array<ValueRepresentation>;
+};
 export default class DicomMessage {
     static read(bufferStream: any, syntax: any, length?: number): {};
     static _normalizeSyntax(syntax: any): any;
