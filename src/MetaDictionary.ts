@@ -264,9 +264,7 @@ export default class DicomMetaDictionary {
   static _generateNameMap() {
     for (var tag in DicomMetaDictionary.dictionary) {
       var dict = DicomMetaDictionary.dictionary[tag];
-      if (dict.version != 'PrivateTag') {
-        DicomMetaDictionary.nameMap[dict.name] = dict;
-      }
+      DicomMetaDictionary.nameMap[dict.name] = dict;
     }
   }
 
