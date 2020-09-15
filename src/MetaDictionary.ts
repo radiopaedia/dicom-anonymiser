@@ -308,7 +308,11 @@ export default class DicomMetaDictionary {
     "1.2.840.10008.5.1.4.1.1.128.1" : "LegacyConvertedEnhancedPETImage",
   }
 
-  static dictionary = dictionary
+  static dictionary: Record<string, {
+    name: string,
+    vr: string,
+    version: string,
+  }> = dictionary
 }
 
 

@@ -35,5 +35,9 @@ export default class DicomMessage {
         vr: ValueRepresentation;
         values: any;
     };
-    static lookupTag(tag: any): any;
+    static lookupTag(tag: any): {
+        name: string;
+        vr: string;
+        version: string;
+    };
 }

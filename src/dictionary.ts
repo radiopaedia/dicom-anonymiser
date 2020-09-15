@@ -1,4 +1,10 @@
-export default {
+const Foo: Record<string, {
+    tag: string,
+    name: string,
+    vr: string,
+    vm: string,
+    version: string,
+  }> = {
   "(0000,0000)": {
     "tag": "(0000,0000)",
     "vr": "UL",
@@ -28230,9 +28236,6 @@ export default {
     "vm": "1",
     "version": "DICOM/retired"
   },
-  "": {
-    "tag": ""
-  },
   "(0019,\"1.2.840.113681\",10)": {
     "tag": "(0019,\"1.2.840.113681\",10)",
     "vr": "ST",
@@ -35650,7 +35653,8 @@ export default {
     "tag": "(0041,\"PAPYRUS\",b3)",
     "vr": "UL",
     "name": "InternalOffsetToImage",
-    "vm": "1-n"
+    "vm": "1-n",
+    "version": "PrivateTag"
   },
   "(2001,\"Philips Imaging DD 001\",01)": {
     "tag": "(2001,\"Philips Imaging DD 001\",01)",
@@ -48057,3 +48061,4 @@ export default {
     "version": "PrivateTag"
   }
 }
+export default Foo;
