@@ -1,6 +1,7 @@
 import {
   WriteBufferStream,
-  ReadBufferStream
+  ReadBufferStream,
+  BufferStream
 } from './BufferStream';
 import DicomMessage from "./Message";
 import Tag from './Tag';
@@ -220,7 +221,8 @@ export class BinaryRepresentation extends ValueRepresentation {
             var fragmentSize = 1024 * 20,
                 frames = value.length;
             let startOffset: Array<number> = [];
-            var binaryStream = new WriteBufferStream(1024 * 1024 * 20, stream.isLittleEndian);
+
+            var binaryStream: BufferStream = new WriteBufferStream(1024 * 1024 * 20, stream.isLittleEndian);
             for (var i = 0;i < frames;i++) {
                 startOffset.push(binaryStream.size);
                 var frameBuffer = value[i], frameStream = new ReadBufferStream(frameBuffer),

@@ -25,7 +25,7 @@ function readDcm(buf, stage) {
   }
 }
 
-let first = readDcm(readFileBuffer('./1.dcm'), 'first')
+let first = readDcm(readFileBuffer('./spec/fixture/mri/00000001'), 'first')
 let secondOrig = readDcm(first.written, 'secondOrig')
 let second = readDcm(first.writtenAnon, 'second')
 let third = readDcm(second.writtenAnon, 'third')
