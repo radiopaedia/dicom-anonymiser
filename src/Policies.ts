@@ -521,6 +521,13 @@ function  petImageModulePolicy() {
   };
 }
 
+function  voiLutModulePolicy() {
+  return {
+    "00281050": {"action":"keep", "description":"Window Center"}, // Type 1C, Handy for viewing
+    "00281051": {"action":"keep", "description":"Window Width"} // Type 1C, handy for viewing
+  };
+}
+
 /******************************************************************************\
       SOP POLICIES
       These are policies for supported SOP Classes made up of module policies.
@@ -584,6 +591,7 @@ function ctImagePolicy(): IPolicy {
     imagePlaneModulePolicy(),
     imagePixelModulePolicy(),
     ctImageModulePolicy(),
+    voiLutModulePolicy(),
     sopCommonModulePolicy(),
     {
         "default" : {"action":"remove", "description":"The default policy is to remove unspecified tags"},
