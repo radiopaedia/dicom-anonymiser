@@ -14,7 +14,11 @@ export default class DicomMetaDictionary {
     static date(): string;
     static time(): string;
     static dateTime(): string;
-    static nameMap: {};
+    static nameMap: Record<string, {
+        name: string;
+        vr: string;
+        tag: string;
+    }>;
     static _generateNameMap(): void;
     static uidMap: {};
     static _generateUIDMap(): void;

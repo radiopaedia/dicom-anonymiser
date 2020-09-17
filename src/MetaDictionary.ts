@@ -259,12 +259,15 @@ export default class DicomMetaDictionary {
     let now = new Date();
     return now.toISOString().replace(/:/g,'').slice(11,17);
   }
-
-  static nameMap = {}
+  static nameMap: Record<string, {
+    name: string;
+    vr: string;
+    tag: string;
+  }> = {}
   static _generateNameMap() {
     for (var tag in DicomMetaDictionary.dictionary) {
       var dict = DicomMetaDictionary.dictionary[tag];
-      DicomMetaDictionary.nameMap[dict.name] = dict;
+      DicomMetaDictionary.nameMap[dict.name] = {...dict, tag};
     }
   }
 
