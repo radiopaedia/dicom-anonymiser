@@ -8,6 +8,51 @@ import DicomDict, { TagValue } from './Message'
 const UIDPREFIX = "1.2.826.0.1.3680043.10.341.";
 // We want to keep the hash algorithm the same to preserve references.
 
+
+function bucketAge(oldAge: TagValue) {
+    if (oldAge.vr == "AS" && oldAge.Value[0]?.length == 4) {
+        // handle age-string like 011M for 11 months old
+        let ageStep = oldAge.Value[0].slice(3,4);
+        let ageNum = parseInt(oldAge.Value[0].slice(0,3));
+        if (ageStep == 'Y') {
+            // Values lower than 90 years are 'not identifying', per
+            // https://www.hhs.gov/hipaa/for-professionals/privacy/special-topics/de-identification/index.html
+            // Values over 90 may be considered identifying information.
+            if (ageNum > 90) {
+                ageNum = 90;
+            }
+            return `${ageNum}Y`.padStart(4, '0');
+        }
+        if (ageStep == 'M') {
+            // No more precision than 'years' allowed.
+            ageNum = Math.round(ageNum / 12);
+            return `${ageNum}Y`.padStart(4, '0');
+        }
+        if (ageStep == 'W') {
+            // No more precision than 'years' allowed.
+            ageNum = Math.round(ageNum / 52);
+            return `${ageNum}Y`.padStart(4, '0');
+        }
+        if (ageStep == 'D') {
+            // No more precision than 'years' allowed.
+            ageNum = Math.round(ageNum / 365);
+            return `${ageNum}Y`.padStart(4, '0');
+        }
+        return ""
+    }
+
+    if (oldAge.vr == "DA") {
+        // handle date string
+        if (oldAge.Value[0]?.length != 8) {
+            return "";
+        }
+
+        // Replace month/day with zeroes
+        return oldAge.Value[0].slice(0, 4) + "0000"
+    }
+    return ""
+};
+
 /**
 * A hashed UID will make sure there's no information hidden in the UID
 * but will maintain relationships between dicoms (e.g. same frame of reference)
@@ -55,6 +100,8 @@ function applyPolicy(dcm: Record<string, TagValue>, policy: IPolicy){
           var oldTag = cloneTag(dcm[key]);
           if (rule["method"] == "random") {
               oldTag["Value"] = [randomUid()];
+          } else if (rule["method"] == "age") {
+              oldTag["Value"] = [bucketAge(oldTag)];
           } else if (rule["method"] == "hash") {
               oldTag["Value"] = [hashedUid(oldTag["Value"][0])];
           }

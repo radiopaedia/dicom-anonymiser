@@ -15,7 +15,7 @@
 ******************************************************************************/
 
 export type Action = 'remove' | 'replace' | 'keep' | 'regenerate';
-export type ReplaceMethod = 'hash' | 'random';
+export type ReplaceMethod = 'hash' | 'age' | 'random';
 
 export interface IPolicy {
   [tagId: string]: {"action": Action, "description":string, value?: Array<any>, method?: ReplaceMethod};
@@ -150,7 +150,7 @@ function patientModulePolicy(): IPolicy {
   return {
     "00100010": {"action":"replace", "value":[], "description":"Patient name will be replaced"},
 	  "00100020": {"action":"replace", "value":[], "description":"Patient ID will be replaced"},
-	  "00100030": {"action":"replace", "value":[], "description":"Patient DOB will be replaced"},
+	  "00100030": {"action":"regenerate", "method":"age", "description":"Patient DOB will be replaced"},
 	  "00100040": {"action":"replace", "value":[], "description":"Patient's sex will be replaced"}
   };
 }
