@@ -90,7 +90,35 @@ function dxImageModulePolicy(): IPolicy {
     "00282112": {"action":"keep", "description":"Lossy Image Compression Ratio"},
     "00280301": {"action":"keep", "description":"Burned in Annotation"},
     "00281050": {"action":"keep", "description":"Window Center"}, // Type 1C, Handy for viewing
-    "00281051": {"action":"keep", "description":"Window Width"} // Type 1C, handy for viewing
+    "00281051": {"action":"keep", "description":"Window Width"}, // Type 1C, handy for viewing
+    "00180081": {"action":"keep", "description":"Echo Time"},
+    "00180082": {"action":"keep", "description":"Inversion Time"},
+    "00180091": {"action":"keep", "description":"Echo Train Length"},
+    "00080005": {"action":"keep", "description":"Specific Character Set"},
+    "00180025": {"action":"keep", "description":"Angio Flag"},
+    "00180083": {"action":"keep", "description":"Number of Averages"},
+    "00180084": {"action":"keep", "description":"Imaging Frequency"},
+    "00180085": {"action":"keep", "description":"Imaged Nucleus"},
+    "00180086": {"action":"keep", "description":"Echo Number(s)"},
+    "00180087": {"action":"keep", "description":"Magnetic Field Strength"},
+    "00180088": {"action":"keep", "description":"Spacing Between Slices"},
+    "00180093": {"action":"keep", "description":"Percent Sampling"},
+    "00180094": {"action":"keep", "description":"Percent Phase Field of View"},
+    "00180095": {"action":"keep", "description":"Pixel Bandwidth"},
+    "00181088": {"action":"keep", "description":"Heart Rate"},
+    "00181090": {"action":"keep", "description":"Cardiac Number of Images"},
+    "00181094": {"action":"keep", "description":"Trigger Window"},
+    "00181100": {"action":"keep", "description":"Reconstruction Diameter"},
+    "00181250": {"action":"keep", "description":"Receive Coil Name"},
+    "00181310": {"action":"keep", "description":"Acquisition Matrix"},
+    "00181312": {"action":"keep", "description":"In-plane Phase Encoding Direction"},
+    "00181314": {"action":"keep", "description":"Flip Angle"},
+    "00181315": {"action":"keep", "description":"Variable Flip Angle Flag"},
+    "00181316": {"action":"keep", "description":"SAR"},
+    "00185100": {"action":"keep", "description":"Patient Position"},
+    "00200060": {"action":"keep", "description":"Laterality"},
+    "00201040": {"action":"keep", "description":"Position Reference Indicator"},
+    "00201041": {"action":"keep", "description":"Slice Location"},
   };
 }
 
