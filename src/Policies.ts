@@ -14,8 +14,11 @@
   random or cryptographically hashed values.
 ******************************************************************************/
 
+export type Action = 'remove' | 'replace' | 'keep' | 'regenerate';
+export type ReplaceMethod = 'hash' | 'random';
+
 export interface IPolicy {
-  [tagId: string]: any;
+  [tagId: string]: {"action": Action, "description":string, value?: Array<any>, method?: ReplaceMethod};
 }
 
 // Add the policy (base policy will be added to by overlay policy, overlay will overwrite existing)
@@ -43,27 +46,27 @@ function addPolicies(...policies: IPolicy[]): IPolicy {
       The module policies are used to build SOP class policies.
 \******************************************************************************/
 
-function  acquisitionContextModulePolicy() {
+function  acquisitionContextModulePolicy(): IPolicy {
   return {
     "00400555": {"action":"replace", "value":[],"description":"Acquisition Context Sequence"}
   };
 }
 
-function dxAnatomyImagedModulePolicy(): { [tagId: string]: any; } {
+function dxAnatomyImagedModulePolicy(): IPolicy {
   return {
     "00200062": {"action":"keep", "description":"Image Laterality"},
     "00082218": {"action":"replace", "value":[],"description":"Anatomic Region Sequence."}
   };
 }
 
-function dxDetectorModulePolicy() {
+function dxDetectorModulePolicy(): IPolicy {
   return {
     "00187004": {"action":"replace", "value":[],"description":"Detector type."},
     "00181164": {"action":"keep", "description":"Imager pixel spacing"}
   };
 }
 
-function dxImageModulePolicy() {
+function dxImageModulePolicy(): IPolicy {
   return {
     "00080008": {"action":"keep", "description":"Image Type"},
     "00280002": {"action":"keep", "description":"Samples per pixel."},
@@ -152,20 +155,20 @@ function patientModulePolicy(): IPolicy {
   };
 }
 
-function  sopCommonModulePolicy() {
+function  sopCommonModulePolicy(): IPolicy {
   return {
     "00080016": {"action":"keep", "description":"SOP Class UID"},
     "0020000D": {"action":"regenerate", "method":"hash", "description":"SOP Storage Instance UID is hashed to preserve structure."}
   };
 }
 
-function  mammographySeriesModulePolicy() {
+function  mammographySeriesModulePolicy(): IPolicy {
   return {
     "00080060": {"action":"keep", "description":"Modality"}
   };
 }
 
-function  mammographyImageModulePolicy() {
+function  mammographyImageModulePolicy(): IPolicy {
   return {
     "00080008": {"action":"keep", "description":"Image Type"},
     "00081508": {"action":"keep", "description":"PositionerType"},
@@ -176,13 +179,13 @@ function  mammographyImageModulePolicy() {
   };
 }
 
-function  frameOfReferenceModulePolicy() {
+function  frameOfReferenceModulePolicy(): IPolicy {
   return {
     "00200052": {"action":"regenerate", "method":"hash","description":"Frame of Reference UID is mandatory and is hashed to preserve structure"}
   };
 }
 
-function  imagePlaneModulePolicy() {
+function  imagePlaneModulePolicy(): IPolicy {
   return {
     "00280030": {"action":"keep", "description":"Pixel Spacing"},
     "00200037": {"action":"keep", "description":"Image Orientation (Patient)"},
@@ -191,7 +194,7 @@ function  imagePlaneModulePolicy() {
   };
 }
 
-function  ctImageModulePolicy() {
+function  ctImageModulePolicy(): IPolicy {
   return {
     "00080008": {"action":"keep", "description":"Image Type"},
     "00280002": {"action":"keep", "description":"Samples per pixel"},
@@ -204,7 +207,7 @@ function  ctImageModulePolicy() {
   };
 }
 
-function  cineModulePolicy() {
+function  cineModulePolicy(): IPolicy {
   return {
     "00181063": {"action":"keep", "description":"Frame Time"},
     "00181065": {"action":"keep", "description":"Frame Time Vector"},
@@ -212,14 +215,14 @@ function  cineModulePolicy() {
   };
 }
 
-function  mutliFrameModulePolicy() {
+function  mutliFrameModulePolicy(): IPolicy {
   return {
     "00280008": {"action":"keep", "description":"Number of Frames"},
     "00280009": {"action":"keep", "description":"Frame Increment Pointer"}
   };
 }
 
-function  paletteColorLookupTablePolicy() {
+function  paletteColorLookupTablePolicy(): IPolicy {
   return {
     "00281101": {"action":"keep", "description":"Red Palette Color Lookup Table Descriptor"},
     "00281102": {"action":"keep", "description":"Green Palette Color Lookup Table Descriptor"},
@@ -233,7 +236,7 @@ function  paletteColorLookupTablePolicy() {
   };
 }
 
-function  ultrasoundImageModulePolicy() {
+function  ultrasoundImageModulePolicy(): IPolicy {
   return {
     "00280002": {"action":"keep", "description":"Samples per pixel"},
     "00280004": {"action":"keep", "description":"Photometric Interpretation"},
@@ -250,7 +253,7 @@ function  ultrasoundImageModulePolicy() {
   };
 }
 
-function  mrImageModulePolicy() {
+function  mrImageModulePolicy(): IPolicy {
   return {
     "00080008": {"action":"keep", "description":"Image Type"},
     "00280002": {"action":"keep", "description":"Samples per pixel"},
@@ -269,13 +272,13 @@ function  mrImageModulePolicy() {
   };
 }
 
-function  mrSeriesModulePolicy() {
+function  mrSeriesModulePolicy(): IPolicy {
   return {
     "00080060": {"action":"keep", "description":"Modality"}
   };
 }
 
-function  enhancedGeneralEquipmentModulePolicy() {
+function  enhancedGeneralEquipmentModulePolicy(): IPolicy {
   return {
     "00080070": {"action":"replace", "value":["REMOVED"], "description":"Manufacturer"},
     "00081090": {"action":"replace", "value":["REMOVED"], "description":"Manufacturer's Model Name"},
@@ -284,7 +287,7 @@ function  enhancedGeneralEquipmentModulePolicy() {
   };
 }
 
-function multiframeFunctionalGroupsSequenceModulePolicy() {
+function multiframeFunctionalGroupsSequenceModulePolicy(): IPolicy {
   return {
     "00200013": {"action":"keep", "description":"Instance Number"},
     "00080023": {"action":"replace", "value":["19700101"], "description":"Content Date"},
@@ -293,7 +296,7 @@ function multiframeFunctionalGroupsSequenceModulePolicy() {
   };
 }
 
-function multiframeDimensionModulePolicy() {
+function multiframeDimensionModulePolicy(): IPolicy {
   return {
     // TODO: We don't have a way to easily deal with nested tags right now.
     // For now we'll just wipe this since it has a UID in there somewhere which could
@@ -301,7 +304,7 @@ function multiframeDimensionModulePolicy() {
   };
 }
 
-function mrSpectroscopyModulePolicy() {
+function mrSpectroscopyModulePolicy(): IPolicy {
   return {
     "00080008": {"action":"keep", "description":"Image Type"},
     "00089206": {"action":"keep", "description":"Volumetric Properties"},
@@ -327,7 +330,7 @@ function mrSpectroscopyModulePolicy() {
   };
 }
 
-function mrSpectroscopyDataModulePolicy() {
+function mrSpectroscopyDataModulePolicy(): IPolicy {
   return {
     "00280010": {"action":"keep", "description":"Rows"},
     "00280011": {"action":"keep", "description":"Columns"},
@@ -341,7 +344,7 @@ function mrSpectroscopyDataModulePolicy() {
   };
 }
 
-function xRayImageModulePolicy() {
+function xRayImageModulePolicy(): IPolicy {
   return {
     "00282110": {"action":"keep", "description":"Lossy Image Compression"},
     "00080008": {"action":"keep", "description":"Image Type"},
@@ -355,7 +358,7 @@ function xRayImageModulePolicy() {
   };
 }
 
-function  xRayAcquisitionModulePolicy() {
+function  xRayAcquisitionModulePolicy(): IPolicy {
   return {
     "00180060": {"action":"replace", "value":[], "description":"KVP"},
     "00181155": {"action":"keep", "description":"Radiation Setting"},
@@ -366,13 +369,13 @@ function  xRayAcquisitionModulePolicy() {
   };
 }
 
-function  xaPositionerModulePolicy() {
+function  xaPositionerModulePolicy(): IPolicy {
   return {
     // Technically the module is mandatory but contains no type-1 or 2 fields
   };
 }
 
-function  enhancedSeriesModulePolicy() {
+function  enhancedSeriesModulePolicy(): IPolicy {
   return {
     // Contains a series number identifying the device and a pair of UIDs
     // contained within a sequence (which we're ignoring). Even though both
@@ -380,7 +383,7 @@ function  enhancedSeriesModulePolicy() {
   };
 }
 
-function xRay3DImageModulePolicy() {
+function xRay3DImageModulePolicy(): IPolicy {
   return {
     "00080008": {"action":"keep", "description":"Image Type"},
     "00089205": {"action":"keep", "description":"Pixel Presentation"},
@@ -401,7 +404,7 @@ function xRay3DImageModulePolicy() {
   };
 }
 
-function nmPETPatientOrientationModulePolicy() {
+function nmPETPatientOrientationModulePolicy(): IPolicy {
   return {
     "00540410": {"action":"replace", "value":[], "description":"Patient Orientation Sequence"},
     "00540414": {"action":"replace", "value":[], "description":"Patient Gantry Relationship Code Sequence"}
@@ -448,7 +451,7 @@ function nmMultiframeModulePolicy(): IPolicy {
   };
 }
 
-function  nmImageModulePolicy() {
+function  nmImageModulePolicy(): IPolicy {
   return {
     "00080008": {"action":"keep", "description":"Image Type"},
     "00282110": {"action":"keep", "description":"Lossy Image Compression"},
@@ -459,20 +462,20 @@ function  nmImageModulePolicy() {
   };
 }
 
-function  nmIsotopeModulePolicy() {
+function  nmIsotopeModulePolicy(): IPolicy {
   return {
     "00540012": {"action":"replace", "value":[], "description":"Scan Velocity"},
     "00540016": {"action":"replace", "value":[], "description":"Scan Length"}
   };
 }
 
-function  nmDetectorModulePolicy() {
+function  nmDetectorModulePolicy(): IPolicy {
   return {
     "00540022": {"action":"replace", "value":[], "description":"Detector Information Sequence"}
   };
 }
 
-function  petSeriesModulePolicy() {
+function  petSeriesModulePolicy(): IPolicy {
   return {
     "00080021": {"action":"replace", "value":["19700101"], "description":"Series Date"},
     "00080031": {"action":"replace", "value":["0000"], "description":"Series Time"},
@@ -489,13 +492,13 @@ function  petSeriesModulePolicy() {
   };
 }
 
-function  petIsotopeModulePolicy() {
+function  petIsotopeModulePolicy(): IPolicy {
   return {
     "00540016": {"action":"replace", "value":[], "description":"Radiopharmaceuitical Information Sequence"}
   };
 }
 
-function  petImageModulePolicy() {
+function  petImageModulePolicy(): IPolicy {
   return {
     "00080008": {"action":"keep", "description":"Image Type"},
     "00280002": {"action":"keep", "description":"Samples per pixel."},
@@ -521,7 +524,7 @@ function  petImageModulePolicy() {
   };
 }
 
-function  voiLutModulePolicy() {
+function  voiLutModulePolicy(): IPolicy {
   return {
     "00281050": {"action":"keep", "description":"Window Center"}, // Type 1C, Handy for viewing
     "00281051": {"action":"keep", "description":"Window Width"} // Type 1C, handy for viewing

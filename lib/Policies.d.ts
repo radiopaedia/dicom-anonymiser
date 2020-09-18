@@ -13,7 +13,14 @@
   information being retained). Type 1 tags are either kept, or replaced with
   random or cryptographically hashed values.
 ******************************************************************************/
+export declare type Action = 'remove' | 'replace' | 'keep' | 'regenerate';
+export declare type ReplaceMethod = 'hash' | 'random';
 export interface IPolicy {
-    [tagId: string]: any;
+    [tagId: string]: {
+        "action": Action;
+        "description": string;
+        value?: Array<any>;
+        method?: ReplaceMethod;
+    };
 }
 export default function policyFor(sopClassUid: string): IPolicy;
