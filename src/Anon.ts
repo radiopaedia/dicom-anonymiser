@@ -1,8 +1,8 @@
-import policyFor from './Policies';
+import policyFor, { IPolicy } from './Policies';
 import sjcl from './sjcl.sha512';
 import Validator from './Validator'
 import {CodeString, LongString} from './ValueRepresentation'
-import DicomDict from './Message'
+import DicomDict, { TagValue } from './Message'
 
 // Prefix from Medical Connections
 const UIDPREFIX = "1.2.826.0.1.3680043.10.341.";
@@ -12,7 +12,7 @@ const UIDPREFIX = "1.2.826.0.1.3680043.10.341.";
 * A hashed UID will make sure there's no information hidden in the UID
 * but will maintain relationships between dicoms (e.g. same frame of reference)
 */
-function hashedUid(oldUid, force=false) {
+function hashedUid(oldUid: string, force=false): string {
     var prefix =  UIDPREFIX + "512.";
     if (!oldUid.startsWith(prefix) || force) {
         var bits = sjcl.hash.sha512.hash(oldUid);
@@ -39,7 +39,7 @@ function randomPatientID() {
 	return id;
 };
 
-function applyPolicy(dcm, policy){
+function applyPolicy(dcm: Record<string, TagValue>, policy: IPolicy){
   var newDcm = {};
   for(const key of Object.keys(dcm)) {
       // Use default action or action specified in policy
@@ -63,7 +63,7 @@ function applyPolicy(dcm, policy){
       // There could be different methods to remove (e.g. just clear the value)
       } else if (action == "remove") {
       // Replacement can be used for tags that require a value..
-      } else if (action == "replace") {
+      } else if (action == "replace" && rule["value"]) {
           oldTag = cloneTag(dcm[key]);
           // We're assuming the policy is correct for VR, etc.
           oldTag["Value"] = rule["value"];
@@ -103,7 +103,7 @@ export default function anonymize(dcm) {
     return newDcm;
 };
 
-const cloneTag = function(oldTag) {
+function cloneTag(oldTag: TagValue) {
     return {
         Value: [...oldTag.Value],
         vr: "" + oldTag.vr,
