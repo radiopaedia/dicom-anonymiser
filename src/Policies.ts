@@ -15,10 +15,15 @@
 ******************************************************************************/
 
 export type Action = 'remove' | 'replace' | 'keep' | 'regenerate';
-export type ReplaceMethod = 'hash' | 'age' | 'random';
+export type ReplaceMethod = 'hash' | 'age' | 'weight' | 'random';
 
 export interface IPolicy {
-  [tagId: string]: {"action": Action, "description":string, value?: Array<any>, method?: ReplaceMethod};
+  [tagId: string]: {
+    action: Action,
+    description: string,
+    value?: Array<any>,
+    method?: ReplaceMethod
+  };
 }
 
 // Add the policy (base policy will be added to by overlay policy, overlay will overwrite existing)
@@ -150,7 +155,8 @@ function patientModulePolicy(): IPolicy {
   return {
     "00100010": {"action":"replace", "value":[], "description":"Patient name will be replaced"},
 	  "00100020": {"action":"replace", "value":[], "description":"Patient ID will be replaced"},
-	  "00100030": {"action":"regenerate", "method":"age", "description":"Patient DOB will be replaced"},
+	  "00100030": {"action":"regenerate", "method":"age", "description":"Patient DOB will be rounded to 1 year and replaced if over 90"},
+    "00101030": {"action":"regenerate", "method":"weight", "description":"Patient weight will be rounded to nearest 5kg if within 30..140kg, else replaced."},
 	  "00100040": {"action":"replace", "value":[], "description":"Patient's sex will be replaced"}
   };
 }
@@ -588,6 +594,7 @@ function ctImagePolicy(): IPolicy {
     patientModulePolicy(),
     generalStudyModulePolicy(),
     generalSeriesModulePolicy(),
+    dxImageModulePolicy(),
     frameOfReferenceModulePolicy(),
     generalEquipmentModulePolicy(),
     generalImageModulePolicy(),
@@ -609,6 +616,7 @@ function ultrasoundMultiframeImagePolicy(): IPolicy {
     patientModulePolicy(),
     generalStudyModulePolicy(),
     generalSeriesModulePolicy(),
+    dxImageModulePolicy(),
     frameOfReferenceModulePolicy(),
     generalEquipmentModulePolicy(),
     generalImageModulePolicy(),
@@ -631,6 +639,7 @@ function mrImagePolicy(): IPolicy {
     patientModulePolicy(),
     generalStudyModulePolicy(),
     generalSeriesModulePolicy(),
+    dxImageModulePolicy(),
     frameOfReferenceModulePolicy(),
     generalEquipmentModulePolicy(),
     generalImageModulePolicy(),
@@ -651,6 +660,7 @@ function mrSpectroscopyImagePolicy(): IPolicy {
     patientModulePolicy(),
     generalStudyModulePolicy(),
     generalSeriesModulePolicy(),
+    dxImageModulePolicy(),
     mrSeriesModulePolicy(),
     frameOfReferenceModulePolicy(),
     generalEquipmentModulePolicy(),
@@ -675,6 +685,7 @@ function ultrasoundImagePolicy(): IPolicy {
     generalStudyModulePolicy(),
     generalSeriesModulePolicy(),
     generalEquipmentModulePolicy(),
+    dxImageModulePolicy(),
     generalImageModulePolicy(),
     imagePixelModulePolicy(),
     ultrasoundImageModulePolicy(),
@@ -692,6 +703,7 @@ function xRayAngiographicImagePolicy(): IPolicy {
     patientModulePolicy(),
     generalStudyModulePolicy(),
     generalSeriesModulePolicy(),
+    dxImageModulePolicy(),
     generalEquipmentModulePolicy(),
     generalImageModulePolicy(),
     imagePixelModulePolicy(),
@@ -712,6 +724,7 @@ function xRayRadiofluoroscopicImagePolicy(): IPolicy {
     generalStudyModulePolicy(),
     generalSeriesModulePolicy(),
     generalEquipmentModulePolicy(),
+    dxImageModulePolicy(),
     generalImageModulePolicy(),
     imagePixelModulePolicy(),
     xRayImageModulePolicy(),
@@ -730,6 +743,7 @@ function xRay3DAngiographicImagePolicy(): IPolicy {
     patientModulePolicy(),
     generalStudyModulePolicy(),
     generalSeriesModulePolicy(),
+    dxImageModulePolicy(),
     enhancedSeriesModulePolicy(),
     frameOfReferenceModulePolicy(),
     generalEquipmentModulePolicy(),
@@ -752,6 +766,7 @@ function nuclearMedicineImagePolicy(): IPolicy {
     patientModulePolicy(),
     generalStudyModulePolicy(),
     generalSeriesModulePolicy(),
+    dxImageModulePolicy(),
     nmPETPatientOrientationModulePolicy(),
     generalEquipmentModulePolicy(),
     generalImageModulePolicy(),
@@ -776,6 +791,7 @@ function positronEmissionTomographyImagePolicy(): IPolicy {
     patientModulePolicy(),
     generalStudyModulePolicy(),
     generalSeriesModulePolicy(),
+    dxImageModulePolicy(),
     petSeriesModulePolicy(),
     petIsotopeModulePolicy(),
     nmPETPatientOrientationModulePolicy(),

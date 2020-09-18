@@ -14,11 +14,11 @@
   random or cryptographically hashed values.
 ******************************************************************************/
 export declare type Action = 'remove' | 'replace' | 'keep' | 'regenerate';
-export declare type ReplaceMethod = 'hash' | 'random';
+export declare type ReplaceMethod = 'hash' | 'age' | 'weight' | 'random';
 export interface IPolicy {
     [tagId: string]: {
-        "action": Action;
-        "description": string;
+        action: Action;
+        description: string;
         value?: Array<any>;
         method?: ReplaceMethod;
     };

@@ -8,8 +8,22 @@ import DicomDict, { TagValue } from './Message'
 const UIDPREFIX = "1.2.826.0.1.3680043.10.341.";
 // We want to keep the hash algorithm the same to preserve references.
 
+function bucketWeight(oldWeight: TagValue): string {
+    // babies have a weight in grams. grossly obese have a weight in
+    const weight = parseInt(oldWeight.Value[0])
+    if (!weight) {
+        return ""
+    }
+    if (weight < 30 || weight > 140) {
+        // Bucketing may not be enough; discard data.
+        return ""
+    }
 
-function bucketAge(oldAge: TagValue) {
+    // Round to nearest 5kg.
+    return `${Math.round(weight / 5) * 5}`
+}
+
+function bucketAge(oldAge: TagValue): string {
     if (oldAge.vr == "AS" && oldAge.Value[0]?.length == 4) {
         // handle age-string like 011M for 11 months old
         let ageStep = oldAge.Value[0].slice(3,4);
@@ -98,12 +112,19 @@ function applyPolicy(dcm: Record<string, TagValue>, policy: IPolicy){
       // always have a VM (multiplicity) of 1, which may be a bad assumption
       } else if (action == "regenerate") {
           var oldTag = cloneTag(dcm[key]);
-          if (rule["method"] == "random") {
+          if (rule.method == "random") {
               oldTag["Value"] = [randomUid()];
-          } else if (rule["method"] == "age") {
+          } else if (rule.method == "weight") {
+              oldTag["Value"] = [bucketWeight(oldTag)];
+          } else if (rule.method == "age") {
               oldTag["Value"] = [bucketAge(oldTag)];
-          } else if (rule["method"] == "hash") {
+          } else if (rule.method == "hash") {
               oldTag["Value"] = [hashedUid(oldTag["Value"][0])];
+          } else if (rule.method == undefined) {
+            // do nothing if action is undefined
+          } else {
+            // exhastiveness
+            const _: never = rule["method"];
           }
           newDcm[key] = oldTag;
       // Then to remove we're just not going to add anything for now.
