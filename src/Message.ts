@@ -57,7 +57,7 @@ export class DicomDict {
 
 export type TagValue = {
   vr: string;
-  Value: Array<string>
+  Value: Array<string | ArrayBuffer | number>;
 }
 
 export default class DicomMessage {

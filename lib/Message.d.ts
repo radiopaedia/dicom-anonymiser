@@ -9,7 +9,7 @@ export declare class DicomDict {
 }
 export declare type TagValue = {
     vr: string;
-    Value: Array<string>;
+    Value: Array<string | ArrayBuffer | number>;
 };
 export default class DicomMessage {
     static read(bufferStream: any, syntax: any, length?: number): {};

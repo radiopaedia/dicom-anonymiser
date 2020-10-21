@@ -9,8 +9,11 @@ const UIDPREFIX = "1.2.826.0.1.3680043.10.341.";
 // We want to keep the hash algorithm the same to preserve references.
 
 function bucketWeight(oldWeight: TagValue): string {
-    // babies have a weight in grams. grossly obese have a weight in
-    const weight = parseInt(oldWeight.Value[0])
+    const weightStr = oldWeight.Value[0]
+    if (typeof weightStr !== "string") {
+      return ""
+    }
+    const weight = parseInt(weightStr)
     if (!weight) {
         return ""
     }
@@ -24,10 +27,14 @@ function bucketWeight(oldWeight: TagValue): string {
 }
 
 function bucketAge(oldAge: TagValue): string {
-    if (oldAge.vr == "AS" && oldAge.Value[0]?.length == 4) {
+    const val = oldAge.Value[0]
+    if (typeof val !== "string") {
+      return ""
+    }
+    if (oldAge.vr == "AS" && val.length == 4) {
         // handle age-string like 011M for 11 months old
-        let ageStep = oldAge.Value[0].slice(3,4);
-        let ageNum = parseInt(oldAge.Value[0].slice(0,3));
+        let ageStep = val.slice(3,4);
+        let ageNum = parseInt(val.slice(0,3));
         if (ageStep == 'Y') {
             // Values lower than 90 years are 'not identifying', per
             // https://www.hhs.gov/hipaa/for-professionals/privacy/special-topics/de-identification/index.html
@@ -57,12 +64,12 @@ function bucketAge(oldAge: TagValue): string {
 
     if (oldAge.vr == "DA") {
         // handle date string
-        if (oldAge.Value[0]?.length != 8) {
+        if (val.length != 8) {
             return "";
         }
 
         // Replace month/day with zeroes
-        return oldAge.Value[0].slice(0, 4) + "0000"
+        return val.slice(0, 4) + "0000"
     }
     return ""
 };
@@ -119,7 +126,7 @@ function applyPolicy(dcm: Record<string, TagValue>, policy: IPolicy){
           } else if (rule.method == "age") {
               oldTag["Value"] = [bucketAge(oldTag)];
           } else if (rule.method == "hash") {
-              oldTag["Value"] = [hashedUid(oldTag["Value"][0])];
+              oldTag["Value"] = [hashedUid(`${oldTag["Value"][0]}`)];
           } else if (rule.method == undefined) {
             // do nothing if action is undefined
           } else {
