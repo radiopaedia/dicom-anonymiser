@@ -8,8 +8,8 @@ describe('Message tests...', () => {
     fs.mkdir('stages', () => undefined)
 
         function readFileBuffer(path) {
-        const b = fs.readFileSync(path)
-        return b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength);
+            const b = fs.readFileSync(path)
+            return b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength);
         }
 
         function readDcm(buf, stage) {
