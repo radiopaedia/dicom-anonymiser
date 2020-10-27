@@ -213,7 +213,7 @@ export class BufferStream {
         return val;
     }
 
-    readString(length) {
+    readString(length: number): string {
         var string = '';
 
         var numOfMulti = length, index = 0;
@@ -225,7 +225,7 @@ export class BufferStream {
         return string;
     }
 
-    readHex(length) {
+    readHex(length: number): string {
         var hexString = '';
         for (var i = 0; i < length; i++) {
             let hexChar = this.readUint8().toString(16)
@@ -237,30 +237,31 @@ export class BufferStream {
         return hexString.toUpperCase();
     }
 
-
-    checkSize(step) {
-        while (this.offset + step > this.buffer.byteLength) {
-            //throw new Error("Writing exceeded the size of buffer");
-            //resize
-            var dst = new ArrayBuffer(this.buffer.byteLength * 2);
-            new Uint8Array(dst).set(new Uint8Array(this.buffer));
-            this.buffer = dst;
-            this.view = new DataView(this.buffer);
+    checkSize(step: number): void {
+        let byteLength = this.buffer.byteLength;
+        if (this.offset + step <= byteLength) {
+            return
         }
-    }
 
-    concat(stream) {
-        var newbuf = new ArrayBuffer(this.offset + stream.size), int8 = new Uint8Array(newbuf);
-        int8.set(new Uint8Array(this.getBuffer(0, this.offset)));
-        int8.set(new Uint8Array(stream.getBuffer(0, stream.size)), this.offset);
-        this.buffer = newbuf;
+        while (this.offset + step > byteLength) {
+            byteLength *= 2;
+        }
+        var dst = new ArrayBuffer(byteLength);
+        new Uint8Array(dst).set(new Uint8Array(this.buffer));
+        this.buffer = dst;
         this.view = new DataView(this.buffer);
-        this.offset += stream.size;
-        this.size = this.offset;
-        return this.buffer.byteLength;
     }
 
-    increment(step) {
+    concat(stream: BufferStream): void {
+        this.checkSize(stream.size)
+
+        const int8 = new Uint8Array(this.buffer);
+        int8.set(new Uint8Array(stream.buffer, 0, stream.size), this.offset);
+        this.size += stream.size;
+        this.offset += stream.size;
+    }
+
+    increment(step: number): number {
         this.offset += step;
         if (this.offset > this.size) {
             this.size = this.offset;
@@ -268,7 +269,7 @@ export class BufferStream {
         return step;
     }
 
-    getBuffer(start=0, end=0) {
+    getBuffer(start=0, end=0): ArrayBuffer {
         if (!start && !end) {
             start = 0;
             end = this.size;

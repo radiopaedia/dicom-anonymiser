@@ -4,8 +4,8 @@ export declare class DicomDict {
     meta: any;
     dict: Record<string, TagValue>;
     constructor(meta: any);
-    upsertTag(tag: any, vr: any, values: any): void;
-    write(dict?: Record<string, TagValue>): ArrayBuffer;
+    upsertTag(tag: string, vr: string, values: Array<string | ArrayBuffer | number>): void;
+    write(dict?: Record<string, TagValue>, size?: number): ArrayBuffer;
 }
 export declare type TagValue = {
     vr: string;

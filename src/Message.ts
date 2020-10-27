@@ -27,7 +27,11 @@ export class DicomDict {
       this.dict = {};
     }
 
-    upsertTag(tag, vr, values) {
+    upsertTag(
+      tag: string,
+      vr: string,
+      values: Array<string | ArrayBuffer | number>
+    ): void {
       if (this.dict[tag]) {
         this.dict[tag].Value = values;
       } else {
@@ -35,9 +39,12 @@ export class DicomDict {
       }
     }
 
-    write(dict=this.dict) {
+    write(
+      dict: Record<string, TagValue> = this.dict,
+      size: number = 4096
+    ): ArrayBuffer {
       var metaSyntax = EXPLICIT_LITTLE_ENDIAN;
-      var fileStream = new WriteBufferStream(4096, true);
+      var fileStream = new WriteBufferStream(size, true);
       fileStream.writeHex("00".repeat(128));
       fileStream.writeString("DICM");
 
