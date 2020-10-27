@@ -238,17 +238,16 @@ export class BufferStream {
     }
 
     checkSize(step: number): void {
-        let size = this.buffer.byteLength;
-        if (this.offset + step < size) {
+        let byteLength = this.buffer.byteLength;
+        if (this.offset + step <= byteLength) {
             return
         }
 
-        while (this.offset + step > size) {
-            size *= 2;
+        while (this.offset + step > byteLength) {
+            byteLength *= 2;
         }
-        var dst = new ArrayBuffer(size);
+        var dst = new ArrayBuffer(byteLength);
         new Uint8Array(dst).set(new Uint8Array(this.buffer));
-        this.size = size
         this.buffer = dst;
         this.view = new DataView(this.buffer);
     }
@@ -257,7 +256,8 @@ export class BufferStream {
         this.checkSize(stream.size)
 
         const int8 = new Uint8Array(this.buffer);
-        int8.set(new Uint8Array(stream.getBuffer(0, stream.size)), this.offset);
+        int8.set(new Uint8Array(stream.buffer, 0, stream.size), this.offset);
+        this.size += stream.size;
         this.offset += stream.size;
     }
 

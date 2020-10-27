@@ -252,7 +252,6 @@ export class BinaryRepresentation extends ValueRepresentation {
             stream.writeUint32(0x0);
             var written = 8 + binaryStream.size + startOffset.length * 4 + 8;
 
-
             if (written & 1) {
                 stream.writeHex(this.padByte);
                 written++;
