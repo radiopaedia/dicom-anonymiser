@@ -1,23 +1,23 @@
 import ValueRepresentation from "./ValueRepresentation";
-import {DicomDict} from "./Message";
+import { DicomDict } from "./Message";
 import dictionary from "./dictionary";
 
 export default class DicomMetaDictionary {
   static punctuateTag(rawTag) {
-    if (rawTag.indexOf(',') != -1) {
-      return (rawTag);
+    if (rawTag.indexOf(",") != -1) {
+      return rawTag;
     }
     if (rawTag.length == 8 && rawTag == rawTag.match(/[0-9a-fA-F]*/)[0]) {
       var tag = rawTag.toUpperCase();
-      return ("("+tag.substring(0,4)+","+tag.substring(4,8)+")");
+      return "(" + tag.substring(0, 4) + "," + tag.substring(4, 8) + ")";
     }
   }
 
   static unpunctuateTag(tag) {
-    if (tag.indexOf(',') == -1) {
-      return (tag);
+    if (tag.indexOf(",") == -1) {
+      return tag;
     }
-    return(tag.substring(1,10).replace(',',''));
+    return tag.substring(1, 10).replace(",", "");
   }
 
   // fixes some common errors in VRs
@@ -30,7 +30,9 @@ export default class DicomMetaDictionary {
       if (data.vr == "SQ") {
         var cleanedValues: Array<any> = [];
         for (var index in data.Value) {
-          cleanedValues.push(DicomMetaDictionary.cleanDataset(data.Value[index]))
+          cleanedValues.push(
+            DicomMetaDictionary.cleanDataset(data.Value[index])
+          );
         }
         data.Value = cleanedValues;
       } else {
@@ -44,7 +46,7 @@ export default class DicomMetaDictionary {
       }
       cleanedDataset[tag] = data;
     }
-    return(cleanedDataset);
+    return cleanedDataset;
   }
 
   // unlike naturalizeDataset, this only
@@ -57,7 +59,9 @@ export default class DicomMetaDictionary {
       if (data.vr == "SQ") {
         var namedValues: Array<any> = [];
         for (var index in data.Value) {
-          namedValues.push(DicomMetaDictionary.namifyDataset(data.Value[index]))
+          namedValues.push(
+            DicomMetaDictionary.namifyDataset(data.Value[index])
+          );
         }
         data.Value = namedValues;
       }
@@ -69,7 +73,7 @@ export default class DicomMetaDictionary {
       }
       namedDataset[name] = data;
     }
-    return(namedDataset);
+    return namedDataset;
   }
 
   // converts from DICOM JSON Model dataset
@@ -81,7 +85,7 @@ export default class DicomMetaDictionary {
   // - object member names are dictionary, not group/element tag
   static naturalizeDataset(dataset) {
     var naturalDataset = {
-      _vrMap : {},
+      _vrMap: {},
     };
     for (var tag in dataset) {
       var data = dataset[tag];
@@ -89,7 +93,9 @@ export default class DicomMetaDictionary {
         // convert sequence to list of values
         var naturalValues: Array<any> = [];
         for (var index in data.Value) {
-          naturalValues.push(DicomMetaDictionary.naturalizeDataset(data.Value[index]))
+          naturalValues.push(
+            DicomMetaDictionary.naturalizeDataset(data.Value[index])
+          );
         }
         data.Value = naturalValues;
       }
@@ -98,14 +104,17 @@ export default class DicomMetaDictionary {
       var naturalName = tag;
       if (entry) {
         naturalName = entry.name;
-        if (entry.vr == 'ox') {
+        if (entry.vr == "ox") {
           // when the vr is data-dependent, keep track of the original type
           naturalDataset._vrMap[naturalName] = data.vr;
         }
       }
       if (/.*Sequence/.test(naturalName)) {
         // remove Sequence from name of list
-        naturalName = naturalName.substring(0, naturalName.length - 'Sequence'.length);
+        naturalName = naturalName.substring(
+          0,
+          naturalName.length - "Sequence".length
+        );
       }
       naturalDataset[naturalName] = data.Value;
       if (naturalDataset[naturalName].length == 1) {
@@ -114,35 +123,36 @@ export default class DicomMetaDictionary {
       }
       if (/.*SOPClassUID/.test(naturalName)) {
         // give natural language name to UID if available
-        var sopClassName = DicomMetaDictionary.sopClassNamesByUID[naturalDataset[naturalName]];
+        var sopClassName =
+          DicomMetaDictionary.sopClassNamesByUID[naturalDataset[naturalName]];
         if (sopClassName) {
           var uidlessName = naturalName;
           if (/.*UID/.test(naturalName)) {
             // strip the UID at the end, since this is now a name not a UID
-            uidlessName = naturalName.substring(0, naturalName.length-3);
+            uidlessName = naturalName.substring(0, naturalName.length - 3);
           }
           delete naturalDataset[naturalName];
           naturalDataset[uidlessName] = sopClassName;
         }
       }
     }
-    return(naturalDataset);
+    return naturalDataset;
   }
 
   static denaturalizeName(naturalName) {
     let name = naturalName;
-    var sequenceName = naturalName+"Sequence";
+    var sequenceName = naturalName + "Sequence";
     if (DicomMetaDictionary.nameMap[sequenceName]) {
       name = sequenceName;
     }
-    var uidName = name+"UID";
+    var uidName = name + "UID";
     if (DicomMetaDictionary.nameMap[uidName]) {
       name = uidName;
     }
-    return (name);
+    return name;
   }
 
-  static denaturalizeValue(naturalValue): Array<string|number> {
+  static denaturalizeValue(naturalValue): Array<string | number> {
     let value = naturalValue;
     // if it's a known UID, map back to numbers
     var uid = DicomMetaDictionary.uidMap[naturalValue];
@@ -152,7 +162,7 @@ export default class DicomMetaDictionary {
     if (!Array.isArray(value)) {
       value = [value];
     }
-    value = value.map(entry=>
+    value = value.map((entry) =>
       entry.constructor.name == "Number" ? String(entry) : entry
     );
     return value;
@@ -160,7 +170,7 @@ export default class DicomMetaDictionary {
 
   static denaturalizeDataset(dataset) {
     var unnaturalDataset = {};
-    Object.keys(dataset).forEach(naturalName => {
+    Object.keys(dataset).forEach((naturalName) => {
       // check if it's a sequence
       var name = naturalName;
       name = DicomMetaDictionary.denaturalizeName(name);
@@ -177,30 +187,34 @@ export default class DicomMetaDictionary {
           vr: entry.vr,
           Value: dataset[naturalName],
         };
-        if (entry.vr == 'ox') {
+        if (entry.vr == "ox") {
           if (dataset._vrMap && dataset._vrMap[naturalName]) {
             dataItem.vr = dataset._vrMap[naturalName];
           } else {
-            console.error('No value representation given for', naturalName);
+            console.error("No value representation given for", naturalName);
           }
         }
 
-        let div: Array<string | number> = DicomMetaDictionary.denaturalizeValue(dataItem.Value);
+        let div: Array<string | number> = DicomMetaDictionary.denaturalizeValue(
+          dataItem.Value
+        );
         dataItem.Value = div;
 
         if (entry.vr == "SQ") {
           var unnaturalValues: Array<any> = [];
-          dataItem.Value.forEach(nestedDataset => {
-            unnaturalValues.push(DicomMetaDictionary.denaturalizeDataset(nestedDataset));
+          dataItem.Value.forEach((nestedDataset) => {
+            unnaturalValues.push(
+              DicomMetaDictionary.denaturalizeDataset(nestedDataset)
+            );
           });
           div = dataItem.Value = unnaturalValues;
         }
         let vr = ValueRepresentation.createByTypeString(dataItem.vr);
         let ml = vr.maxLength;
-        if ((!vr.isBinary()) && ml) {
+        if (!vr.isBinary() && ml) {
           for (let i in div) {
-            let value = div[i]
-            if (value && (typeof value === "string") && value.length > ml) {
+            let value = div[i];
+            if (value && typeof value === "string" && value.length > ml) {
               div[i] = value.slice(0, ml);
             }
           }
@@ -212,7 +226,7 @@ export default class DicomMetaDictionary {
         console.warn("Unknown name in dataset", name, ":", dataset[name]);
       }
     });
-    return (unnaturalDataset);
+    return unnaturalDataset;
   }
 
   static datasetToBlob(dataset) {
@@ -221,25 +235,25 @@ export default class DicomMetaDictionary {
     // as a file blob
     const meta = DicomMetaDictionary.denaturalizeDataset({
       // TODO: generate FileMetaInformationVersion de novo
-      FileMetaInformationVersion: dataset._meta.FileMetaInformationVersion.Value[0],
+      FileMetaInformationVersion:
+        dataset._meta.FileMetaInformationVersion.Value[0],
       MediaStorageSOPClass: dataset.SOPClass,
       MediaStorageSOPInstance: dataset.SOPInstanceUID,
       TransferSyntaxUID: "1.2.840.10008.1.2",
       ImplementationClassUID: DicomMetaDictionary.uid(),
       ImplementationVersionName: "dcmio-0.0",
-
     });
     let dicomDict = new DicomDict(meta);
     dicomDict.dict = DicomMetaDictionary.denaturalizeDataset(dataset);
     var buffer = dicomDict.write();
-    var blob = new Blob([buffer], {type: "application/dicom"});
-    return (blob);
+    var blob = new Blob([buffer], { type: "application/dicom" });
+    return blob;
   }
 
   static uid() {
-    let uid = "2.25." + Math.floor(1+ Math.random() * 9);
+    let uid = "2.25." + Math.floor(1 + Math.random() * 9);
     for (let index = 0; index < 38; index++) {
-      uid = uid + Math.floor(Math.random()*10);
+      uid = uid + Math.floor(Math.random() * 10);
     }
     return uid;
   }
@@ -247,31 +261,34 @@ export default class DicomMetaDictionary {
   // date and time in UTC
   static date() {
     let now = new Date();
-    return now.toISOString().replace(/-/g,'').slice(0,8);
+    return now.toISOString().replace(/-/g, "").slice(0, 8);
   }
 
   static time() {
     let now = new Date();
-    return now.toISOString().replace(/:/g,'').slice(11,17);
+    return now.toISOString().replace(/:/g, "").slice(11, 17);
   }
 
   static dateTime() {
     let now = new Date();
-    return now.toISOString().replace(/:/g,'').slice(11,17);
+    return now.toISOString().replace(/:/g, "").slice(11, 17);
   }
-  static nameMap: Record<string, {
-    name: string;
-    vr: string;
-    tag: string;
-  }> = {}
+  static nameMap: Record<
+    string,
+    {
+      name: string;
+      vr: string;
+      tag: string;
+    }
+  > = {};
   static _generateNameMap() {
     for (var tag in DicomMetaDictionary.dictionary) {
       var dict = DicomMetaDictionary.dictionary[tag];
-      DicomMetaDictionary.nameMap[dict.name] = {...dict, tag};
+      DicomMetaDictionary.nameMap[dict.name] = { ...dict, tag };
     }
   }
 
-  static uidMap = {}
+  static uidMap = {};
   static _generateUIDMap() {
     DicomMetaDictionary.uidMap = {};
     for (var uid in DicomMetaDictionary.sopClassNamesByUID) {
@@ -283,38 +300,40 @@ export default class DicomMetaDictionary {
   // Subset of those listed at:
   // http://dicom.nema.org/medical/dicom/current/output/html/part04.html#sect_B.5
   static sopClassNamesByUID = {
-    "1.2.840.10008.5.1.4.1.1.2" : "CTImage",
-    "1.2.840.10008.5.1.4.1.1.2.1" : "EnhancedCTImage",
-    "1.2.840.10008.5.1.4.1.1.2.2" : "LegacyConvertedEnhancedCTImage",
-    "1.2.840.10008.5.1.4.1.1.3.1" : "USMultiframeImage",
-    "1.2.840.10008.5.1.4.1.1.4" : "MRImage",
-    "1.2.840.10008.5.1.4.1.1.4.1" : "EnhancedMRImage",
-    "1.2.840.10008.5.1.4.1.1.4.2" : "MRSpectroscopy",
-    "1.2.840.10008.5.1.4.1.1.4.3" : "EnhancedMRColorImage",
-    "1.2.840.10008.5.1.4.1.1.4.4" : "LegacyConvertedEnhancedMRImage",
-    "1.2.840.10008.5.1.4.1.1.6.1" : "USImage",
-    "1.2.840.10008.5.1.4.1.1.6.2" : "EnhancedUSVolume",
-    "1.2.840.10008.5.1.4.1.1.7" : "SecondaryCaptureImage",
-    "1.2.840.10008.5.1.4.1.1.66" : "RawData",
-    "1.2.840.10008.5.1.4.1.1.66.1" : "SpatialRegistration",
-    "1.2.840.10008.5.1.4.1.1.66.2" : "SpatialFiducials",
-    "1.2.840.10008.5.1.4.1.1.66.3" : "DeformableSpatialRegistration",
-    "1.2.840.10008.5.1.4.1.1.66.4" : "Segmentation",
-    "1.2.840.10008.5.1.4.1.1.67" : "RealWorldValueMapping",
-    "1.2.840.10008.5.1.4.1.1.88.11" : "BasicTextSR",
-    "1.2.840.10008.5.1.4.1.1.88.22" : "EnhancedSR",
-    "1.2.840.10008.5.1.4.1.1.88.33" : "ComprehensiveSR",
-    "1.2.840.10008.5.1.4.1.1.128" : "PETImage",
-    "1.2.840.10008.5.1.4.1.1.130" : "EnhancedPETImage",
-    "1.2.840.10008.5.1.4.1.1.128.1" : "LegacyConvertedEnhancedPETImage",
-  }
+    "1.2.840.10008.5.1.4.1.1.2": "CTImage",
+    "1.2.840.10008.5.1.4.1.1.2.1": "EnhancedCTImage",
+    "1.2.840.10008.5.1.4.1.1.2.2": "LegacyConvertedEnhancedCTImage",
+    "1.2.840.10008.5.1.4.1.1.3.1": "USMultiframeImage",
+    "1.2.840.10008.5.1.4.1.1.4": "MRImage",
+    "1.2.840.10008.5.1.4.1.1.4.1": "EnhancedMRImage",
+    "1.2.840.10008.5.1.4.1.1.4.2": "MRSpectroscopy",
+    "1.2.840.10008.5.1.4.1.1.4.3": "EnhancedMRColorImage",
+    "1.2.840.10008.5.1.4.1.1.4.4": "LegacyConvertedEnhancedMRImage",
+    "1.2.840.10008.5.1.4.1.1.6.1": "USImage",
+    "1.2.840.10008.5.1.4.1.1.6.2": "EnhancedUSVolume",
+    "1.2.840.10008.5.1.4.1.1.7": "SecondaryCaptureImage",
+    "1.2.840.10008.5.1.4.1.1.66": "RawData",
+    "1.2.840.10008.5.1.4.1.1.66.1": "SpatialRegistration",
+    "1.2.840.10008.5.1.4.1.1.66.2": "SpatialFiducials",
+    "1.2.840.10008.5.1.4.1.1.66.3": "DeformableSpatialRegistration",
+    "1.2.840.10008.5.1.4.1.1.66.4": "Segmentation",
+    "1.2.840.10008.5.1.4.1.1.67": "RealWorldValueMapping",
+    "1.2.840.10008.5.1.4.1.1.88.11": "BasicTextSR",
+    "1.2.840.10008.5.1.4.1.1.88.22": "EnhancedSR",
+    "1.2.840.10008.5.1.4.1.1.88.33": "ComprehensiveSR",
+    "1.2.840.10008.5.1.4.1.1.128": "PETImage",
+    "1.2.840.10008.5.1.4.1.1.130": "EnhancedPETImage",
+    "1.2.840.10008.5.1.4.1.1.128.1": "LegacyConvertedEnhancedPETImage",
+  };
 
-  static dictionary: Record<string, {
-    name: string,
-    vr: string,
-  }> = dictionary
+  static dictionary: Record<
+    string,
+    {
+      name: string;
+      vr: string;
+    }
+  > = dictionary;
 }
-
 
 DicomMetaDictionary._generateNameMap();
 DicomMetaDictionary._generateUIDMap();

@@ -7,4 +7,4 @@ import TagData from "./TagData";
 import Tag from "./Tag";
 import ValueRepresentation from "./ValueRepresentation";
 import Validator from "./Validator";
-export { Anonymize, Policies, dictionary, Message, MetaDictionary, TagData, Tag, Validator, ValueRepresentation };
+export { Anonymize, Policies, dictionary, Message, MetaDictionary, TagData, Tag, Validator, ValueRepresentation, };
