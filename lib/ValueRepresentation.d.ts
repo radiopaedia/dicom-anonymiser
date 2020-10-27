@@ -1,4 +1,4 @@
-import Tag from './Tag';
+import Tag from "./Tag";
 export declare function tagFromNumbers(group: any, element: any): Tag;
 export default class ValueRepresentation {
     type: string;

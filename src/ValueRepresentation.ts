@@ -1,13 +1,13 @@
 import {
   WriteBufferStream,
   ReadBufferStream,
-  BufferStream
-} from './BufferStream';
+  BufferStream,
+} from "./BufferStream";
 import DicomMessage from "./Message";
-import Tag from './Tag';
+import Tag from "./Tag";
 
 function rtrim(str) {
-  return str.replace(/\s*$/g, '');
+  return str.replace(/\s*$/g, "");
 }
 
 export function tagFromNumbers(group, element) {
@@ -16,7 +16,7 @@ export function tagFromNumbers(group, element) {
 
 function readTag(stream) {
   var group = stream.readUint16(),
-      element = stream.readUint16();
+    element = stream.readUint16();
 
   var tag = tagFromNumbers(group, element);
   return tag;
@@ -27,805 +27,844 @@ const explicitVRList = ["OB", "OW", "OF", "SQ", "UC", "UR", "UT", "UN"];
 const singleVRs = ["SQ", "OF", "OW", "OB", "UN"];
 
 export default class ValueRepresentation {
-    type: string;
-    multi: boolean;
-    maxLength: number | undefined;
-    noMultiple: boolean;
-    fillWith: string;
-    padByte: string;
-    fixed: boolean;16
-    defaultValue: string | number;
-    valueLength: number;
-    maxCharLength: number;
-    checkLength?: (value: string) => boolean;
+  type: string;
+  multi: boolean;
+  maxLength: number | undefined;
+  noMultiple: boolean;
+  fillWith: string;
+  padByte: string;
+  fixed: boolean;
+  16;
+  defaultValue: string | number;
+  valueLength: number;
+  maxCharLength: number;
+  checkLength?: (value: string) => boolean;
 
-    constructor(type, value=undefined) {
-      this.type = type;
-      this.multi = false;
-      this.maxLength = 0;
-      this.noMultiple = false;
+  constructor(type, value = undefined) {
+    this.type = type;
+    this.multi = false;
+    this.maxLength = 0;
+    this.noMultiple = false;
+  }
+
+  isBinary() {
+    return binaryVRs.indexOf(this.type) != -1;
+  }
+
+  allowMultiple() {
+    return !this.isBinary() && singleVRs.indexOf(this.type) == -1;
+  }
+
+  isExplicit() {
+    return explicitVRList.indexOf(this.type) != -1;
+  }
+
+  read(stream, length, syntax) {
+    if (this.fixed && this.maxLength) {
+      if (!length) return this.defaultValue;
+      // if (this.maxLength != length)
+      //   console.log("Invalid length for fixed length tag, vr " + this.type + ", length " + this.maxLength + " != " + length);
     }
+    return this.readBytes(stream, length, syntax);
+  }
 
-    isBinary() {
-        return binaryVRs.indexOf(this.type) != -1;
+  readBytes(stream, length, _syntax) {
+    return stream.readString(length);
+  }
+
+  readNullPaddedString(stream, length) {
+    if (!length) return "";
+
+    var str = stream.readString(length - 1);
+    if (stream.readUint8() != 0) {
+      stream.increment(-1);
+      str += stream.readString(1);
     }
+    return str;
+  }
 
-    allowMultiple() {
-        return !this.isBinary() && singleVRs.indexOf(this.type) == -1;
+  writeFilledString(stream, value, length) {
+    if (this.maxLength && length < this.maxLength && length >= 0) {
+      var written = 0;
+      if (length > 0) written += stream.writeString(value);
+      var zeroLength = this.maxLength - length;
+      written += stream.writeHex(this.fillWith.repeat(zeroLength));
+      return written;
+    } else if (length == this.maxLength) {
+      return stream.writeString(value);
+    } else {
+      throw "Length mismatch";
     }
+  }
 
-    isExplicit() {
-        return explicitVRList.indexOf(this.type) != -1;
-    }
-
-    read(stream, length, syntax) {
-      if (this.fixed && this.maxLength) {
-        if (!length)
-          return this.defaultValue;
-        // if (this.maxLength != length)
-        //   console.log("Invalid length for fixed length tag, vr " + this.type + ", length " + this.maxLength + " != " + length);
-      }
-      return this.readBytes(stream, length, syntax);
-    }
-
-    readBytes(stream, length, _syntax) {
-      return stream.readString(length);
-    }
-
-    readNullPaddedString(stream, length) {
-      if (!length) return "";
-
-      var str = stream.readString(length - 1);
-      if (stream.readUint8() != 0) {
-        stream.increment(-1);
-        str += stream.readString(1);
-      }
-      return str;
-    }
-
-    writeFilledString(stream, value, length) {
-        if (this.maxLength && length < this.maxLength && length >= 0) {
-            var written = 0;
-            if (length > 0)
-                written += stream.writeString(value);
-            var zeroLength = this.maxLength - length;
-            written += stream.writeHex(this.fillWith.repeat(zeroLength));
-            return written;
-        } else if (length == this.maxLength) {
-            return stream.writeString(value);
+  write(stream, type, ...valueArgs) {
+    var args = Array.from(arguments);
+    if (args[2] === null || args[2] === "" || args[2] === undefined) {
+      return [stream.writeString("")];
+    } else {
+      let written: Array<number> = [];
+      let func = stream["write" + type];
+      if (Array.isArray(valueArgs[0])) {
+        if (valueArgs[0].length < 1) {
+          written.push(0);
         } else {
-            throw "Length mismatch";
-        }
-    }
-
-    write(stream, type, ...valueArgs) {
-        var args = Array.from(arguments);
-        if (args[2] === null || args[2] === "" || args[2] === undefined) {
-            return [stream.writeString("")];
-        } else {
-            let written: Array<number> = [];
-            let func = stream["write"+type];
-            if (Array.isArray(valueArgs[0])) {
-                if (valueArgs[0].length < 1) {
-                    written.push(0);
-                } else {
-                    var self = this;
-                    valueArgs[0].forEach(function(v, k){
-                        if (self.allowMultiple() && k > 0) {
-                            stream.writeHex("5C");
-                            //byteCount++;
-                        }
-                        var singularArgs = [v].concat(valueArgs.slice(1));
-
-                        var byteCount = func.apply(stream, singularArgs);
-                        written.push(byteCount);
-                    });
-                }
-            } else {
-                written.push(func.apply(stream, valueArgs));
+          var self = this;
+          valueArgs[0].forEach(function (v, k) {
+            if (self.allowMultiple() && k > 0) {
+              stream.writeHex("5C");
+              //byteCount++;
             }
-            return written;
-        }
-    }
+            var singularArgs = [v].concat(valueArgs.slice(1));
 
-    writeBytes(stream, value, lengths, isEncapsulated=false) {
-      var valid = true, valarr = Array.isArray(value) ? value : [value], total = 0;
-      for (var i = 0;i < valarr.length;i++) {
-          let checkValue: string | number = valarr[i];
-          let checklen = lengths[i], isString = false, displaylen = checklen;
-          if (this.checkLength && typeof checkValue == "string") {
-            valid = this.checkLength(checkValue);
-          } else if (this.maxCharLength && typeof checkValue == "string") {
-            var check = this.maxCharLength;//, checklen = checkValue.length;
-            valid = checkValue.length <= check;
-            displaylen = checkValue.length;
-            isString = true;
-          } else if (this.maxLength) {
-            valid = checklen <= this.maxLength;
-          }
-          var errmsg = "Value exceeds max length, vr: " + this.type + ", value: " + checkValue + ", length: " + displaylen;
-          if (!valid) {
-            //  if(isString)
-                //  console.log(errmsg)
-            //  else
-            if (!isString)
-                throw new Error(errmsg);
-          }
-          total += checklen;
-      }
-      if (this.allowMultiple()) {
-        total += valarr.length ? valarr.length - 1 : 0;
-      }
-      //check for odd
-      var written = total;
-      if (total & 1) {
-        stream.writeHex(this.padByte);
-        written++;
+            var byteCount = func.apply(stream, singularArgs);
+            written.push(byteCount);
+          });
+        }
+      } else {
+        written.push(func.apply(stream, valueArgs));
       }
       return written;
     }
+  }
 
-    static createByTypeString(type: string): ValueRepresentation {
-        let vr: ValueRepresentation;
-        if (type == "AE") vr = new ApplicationEntity();
-        else if (type == "AS") vr = new AgeString();
-        else if (type == "AT") vr = new AttributeTag();
-        else if (type == "CS") vr = new CodeString();
-        else if (type == "DA") vr = new DateValue(null);
-        else if (type == "DS") vr = new DecimalString();
-        else if (type == "DT") vr = new DateTime();
-        else if (type == "FL") vr = new FloatingPointSingle();
-        else if (type == "FD") vr = new FloatingPointDouble();
-        else if (type == "IS") vr = new IntegerString();
-        else if (type == "LO") vr = new LongString();
-        else if (type == "LT") vr = new LongText();
-        else if (type == "OB") vr = new OtherByteString();
-        // else if (type == "OD") vr = new OtherDoubleString();
-        // else if (type == "OF") vr = new OtherFloatString();
-        else if (type == "OW") vr = new OtherWordString();
-        else if (type == "PN") vr = new PersonName();
-        else if (type == "SH") vr = new ShortString();
-        else if (type == "SL") vr = new SignedLong();
-        else if (type == "SQ") vr = new SequenceOfItems();
-        else if (type == "SS") vr = new SignedShort();
-        else if (type == "ST") vr = new ShortText();
-        else if (type == "TM") vr = new TimeValue();
-        else if (type == "UC") vr = new UnlimitedCharacters();
-        else if (type == "UI") vr = new UniqueIdentifier();
-        else if (type == "UL") vr = new UnsignedLong();
-        else if (type == "UN") vr = new UnknownValue();
-        else if (type == "UR") vr = new UniversalResource();
-        else if (type == "US") vr = new UnsignedShort();
-        else if (type == "UT") vr = new UnlimitedText();
-        else throw "Invalid vr type " + type;
-
-        return vr;
+  writeBytes(stream, value, lengths, isEncapsulated = false) {
+    var valid = true,
+      valarr = Array.isArray(value) ? value : [value],
+      total = 0;
+    for (var i = 0; i < valarr.length; i++) {
+      let checkValue: string | number = valarr[i];
+      let checklen = lengths[i],
+        isString = false,
+        displaylen = checklen;
+      if (this.checkLength && typeof checkValue == "string") {
+        valid = this.checkLength(checkValue);
+      } else if (this.maxCharLength && typeof checkValue == "string") {
+        var check = this.maxCharLength; //, checklen = checkValue.length;
+        valid = checkValue.length <= check;
+        displaylen = checkValue.length;
+        isString = true;
+      } else if (this.maxLength) {
+        valid = checklen <= this.maxLength;
+      }
+      var errmsg =
+        "Value exceeds max length, vr: " +
+        this.type +
+        ", value: " +
+        checkValue +
+        ", length: " +
+        displaylen;
+      if (!valid) {
+        //  if(isString)
+        //  console.log(errmsg)
+        //  else
+        if (!isString) throw new Error(errmsg);
+      }
+      total += checklen;
     }
+    if (this.allowMultiple()) {
+      total += valarr.length ? valarr.length - 1 : 0;
+    }
+    //check for odd
+    var written = total;
+    if (total & 1) {
+      stream.writeHex(this.padByte);
+      written++;
+    }
+    return written;
+  }
+
+  static createByTypeString(type: string): ValueRepresentation {
+    let vr: ValueRepresentation;
+    if (type == "AE") vr = new ApplicationEntity();
+    else if (type == "AS") vr = new AgeString();
+    else if (type == "AT") vr = new AttributeTag();
+    else if (type == "CS") vr = new CodeString();
+    else if (type == "DA") vr = new DateValue(null);
+    else if (type == "DS") vr = new DecimalString();
+    else if (type == "DT") vr = new DateTime();
+    else if (type == "FL") vr = new FloatingPointSingle();
+    else if (type == "FD") vr = new FloatingPointDouble();
+    else if (type == "IS") vr = new IntegerString();
+    else if (type == "LO") vr = new LongString();
+    else if (type == "LT") vr = new LongText();
+    else if (type == "OB") vr = new OtherByteString();
+    // else if (type == "OD") vr = new OtherDoubleString();
+    // else if (type == "OF") vr = new OtherFloatString();
+    else if (type == "OW") vr = new OtherWordString();
+    else if (type == "PN") vr = new PersonName();
+    else if (type == "SH") vr = new ShortString();
+    else if (type == "SL") vr = new SignedLong();
+    else if (type == "SQ") vr = new SequenceOfItems();
+    else if (type == "SS") vr = new SignedShort();
+    else if (type == "ST") vr = new ShortText();
+    else if (type == "TM") vr = new TimeValue();
+    else if (type == "UC") vr = new UnlimitedCharacters();
+    else if (type == "UI") vr = new UniqueIdentifier();
+    else if (type == "UL") vr = new UnsignedLong();
+    else if (type == "UN") vr = new UnknownValue();
+    else if (type == "UR") vr = new UniversalResource();
+    else if (type == "US") vr = new UnsignedShort();
+    else if (type == "UT") vr = new UnlimitedText();
+    else throw "Invalid vr type " + type;
+
+    return vr;
+  }
 }
 
 export class StringRepresentation extends ValueRepresentation {
-    readBytes(stream, length, _syntax) {
-        return stream.readString(length);
-    }
+  readBytes(stream, length, _syntax) {
+    return stream.readString(length);
+  }
 
-    writeBytes(stream, value, syntax, isEncapsulated) {
-        var written = super.write(stream, "String", value);
+  writeBytes(stream, value, syntax, isEncapsulated) {
+    var written = super.write(stream, "String", value);
 
-        return super.writeBytes(stream, value, written);
-    }
+    return super.writeBytes(stream, value, written);
+  }
 }
 
 export class BinaryRepresentation extends ValueRepresentation {
-    writeBytes(stream, value, syntax, isEncapsulated) {
-        if (isEncapsulated) {
-            var fragmentSize = 1024 * 20,
-                frames = value.length;
-            let startOffset: Array<number> = [];
+  writeBytes(stream, value, syntax, isEncapsulated) {
+    if (isEncapsulated) {
+      var fragmentSize = 1024 * 20,
+        frames = value.length;
+      let startOffset: Array<number> = [];
 
-            var binaryStream: BufferStream = new WriteBufferStream(1024 * 1024 * 20, stream.isLittleEndian);
-            for (var i = 0;i < frames;i++) {
-                startOffset.push(binaryStream.size);
-                var frameBuffer = value[i], frameStream = new ReadBufferStream(frameBuffer),
-                    fragmentsLength = Math.ceil(frameStream.size / fragmentSize);
-                for (var j = 0, fragmentStart = 0;j < fragmentsLength;j++) {
-                    var fragmentEnd = fragmentStart + fragmentSize;
-                    if (j == fragmentsLength - 1) {
-                        fragmentEnd = frameStream.size;
-                    }
-                    var fragStream = new ReadBufferStream(frameStream.getBuffer(fragmentStart, fragmentEnd));
-                    fragmentStart = fragmentEnd;
-                    binaryStream.writeUint16(0xfffe);
-                    binaryStream.writeUint16(0xe000);
-                    binaryStream.writeUint32(fragStream.size);
-                    binaryStream.concat(fragStream);
-                }
-            }
-            stream.writeUint16(0xfffe);
-            stream.writeUint16(0xe000);
-            stream.writeUint32(startOffset.length * 4);
-            for (var i = 0;i < startOffset.length;i++) {
-                stream.writeUint32(startOffset[i]);
-            }
-            stream.concat(binaryStream);
-            stream.writeUint16(0xfffe);
-            stream.writeUint16(0xe0dd);
-            stream.writeUint32(0x0);
-            var written = 8 + binaryStream.size + startOffset.length * 4 + 8;
-
-            if (written & 1) {
-                stream.writeHex(this.padByte);
-                written++;
-            }
-            return 0xffffffff;
-        } else {
-            var binaryData = value[0], binaryStream = new ReadBufferStream(binaryData);
-            stream.concat(binaryStream);
-            return super.writeBytes(stream, binaryData, [binaryStream.size]);
+      var binaryStream: BufferStream = new WriteBufferStream(
+        1024 * 1024 * 20,
+        stream.isLittleEndian
+      );
+      for (var i = 0; i < frames; i++) {
+        startOffset.push(binaryStream.size);
+        var frameBuffer = value[i],
+          frameStream = new ReadBufferStream(frameBuffer),
+          fragmentsLength = Math.ceil(frameStream.size / fragmentSize);
+        for (var j = 0, fragmentStart = 0; j < fragmentsLength; j++) {
+          var fragmentEnd = fragmentStart + fragmentSize;
+          if (j == fragmentsLength - 1) {
+            fragmentEnd = frameStream.size;
+          }
+          var fragStream = new ReadBufferStream(
+            frameStream.getBuffer(fragmentStart, fragmentEnd)
+          );
+          fragmentStart = fragmentEnd;
+          binaryStream.writeUint16(0xfffe);
+          binaryStream.writeUint16(0xe000);
+          binaryStream.writeUint32(fragStream.size);
+          binaryStream.concat(fragStream);
         }
-    }
+      }
+      stream.writeUint16(0xfffe);
+      stream.writeUint16(0xe000);
+      stream.writeUint32(startOffset.length * 4);
+      for (var i = 0; i < startOffset.length; i++) {
+        stream.writeUint32(startOffset[i]);
+      }
+      stream.concat(binaryStream);
+      stream.writeUint16(0xfffe);
+      stream.writeUint16(0xe0dd);
+      stream.writeUint32(0x0);
+      var written = 8 + binaryStream.size + startOffset.length * 4 + 8;
 
-    readBytes(stream, length, _syntax) {
-        if (length == 0xffffffff) {
-            var itemTagValue = Tag.readTag(stream), frames: Array<any> = [];
-            /**
-             * There are three special SQ related Data Elements that are not ruled by the VR encoding rules conveyed
-             * by the Transfer Syntax. They shall be encoded as Implicit VR. These special Data Elements are Item (FFFE,E000),
-             * Item Delimitation Item (FFFE,E00D), and Sequence Delimitation Item (FFFE,E0DD).
-             * However, the Data Set within the Value Field of the Data Element Item (FFFE,E000) shall be encoded according
-             * to the rules conveyed by the Transfer Syntax.
-             *
-             * ^^^ Not sure what this means but here we are handling FFFE E000
-             */
-            if (itemTagValue.is(0xfffee000)) {
-                var itemLength = stream.readUint32(), numOfFrames = 1, offsets: Array<number> = [];
-                if (itemLength > 0x0) {
-                    // There are frames (commonly the item length is 4 for a single frame?)
-                    numOfFrames = itemLength / 4;
-                    var i = 0;
-                    while (i++ < numOfFrames) {
-                        const offset = stream.readUint32();
-                        offsets.push(offset);
-                    }
-                } else {
-                    offsets = [0];
-                }
-                // At this point I'm assuming offsets start at zero for single frames (through either method).
-                var nextTag = Tag.readTag(stream), fragmentStream: any = null, start = 4,
-                    frameOffset = offsets.shift();
-                // Alright, so that means we have a bunch of binary data, encapsulated in a (FFFE,E000) tag.
-                // I think I get it...
-                var fragCount = 0;
-                var fragSizeRead = 0;
-                var iCount = 0;
-                while (nextTag.is(0xfffee000)) {
-                    // I guess this is for starting a new frame?
-                    if (frameOffset == start) {
-                        frameOffset = offsets.shift();
-                        if (fragmentStream !== null) {
-                            frames.push(fragmentStream.buffer);
-                            fragmentStream = null;
-                        }
-                    }
-                    var frameItemLength = stream.readUint32(),
-                        thisStream = stream.more(frameItemLength);
-                    fragCount++;
-                    fragSizeRead+=frameItemLength;
-                    // Set the fragment stream to this stream on the first try
-                    if (fragmentStream === null) {
-                        fragmentStream = thisStream;
-                        // FIX! This offset wasn't being set causing us to overwrite the first fragment.
-                        fragmentStream.offset = thisStream.size;
-                    } else {
-                        // For each encapsulted fragment, add it.
-                        fragmentStream.concat(thisStream);
-                    }
-                    nextTag = Tag.readTag(stream);
-                    start += 4 + frameItemLength;
-                }
-                // Then we seem to add the whole stream in as a fragment?
-                if (fragmentStream !== null) {
-                    frames.push(fragmentStream.buffer);
-                }
-                // Not sure why we need to read off an extra 32 bits?
-                stream.readUint32();
-            } else {
-                throw new Error("Item tag not found after undefined binary length");
-            }
-            // Send back the frames.
-            return frames;
+      if (written & 1) {
+        stream.writeHex(this.padByte);
+        written++;
+      }
+      return 0xffffffff;
+    } else {
+      var binaryData = value[0],
+        binaryStream = new ReadBufferStream(binaryData);
+      stream.concat(binaryStream);
+      return super.writeBytes(stream, binaryData, [binaryStream.size]);
+    }
+  }
+
+  readBytes(stream, length, _syntax) {
+    if (length == 0xffffffff) {
+      var itemTagValue = Tag.readTag(stream),
+        frames: Array<any> = [];
+      /**
+       * There are three special SQ related Data Elements that are not ruled by the VR encoding rules conveyed
+       * by the Transfer Syntax. They shall be encoded as Implicit VR. These special Data Elements are Item (FFFE,E000),
+       * Item Delimitation Item (FFFE,E00D), and Sequence Delimitation Item (FFFE,E0DD).
+       * However, the Data Set within the Value Field of the Data Element Item (FFFE,E000) shall be encoded according
+       * to the rules conveyed by the Transfer Syntax.
+       *
+       * ^^^ Not sure what this means but here we are handling FFFE E000
+       */
+      if (itemTagValue.is(0xfffee000)) {
+        var itemLength = stream.readUint32(),
+          numOfFrames = 1,
+          offsets: Array<number> = [];
+        if (itemLength > 0x0) {
+          // There are frames (commonly the item length is 4 for a single frame?)
+          numOfFrames = itemLength / 4;
+          var i = 0;
+          while (i++ < numOfFrames) {
+            const offset = stream.readUint32();
+            offsets.push(offset);
+          }
         } else {
-            var bytes;
-            /*if (this.type == 'OW') {
+          offsets = [0];
+        }
+        // At this point I'm assuming offsets start at zero for single frames (through either method).
+        var nextTag = Tag.readTag(stream),
+          fragmentStream: any = null,
+          start = 4,
+          frameOffset = offsets.shift();
+        // Alright, so that means we have a bunch of binary data, encapsulated in a (FFFE,E000) tag.
+        // I think I get it...
+        var fragCount = 0;
+        var fragSizeRead = 0;
+        var iCount = 0;
+        while (nextTag.is(0xfffee000)) {
+          // I guess this is for starting a new frame?
+          if (frameOffset == start) {
+            frameOffset = offsets.shift();
+            if (fragmentStream !== null) {
+              frames.push(fragmentStream.buffer);
+              fragmentStream = null;
+            }
+          }
+          var frameItemLength = stream.readUint32(),
+            thisStream = stream.more(frameItemLength);
+          fragCount++;
+          fragSizeRead += frameItemLength;
+          // Set the fragment stream to this stream on the first try
+          if (fragmentStream === null) {
+            fragmentStream = thisStream;
+            // FIX! This offset wasn't being set causing us to overwrite the first fragment.
+            fragmentStream.offset = thisStream.size;
+          } else {
+            // For each encapsulted fragment, add it.
+            fragmentStream.concat(thisStream);
+          }
+          nextTag = Tag.readTag(stream);
+          start += 4 + frameItemLength;
+        }
+        // Then we seem to add the whole stream in as a fragment?
+        if (fragmentStream !== null) {
+          frames.push(fragmentStream.buffer);
+        }
+        // Not sure why we need to read off an extra 32 bits?
+        stream.readUint32();
+      } else {
+        throw new Error("Item tag not found after undefined binary length");
+      }
+      // Send back the frames.
+      return frames;
+    } else {
+      var bytes;
+      /*if (this.type == 'OW') {
                 bytes = stream.readUint16Array(length);
             } else if (this.type == 'OB') {
                 bytes = stream.readUint8Array(length);
             }*/
-            bytes = stream.more(length).buffer;
-            return [bytes];
-        }
+      bytes = stream.more(length).buffer;
+      return [bytes];
     }
+  }
 }
 
 export class ApplicationEntity extends StringRepresentation {
-    constructor() {
-        super("AE");
-        this.maxLength = 16;
-        this.padByte = "20";
-        this.fillWith = "20";
-    }
+  constructor() {
+    super("AE");
+    this.maxLength = 16;
+    this.padByte = "20";
+    this.fillWith = "20";
+  }
 
-    readBytes(stream, length, _syntax) {
-        return stream.readString(length).trim();
-    }
+  readBytes(stream, length, _syntax) {
+    return stream.readString(length).trim();
+  }
 }
 
 export class CodeString extends StringRepresentation {
-    constructor() {
-        super("CS");
-        this.maxLength = 16;
-        this.padByte = "20";
-    };
+  constructor() {
+    super("CS");
+    this.maxLength = 16;
+    this.padByte = "20";
+  }
 
-    readBytes(stream, length, _syntax) {
-        //return this.readNullPaddedString(stream, length).trim();
-        return stream.readString(length).trim();
-    }
+  readBytes(stream, length, _syntax) {
+    //return this.readNullPaddedString(stream, length).trim();
+    return stream.readString(length).trim();
+  }
 }
 
 export class AgeString extends StringRepresentation {
-    constructor() {
-        super("AS");
-        this.maxLength = 4;
-        this.padByte = "20";
-        this.fixed = true;
-        this.defaultValue = "";
-    }
+  constructor() {
+    super("AS");
+    this.maxLength = 4;
+    this.padByte = "20";
+    this.fixed = true;
+    this.defaultValue = "";
+  }
 }
 
 export class AttributeTag extends ValueRepresentation {
-    constructor() {
-        super("AT");
-        this.maxLength = 4;
-        this.valueLength = 4;
-        this.padByte = "00";
-        this.fixed = true;
-    };
+  constructor() {
+    super("AT");
+    this.maxLength = 4;
+    this.valueLength = 4;
+    this.padByte = "00";
+    this.fixed = true;
+  }
 
-    readBytes(stream, length, _syntax) {
-        var group = stream.readUint16(), element = stream.readUint16();
-        return tagFromNumbers(group, element).value;
-    }
+  readBytes(stream, length, _syntax) {
+    var group = stream.readUint16(),
+      element = stream.readUint16();
+    return tagFromNumbers(group, element).value;
+  }
 
-    writeBytes(stream, value) {
-        return super.writeBytes(stream, value, super.write(stream, "Uint32", value));
-    }
+  writeBytes(stream, value) {
+    return super.writeBytes(
+      stream,
+      value,
+      super.write(stream, "Uint32", value)
+    );
+  }
 }
 
 export class DateValue extends StringRepresentation {
-    constructor(value) {
-      super("DA", value);
-      this.maxLength = 18;
-      this.padByte = "20";
-      //this.fixed = true;
-      this.defaultValue = "";
-    }
+  constructor(value) {
+    super("DA", value);
+    this.maxLength = 18;
+    this.padByte = "20";
+    //this.fixed = true;
+    this.defaultValue = "";
+  }
 }
 
 export class DecimalString extends StringRepresentation {
-    constructor() {
-      super("DS");
-      this.maxLength = 16;
-      this.padByte = "20";
-    }
+  constructor() {
+    super("DS");
+    this.maxLength = 16;
+    this.padByte = "20";
+  }
 
-    readBytes(stream, length, _syntax) {
-      //return this.readNullPaddedString(stream, length).trim();
-      return stream.readString(length).trim();
-    }
+  readBytes(stream, length, _syntax) {
+    //return this.readNullPaddedString(stream, length).trim();
+    return stream.readString(length).trim();
+  }
 }
 
 export class DateTime extends StringRepresentation {
-    constructor() {
-        super("DT");
-        this.maxLength = 26;
-        this.padByte = "20";
-    }
+  constructor() {
+    super("DT");
+    this.maxLength = 26;
+    this.padByte = "20";
+  }
 }
 
 export class FloatingPointSingle extends ValueRepresentation {
-    constructor() {
-        super("FL");
-        this.maxLength = 4;
-        this.padByte = "00";
-        this.fixed = true;
-        this.defaultValue = 0.0;
-    }
+  constructor() {
+    super("FL");
+    this.maxLength = 4;
+    this.padByte = "00";
+    this.fixed = true;
+    this.defaultValue = 0.0;
+  }
 
-    readBytes(stream, length, _syntax) {
-        return stream.readFloat();
-    }
+  readBytes(stream, length, _syntax) {
+    return stream.readFloat();
+  }
 
-    writeBytes(stream, value) {
-        return super.writeBytes(stream, value, super.write(stream, "Float", value));
-    }
+  writeBytes(stream, value) {
+    return super.writeBytes(stream, value, super.write(stream, "Float", value));
+  }
 }
 
 export class FloatingPointDouble extends ValueRepresentation {
-    constructor() {
-        super("FD");
-        this.maxLength = 8;
-        this.padByte = "00";
-        this.fixed = true;
-        this.defaultValue = 0.0;
-    }
+  constructor() {
+    super("FD");
+    this.maxLength = 8;
+    this.padByte = "00";
+    this.fixed = true;
+    this.defaultValue = 0.0;
+  }
 
-    readBytes(stream, length, _syntax) {
-        return stream.readDouble();
-    }
+  readBytes(stream, length, _syntax) {
+    return stream.readDouble();
+  }
 
-    writeBytes(stream, value) {
-        return super.writeBytes(stream, value, super.write(stream, "Double", value));
-    }
+  writeBytes(stream, value) {
+    return super.writeBytes(
+      stream,
+      value,
+      super.write(stream, "Double", value)
+    );
+  }
 }
 
 export class IntegerString extends StringRepresentation {
-    constructor() {
-        super("IS");
-        this.maxLength = 12
-        this.padByte = "20";
-    }
+  constructor() {
+    super("IS");
+    this.maxLength = 12;
+    this.padByte = "20";
+  }
 
-    readBytes(stream, length, _syntax) {
-        //return this.readNullPaddedString(stream, length);
-        return stream.readString(length).trim();
-    }
+  readBytes(stream, length, _syntax) {
+    //return this.readNullPaddedString(stream, length);
+    return stream.readString(length).trim();
+  }
 }
 
 export class LongString extends StringRepresentation {
-    constructor() {
-        super("LO");
-        this.maxCharLength = 64;
-        this.padByte = "20";
-    }
+  constructor() {
+    super("LO");
+    this.maxCharLength = 64;
+    this.padByte = "20";
+  }
 
-    readBytes(stream, length, _syntax) {
-        //return this.readNullPaddedString(stream, length).trim();
-        return stream.readString(length).trim();
-    }
+  readBytes(stream, length, _syntax) {
+    //return this.readNullPaddedString(stream, length).trim();
+    return stream.readString(length).trim();
+  }
 }
 
 export class LongText extends StringRepresentation {
-    constructor() {
-        super("LT");
-        this.maxCharLength = 10240;
-        this.padByte = "20";
-    }
+  constructor() {
+    super("LT");
+    this.maxCharLength = 10240;
+    this.padByte = "20";
+  }
 
-    readBytes(stream, length, _syntax) {
-        //return rtrim(this.readNullPaddedString(stream, length));
-        return rtrim(stream.readString(length));
-    }
+  readBytes(stream, length, _syntax) {
+    //return rtrim(this.readNullPaddedString(stream, length));
+    return rtrim(stream.readString(length));
+  }
 }
 
 export class PersonName extends StringRepresentation {
-    constructor() {
-        super("PN");
-        this.maxLength = undefined;
-        this.padByte = "20";
-        this.checkLength = (value) => {
-            var cmps = value.split(/\^/);
-            for (var i in cmps) {
-                var cmp = cmps[i];
-                if (cmp.length > 64) return false;
-            }
-            return true;
-        }
-    }
+  constructor() {
+    super("PN");
+    this.maxLength = undefined;
+    this.padByte = "20";
+    this.checkLength = (value) => {
+      var cmps = value.split(/\^/);
+      for (var i in cmps) {
+        var cmp = cmps[i];
+        if (cmp.length > 64) return false;
+      }
+      return true;
+    };
+  }
 
-    readBytes(stream, length, _syntax) {
-        //return rtrim(this.readNullPaddedString(stream, length));
-        return rtrim(stream.readString(length));
-    }
+  readBytes(stream, length, _syntax) {
+    //return rtrim(this.readNullPaddedString(stream, length));
+    return rtrim(stream.readString(length));
+  }
 }
 
 export class ShortString extends StringRepresentation {
-    constructor() {
-        super("SH");
-        this.maxCharLength = 16;
-        this.padByte = "20";
-    }
+  constructor() {
+    super("SH");
+    this.maxCharLength = 16;
+    this.padByte = "20";
+  }
 
-    readBytes(stream, length, _syntax) {
-        //return this.readNullPaddedString(stream, length).trim();
-        return stream.readString(length).trim();
-    }
+  readBytes(stream, length, _syntax) {
+    //return this.readNullPaddedString(stream, length).trim();
+    return stream.readString(length).trim();
+  }
 }
 
 export class SignedLong extends ValueRepresentation {
-    constructor() {
-        super("SL");
-        this.maxLength = 4;
-        this.padByte = "00";
-        this.fixed = true;
-        this.defaultValue = 0;
-    }
+  constructor() {
+    super("SL");
+    this.maxLength = 4;
+    this.padByte = "00";
+    this.fixed = true;
+    this.defaultValue = 0;
+  }
 
-    readBytes(stream, length, _syntax) {
-        return stream.readInt32();
-    }
+  readBytes(stream, length, _syntax) {
+    return stream.readInt32();
+  }
 
-    writeBytes(stream, value) {
-        return super.writeBytes(stream, value, super.write(stream, 'Int32', value));
-    }
+  writeBytes(stream, value) {
+    return super.writeBytes(stream, value, super.write(stream, "Int32", value));
+  }
 }
 
 export class SequenceOfItems extends ValueRepresentation {
-    constructor() {
-        super("SQ");
-        this.maxLength = undefined;
-        this.padByte = "00";
-        this.noMultiple = true;
-    }
+  constructor() {
+    super("SQ");
+    this.maxLength = undefined;
+    this.padByte = "00";
+    this.noMultiple = true;
+  }
 
-    readBytes(stream, sqlength, syntax) {
-        if (sqlength == 0x0) {
-            return []; //contains no dataset
-        } else {
-            var undefLength = sqlength == 0xffffffff, elements: Array<any> = [], read = 0;
+  readBytes(stream, sqlength, syntax) {
+    if (sqlength == 0x0) {
+      return []; //contains no dataset
+    } else {
+      var undefLength = sqlength == 0xffffffff,
+        elements: Array<any> = [],
+        read = 0;
 
-            while (true) {
-                var tag = readTag(stream);
-                read += 4;
+      while (true) {
+        var tag = readTag(stream);
+        read += 4;
 
-                if (tag.is(0xfffee0dd)) {
-                    stream.readUint32();
+        if (tag.is(0xfffee0dd)) {
+          stream.readUint32();
+          break;
+        } else if (!undefLength && read == sqlength) {
+          break;
+        } else if (tag.is(0xfffee000)) {
+          let length = stream.readUint32();
+          read += 4;
+          var itemStream = null,
+            toRead = 0,
+            undef = length == 0xffffffff;
+
+          if (undef) {
+            var stack = 0;
+            while (1) {
+              var g = stream.readUint16();
+              if (g == 0xfffe) {
+                var ge = stream.readUint16();
+                if (ge == 0xe00d) {
+                  stack--;
+                  if (stack < 0) {
+                    stream.increment(4);
+                    read += 8;
                     break;
-                } else if (!undefLength && (read == sqlength)) {
-                    break;
-                } else if (tag.is(0xfffee000)) {
-                    let length = stream.readUint32();
-                    read += 4;
-                    var itemStream = null, toRead = 0, undef = length == 0xffffffff;
-
-                    if (undef) {
-                        var stack = 0;
-                        while (1) {
-                            var g = stream.readUint16();
-                            if (g == 0xfffe) {
-                                var ge = stream.readUint16();
-                                if (ge == 0xe00d) {
-                                    stack--;
-                                    if (stack < 0) {
-                                        stream.increment(4);
-                                        read += 8;
-                                        break;
-                                    } else {
-                                        toRead += 4;
-                                    }
-                                } else if (ge == 0xe000) {
-                                    stack++;
-                                    toRead += 4;
-                                } else {
-                                    toRead += 2;
-                                    stream.increment(-2);
-                                }
-                            } else {
-                                toRead += 2;
-                            }
-                        }
-                    } else {
-                        toRead = length;
-                    }
-
-                    if (toRead) {
-                        stream.increment(undef ? (-toRead-8) : 0);
-                        itemStream = stream.more(toRead);//parseElements
-                        read += toRead;
-                        if (undef)
-                            stream.increment(8);
-
-                        var items = DicomMessage.read(itemStream, syntax);
-                        elements.push(items);
-                    }
-                    if (!undefLength && (read == sqlength)) {
-                        break;
-                    }
+                  } else {
+                    toRead += 4;
+                  }
+                } else if (ge == 0xe000) {
+                  stack++;
+                  toRead += 4;
+                } else {
+                  toRead += 2;
+                  stream.increment(-2);
                 }
+              } else {
+                toRead += 2;
+              }
             }
-            return elements;
+          } else {
+            toRead = length;
+          }
+
+          if (toRead) {
+            stream.increment(undef ? -toRead - 8 : 0);
+            itemStream = stream.more(toRead); //parseElements
+            read += toRead;
+            if (undef) stream.increment(8);
+
+            var items = DicomMessage.read(itemStream, syntax);
+            elements.push(items);
+          }
+          if (!undefLength && read == sqlength) {
+            break;
+          }
         }
+      }
+      return elements;
     }
+  }
 
-    writeBytes(stream, value, syntax) {
-        // var startOffset = stream.offset,
-        let written = 0;
-        if (value) {
-            for (var i = 0;i < value.length;i++) {
-                var item = value[i];
-                super.write(stream, "Uint16", 0xfffe);
-                super.write(stream, "Uint16", 0xe000);
-                super.write(stream, "Uint32", 0xffffffff);
-
-                written += DicomMessage.write(item, stream, syntax);
-
-                super.write(stream, "Uint16", 0xfffe);
-                super.write(stream, "Uint16", 0xe00d);
-                super.write(stream, "Uint32", 0x00000000);
-                written += 16;
-            }
-        }
+  writeBytes(stream, value, syntax) {
+    // var startOffset = stream.offset,
+    let written = 0;
+    if (value) {
+      for (var i = 0; i < value.length; i++) {
+        var item = value[i];
         super.write(stream, "Uint16", 0xfffe);
-        super.write(stream, "Uint16", 0xe0dd);
-        super.write(stream, "Uint32", 0x00000000);
-        written += 8;
+        super.write(stream, "Uint16", 0xe000);
+        super.write(stream, "Uint32", 0xffffffff);
 
-        // var totalLength = stream.offset - startOffset;
-        return super.writeBytes(stream, value, [written]);
+        written += DicomMessage.write(item, stream, syntax);
+
+        super.write(stream, "Uint16", 0xfffe);
+        super.write(stream, "Uint16", 0xe00d);
+        super.write(stream, "Uint32", 0x00000000);
+        written += 16;
+      }
     }
+    super.write(stream, "Uint16", 0xfffe);
+    super.write(stream, "Uint16", 0xe0dd);
+    super.write(stream, "Uint32", 0x00000000);
+    written += 8;
+
+    // var totalLength = stream.offset - startOffset;
+    return super.writeBytes(stream, value, [written]);
+  }
 }
 
 export class SignedShort extends ValueRepresentation {
-    constructor() {
-        super("SS");
-        this.maxLength = 2;
-        this.valueLength = 2;
-        this.padByte = "00";
-        this.fixed = true;
-        this.defaultValue = 0;
-    }
+  constructor() {
+    super("SS");
+    this.maxLength = 2;
+    this.valueLength = 2;
+    this.padByte = "00";
+    this.fixed = true;
+    this.defaultValue = 0;
+  }
 
-    readBytes(stream, length, _syntax) {
-        return stream.readInt16();
-    }
+  readBytes(stream, length, _syntax) {
+    return stream.readInt16();
+  }
 
-    writeBytes(stream, value) {
-        return super.writeBytes(stream, value, super.write(stream, "Int16", value));
-    }
+  writeBytes(stream, value) {
+    return super.writeBytes(stream, value, super.write(stream, "Int16", value));
+  }
 }
 
 export class ShortText extends StringRepresentation {
-    constructor() {
-        super("ST");
-        this.maxCharLength = 1024;
-        this.padByte = "20";
-    }
+  constructor() {
+    super("ST");
+    this.maxCharLength = 1024;
+    this.padByte = "20";
+  }
 
-    readBytes(stream, length, _syntax) {
-
-        //return rtrim(this.readNullPaddedString(stream, length));
-        return rtrim(stream.readString(length));
-    }
+  readBytes(stream, length, _syntax) {
+    //return rtrim(this.readNullPaddedString(stream, length));
+    return rtrim(stream.readString(length));
+  }
 }
 
 export class TimeValue extends StringRepresentation {
-    constructor() {
-        super("TM");
-        this.maxLength = 14;
-        this.padByte = "20";
-    }
+  constructor() {
+    super("TM");
+    this.maxLength = 14;
+    this.padByte = "20";
+  }
 
-    readBytes(stream, length, _syntax) {
-        return rtrim(stream.readString(length));
-    }
+  readBytes(stream, length, _syntax) {
+    return rtrim(stream.readString(length));
+  }
 }
 
 export class UnlimitedCharacters extends StringRepresentation {
-    constructor() {
-        super("UC");
-        this.maxLength = undefined;
-        this.multi = true;
-        this.padByte = "20";
-    }
+  constructor() {
+    super("UC");
+    this.maxLength = undefined;
+    this.multi = true;
+    this.padByte = "20";
+  }
 
-    readBytes(stream, length, _syntax) {
-        return rtrim(stream.readString(length));
-    }
+  readBytes(stream, length, _syntax) {
+    return rtrim(stream.readString(length));
+  }
 }
 
 export class UnlimitedText extends StringRepresentation {
-    constructor() {
-        super("UT");
-        this.maxLength = undefined;
-        this.padByte = "20";
-    }
+  constructor() {
+    super("UT");
+    this.maxLength = undefined;
+    this.padByte = "20";
+  }
 
-    readBytes(stream, length, _syntax) {
-        //return this.readNullPaddedString(stream, length);
-        return rtrim(stream.readString(length));
-    }
+  readBytes(stream, length, _syntax) {
+    //return this.readNullPaddedString(stream, length);
+    return rtrim(stream.readString(length));
+  }
 }
 
 export class UnsignedShort extends ValueRepresentation {
-    constructor() {
-        super("US");
-        this.maxLength = 2;
-        this.padByte = "00";
-        this.fixed = true;
-        this.defaultValue = 0;
-    }
+  constructor() {
+    super("US");
+    this.maxLength = 2;
+    this.padByte = "00";
+    this.fixed = true;
+    this.defaultValue = 0;
+  }
 
-    readBytes(stream, length, _syntax) {
-        return stream.readUint16();
-    }
+  readBytes(stream, length, _syntax) {
+    return stream.readUint16();
+  }
 
-    writeBytes(stream, value) {
-        return super.writeBytes(stream, value, super.write(stream, "Uint16", value));
-    }
+  writeBytes(stream, value) {
+    return super.writeBytes(
+      stream,
+      value,
+      super.write(stream, "Uint16", value)
+    );
+  }
 }
 
 export class UnsignedLong extends ValueRepresentation {
-    constructor() {
-        super("UL");
-        this.maxLength = 4;
-        this.padByte = "00";
-        this.fixed = true;
-        this.defaultValue = 0;
-    }
+  constructor() {
+    super("UL");
+    this.maxLength = 4;
+    this.padByte = "00";
+    this.fixed = true;
+    this.defaultValue = 0;
+  }
 
-    readBytes(stream, length, _syntax) {
-        return stream.readUint32();
-    }
+  readBytes(stream, length, _syntax) {
+    return stream.readUint32();
+  }
 
-    writeBytes(stream, value) {
-        return super.writeBytes(stream, value, super.write(stream, "Uint32", value));
-    }
+  writeBytes(stream, value) {
+    return super.writeBytes(
+      stream,
+      value,
+      super.write(stream, "Uint32", value)
+    );
+  }
 }
 
 export class UniqueIdentifier extends StringRepresentation {
-    constructor() {
-        super("UI");
-        this.maxLength = 64;
-        this.padByte = "00";
-    }
+  constructor() {
+    super("UI");
+    this.maxLength = 64;
+    this.padByte = "00";
+  }
 
-    readBytes(stream, length, _syntax) {
-        return this.readNullPaddedString(stream, length);
-    }
+  readBytes(stream, length, _syntax) {
+    return this.readNullPaddedString(stream, length);
+  }
 }
 
 export class UniversalResource extends StringRepresentation {
-    constructor() {
-        super("UR");
-        this.maxLength = undefined;
-        this.padByte = "20";
-    }
+  constructor() {
+    super("UR");
+    this.maxLength = undefined;
+    this.padByte = "20";
+  }
 
-    readBytes(stream, length, _syntax) {
-        return stream.readString(length);
-    }
+  readBytes(stream, length, _syntax) {
+    return stream.readString(length);
+  }
 }
 
 export class UnknownValue extends StringRepresentation {
-    constructor() {
-        super("UN");
-        this.maxLength = undefined;
-        this.padByte = "00";
-        this.noMultiple = true;
-    }
+  constructor() {
+    super("UN");
+    this.maxLength = undefined;
+    this.padByte = "00";
+    this.noMultiple = true;
+  }
 
-    readBytes(stream, length, _syntax) {
-        return stream.readString(length);
-    }
+  readBytes(stream, length, _syntax) {
+    return stream.readString(length);
+  }
 }
 
 export class OtherWordString extends BinaryRepresentation {
-    constructor() {
-        super("OW");
-        this.maxLength = undefined;
-        this.padByte = "00";
-        this.noMultiple = true;
-    }
+  constructor() {
+    super("OW");
+    this.maxLength = undefined;
+    this.padByte = "00";
+    this.noMultiple = true;
+  }
 }
 
 export class OtherByteString extends BinaryRepresentation {
-    constructor() {
-        super("OB");
-        this.maxLength = undefined;
-        this.padByte = "00";
-        this.noMultiple = true;
-    }
+  constructor() {
+    super("OB");
+    this.maxLength = undefined;
+    this.padByte = "00";
+    this.noMultiple = true;
+  }
 
-    /*writeBytes(stream, value) {
+  /*writeBytes(stream, value) {
         var written = super.write(stream, 'Hex', value);
         return super.writeBytes(stream, value, written);
     } */

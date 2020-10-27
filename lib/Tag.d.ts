@@ -1,4 +1,4 @@
-import { WriteBufferStream } from './BufferStream';
+import { WriteBufferStream } from "./BufferStream";
 export default class Tag {
     value: number;
     constructor(value: any);

@@ -17,5 +17,5 @@ export {
   TagData,
   Tag,
   Validator,
-  ValueRepresentation
-}
+  ValueRepresentation,
+};
