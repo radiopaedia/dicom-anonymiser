@@ -1,23 +1,30 @@
+import { BufferStream } from "./BufferStream";
 import ValueRepresentation from "./ValueRepresentation";
 import Tag from "./Tag";
+export declare const IMPLICIT_LITTLE_ENDIAN = "1.2.840.10008.1.2";
+export declare const EXPLICIT_LITTLE_ENDIAN = "1.2.840.10008.1.2.1";
+export declare const EXPLICIT_BIG_ENDIAN = "1.2.840.10008.1.2.2";
+export declare type NormalizedSyntax = typeof IMPLICIT_LITTLE_ENDIAN | typeof EXPLICIT_LITTLE_ENDIAN | typeof EXPLICIT_BIG_ENDIAN;
 export declare class DicomDict {
-    meta: any;
-    dict: Record<string, TagValue>;
-    constructor(meta: any);
+    meta: TagDict;
+    dict: TagDict;
+    constructor(meta: TagDict);
     upsertTag(tag: string, vr: string, values: Array<string | ArrayBuffer | number>): void;
-    write(dict?: Record<string, TagValue>, size?: number): ArrayBuffer;
+    write(dict?: TagDict, size?: number): ArrayBuffer;
 }
+export declare type TagDict = Record<string, TagValue>;
+export declare type TagValueEntry = string | ArrayBuffer | number | TagDict;
 export declare type TagValue = {
     vr: string;
-    Value: Array<string | ArrayBuffer | number>;
+    Value: Array<TagValueEntry>;
 };
 export default class DicomMessage {
-    static read(bufferStream: any, syntax: any, length?: number): {};
-    static _normalizeSyntax(syntax: any): any;
-    static isEncapsulated(syntax: any): boolean;
-    static readFile(buffer: any): DicomDict;
-    static writeTagObject(stream: any, tagString: any, vr: any, values: any, syntax: any): void;
-    static write(jsonObjects: any, useStream: any, syntax: any): number;
+    static read(bufferStream: BufferStream, syntax: NormalizedSyntax, length?: number): TagDict;
+    static _normalizeSyntax(syntax: unknown): NormalizedSyntax;
+    static isEncapsulated(syntax: string): boolean;
+    static readFile(buffer: ArrayBuffer): DicomDict;
+    static writeTagObject(stream: BufferStream, tagString: string, vr: string, values: number, syntax: NormalizedSyntax): number;
+    static write(jsonObjects: TagDict, useStream: BufferStream, syntax: NormalizedSyntax): number;
     /**
      * Read a tag from a byte stream.
      * Tags are organised as follows:
@@ -30,12 +37,12 @@ export default class DicomMessage {
      * @param stream
      * @param syntax
      */
-    static readTag(stream: any, syntax: any): {
+    static readTag(stream: BufferStream, syntax: NormalizedSyntax): {
         tag: Tag;
-        vr: ValueRepresentation;
+        vr: ValueRepresentation<TagValueEntry>;
         values: any;
     };
-    static lookupTag(tag: any): {
+    static lookupTag(tag: Tag): {
         name: string;
         vr: string;
     };

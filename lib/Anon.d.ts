@@ -1,1 +1,2 @@
-export default function anonymize(dcm: any): {};
+import { TagDict } from "./Message";
+export default function anonymize(dcm: TagDict): TagDict;

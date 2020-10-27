@@ -1,8 +1,3 @@
-import {
-  BufferStream,
-  WriteBufferStream,
-  ReadBufferStream,
-} from "./BufferStream";
 import DicomMessage from "./Message";
 const fs = require("fs");
 
@@ -10,12 +5,12 @@ describe("Message tests...", () => {
   it("Try to write binary bits...", () => {
     fs.mkdir("stages", () => undefined);
 
-    function readFileBuffer(path) {
+    function readFileBuffer(path: string) {
       const b = fs.readFileSync(path);
       return b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength);
     }
 
-    function readDcm(buf, stage) {
+    function readDcm(buf: ArrayBuffer, stage: string) {
       let dcm = DicomMessage.readFile(buf);
       let written = dcm.write(dcm.dict);
       fs.writeFileSync(`stages/${stage}-raw`, Buffer.from(written));

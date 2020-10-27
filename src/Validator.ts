@@ -1,3 +1,4 @@
+import { TagDict, TagValue } from "./Message";
 import TagData from "./TagData";
 
 /**
@@ -38,7 +39,7 @@ export function supportedSOPClasses(): string[] {
   ];
 }
 
-function validateAplicationEntityVR(tag): IValidatorWarning[] {
+function validateAplicationEntityVR(tag: TagValue): IValidatorWarning[] {
   //let values = tag["Value"];
   let warnings = Array<IValidatorWarning>();
   // This is a pretty broadly defined VR
@@ -46,28 +47,28 @@ function validateAplicationEntityVR(tag): IValidatorWarning[] {
 }
 
 // We shouldn't see age string values in anonymized datasets.
-function validateAgeStringVR(tag): IValidatorWarning[] {
-  let values = tag["Value"];
+function validateAgeStringVR(tag: TagValue): IValidatorWarning[] {
+  let values = tag.Value;
+
   let warnings = Array<IValidatorWarning>();
-  if (values.length > 0) {
-    for (var i = 0; i < values.length; i++) {
-      if (values[i].length > 0) {
-        warnings.push({
-          level: 1,
-          text: "Anonamised data should not include age data.",
-        });
-        return warnings;
-      }
+  for (var i = 0; i < values.length; i++) {
+    const value = values[i]
+    if (typeof value === "string" && value.length > 0 && !value.match(/^\d{1-3}Y$/)) {
+      warnings.push({
+        level: 1,
+        text: "Anonymised data should not include age data.",
+      });
     }
   }
   return warnings;
 }
 
-function validateAttributeTagVR(tag): IValidatorWarning[] {
+function validateAttributeTagVR(tag: TagValue): IValidatorWarning[] {
   let values = tag["Value"];
   let warnings = Array<IValidatorWarning>();
   for (var i = 0; i < values.length; i++) {
-    if (values[i] in TagData == false) {
+    const value = values[i]
+    if (typeof value === "string" && !(value in TagData)) {
       warnings.push({
         level: 3,
         text: values[i] + " was not an expected attribute tag.",
@@ -77,12 +78,13 @@ function validateAttributeTagVR(tag): IValidatorWarning[] {
   return warnings;
 }
 
-function validateCodeStringVR(tag): IValidatorWarning[] {
+function validateCodeStringVR(tag: TagValue): IValidatorWarning[] {
   let values = tag["Value"];
   let warnings = Array<IValidatorWarning>();
   for (var i = 0; i < values.length; i++) {
     // Code string values should be uppercase.
-    if (/[a-z]/.test(values[i])) {
+    const value = values[i]
+    if (typeof value === "string" && /[a-z]/.test(value)) {
       warnings.push({
         level: 3,
         text: values[i] + " is not an expected value for codestring",
@@ -93,7 +95,7 @@ function validateCodeStringVR(tag): IValidatorWarning[] {
 }
 
 //YYYYMMDD
-function validateDateVR(tag): IValidatorWarning[] {
+function validateDateVR(tag: TagValue): IValidatorWarning[] {
   let values = tag["Value"];
   let warnings = Array<IValidatorWarning>();
   for (var i = 0; i < values.length; i++) {
@@ -110,28 +112,29 @@ function validateDateVR(tag): IValidatorWarning[] {
   return warnings;
 }
 
-function validateDecimalStringVR(tag): IValidatorWarning[] {
+function validateDecimalStringVR(tag: TagValue): IValidatorWarning[] {
   let values = tag["Value"];
   let warnings = Array<IValidatorWarning>();
   for (var i = 0; i < values.length; i++) {
+    const value = values[i]
     // Valid chars are 0-9, e, E - +
     // Just a quick test for bad chars.
-    if (
-      /[a-d]/.test(values[i]) ||
-      /[f-z]/.test(values[i]) ||
-      /[A-D]/.test(values[i]) ||
-      /[F-Z]/.test(values[i])
-    ) {
+    if (typeof value === "string" && (
+      /[a-d]/.test(value) ||
+      /[f-z]/.test(value) ||
+      /[A-D]/.test(value) ||
+      /[F-Z]/.test(value)
+    )) {
       warnings.push({
         level: 3,
-        text: values[i] + " is not an expected value for a decimal string",
+        text: value + " is not an expected value for a decimal string",
       });
     }
   }
   return warnings;
 }
 
-function validateDateTimeVR(tag): IValidatorWarning[] {
+function validateDateTimeVR(tag: TagValue): IValidatorWarning[] {
   let values = tag["Value"];
   let warnings = Array<IValidatorWarning>();
   for (var i = 0; i < values.length; i++) {
@@ -148,38 +151,39 @@ function validateDateTimeVR(tag): IValidatorWarning[] {
   return warnings;
 }
 
-function validateFloatingPointSingleVR(tag): IValidatorWarning[] {
+function validateFloatingPointSingleVR(tag: TagValue): IValidatorWarning[] {
   //TODO (Probably a cast?)
   return Array<IValidatorWarning>();
 }
 
-function validateFloatingPointDoubleVR(tag): IValidatorWarning[] {
+function validateFloatingPointDoubleVR(tag: TagValue): IValidatorWarning[] {
   //TODO (Probably a cast?)
   return Array<IValidatorWarning>();
 }
 
-function validateIntegerStringVR(tag): IValidatorWarning[] {
+function validateIntegerStringVR(tag: TagValue): IValidatorWarning[] {
   let warnings = Array<IValidatorWarning>();
   let values = tag["Value"];
   for (var i = 0; i < values.length; i++) {
+    const value = values[i]
     // Valid chars are 0-9, e, E - +
     // Just a quick test for bad chars.
-    if (
-      /[a-d]/.test(values[i]) ||
-      /[f-z]/.test(values[i]) ||
-      /[A-D]/.test(values[i]) ||
-      /[F-Z]/.test(values[i])
-    ) {
+    if (typeof value === "string" && (
+      /[a-d]/.test(value) ||
+      /[f-z]/.test(value) ||
+      /[A-D]/.test(value) ||
+      /[F-Z]/.test(value)
+    )) {
       warnings.push({
         level: 3,
-        text: values[i] + " is not an expected value for a integer string",
+        text: value + " is not an expected value for a integer string",
       });
     }
   }
   return warnings;
 }
 
-function validateLongStringVR(tag): IValidatorWarning[] {
+function validateLongStringVR(tag: TagValue): IValidatorWarning[] {
   let warnings = Array<IValidatorWarning>();
   let values = tag["Value"];
   for (var i = 0; i < values.length; i++) {
@@ -195,32 +199,33 @@ function validateLongStringVR(tag): IValidatorWarning[] {
 
 /// The "Other X" types are all (by design) pretty wide open byte streams with
 /// arbitrary encoding schemes. Not much we can do to check...
-function validateOtherByteVR(tag): IValidatorWarning[] {
+function validateOtherByteVR(tag: TagValue): IValidatorWarning[] {
   return Array<IValidatorWarning>();
 }
 
-function validateOtherDoubleStringVR(tag): IValidatorWarning[] {
+function validateOtherDoubleStringVR(tag: TagValue): IValidatorWarning[] {
   return Array<IValidatorWarning>();
 }
 
-function validateOtherFloatStringVR(tag): IValidatorWarning[] {
+function validateOtherFloatStringVR(tag: TagValue): IValidatorWarning[] {
   return Array<IValidatorWarning>();
 }
 
-function validateOtherWordStringVR(tag): IValidatorWarning[] {
+function validateOtherWordStringVR(tag: TagValue): IValidatorWarning[] {
   return Array<IValidatorWarning>();
 }
 
-function validatePersonNameVR(tag): IValidatorWarning[] {
+function validatePersonNameVR(tag: TagValue): IValidatorWarning[] {
   let values = tag["Value"];
   let warnings = Array<IValidatorWarning>();
   for (var i = 0; i < values.length; i++) {
-    if (values != undefined && values[i].length > 0) {
+    const value = values[i]
+    if (typeof value === "string" && value.length > 0) {
       warnings.push({
         level: 1,
         text:
-          values[i] +
-          " is a person name and should not be included in Anonamised data",
+          value +
+          " is a person name and should not be included in Anonymised data",
       });
     }
   }
@@ -228,11 +233,12 @@ function validatePersonNameVR(tag): IValidatorWarning[] {
   return warnings;
 }
 
-function validateShortStringVR(tag): IValidatorWarning[] {
+function validateShortStringVR(tag: TagValue): IValidatorWarning[] {
   let values = tag["Value"];
   let warnings = Array<IValidatorWarning>();
   for (var i = 0; i < values.length; i++) {
-    if (values != undefined && values[i].trim.length > 16) {
+    const value = values[i]
+    if (typeof value === "string" && value.trim.length > 16) {
       warnings.push({
         level: 3,
         text: values[i] + " has more data than expected for a short string.",
@@ -243,26 +249,27 @@ function validateShortStringVR(tag): IValidatorWarning[] {
   return warnings;
 }
 
-function validateSignedLongVR(tag): IValidatorWarning[] {
+function validateSignedLongVR(tag: TagValue): IValidatorWarning[] {
   //TODO (Probably a cast?)
   return Array<IValidatorWarning>();
 }
 
-function validateSequenceVR(tag): IValidatorWarning[] {
+function validateSequenceVR(tag: TagValue): IValidatorWarning[] {
   //Not going to get into recurssive structures...
   return Array<IValidatorWarning>();
 }
 
-function validateSignedShortVR(tag): IValidatorWarning[] {
+function validateSignedShortVR(tag: TagValue): IValidatorWarning[] {
   //TODO (Probably a cast?)
   return Array<IValidatorWarning>();
 }
 
-function validateShortTextVR(tag): IValidatorWarning[] {
+function validateShortTextVR(tag: TagValue): IValidatorWarning[] {
   let values = tag["Value"];
   let warnings = Array<IValidatorWarning>();
   for (var i = 0; i < values.length; i++) {
-    if (values != undefined && values[i].trim.length > 1024) {
+    const value = values[i]
+    if (typeof value === "string" && value.trim.length > 1024) {
       warnings.push({
         level: 3,
         text: values[i] + " has more data than expected for a short text.",
@@ -273,35 +280,37 @@ function validateShortTextVR(tag): IValidatorWarning[] {
   return warnings;
 }
 
-function validateTimeVR(tag): IValidatorWarning[] {
+function validateTimeVR(tag: TagValue): IValidatorWarning[] {
   let values = tag["Value"];
   let warnings = Array<IValidatorWarning>();
   for (var i = 0; i < values.length; i++) {
+    const value = values[i]
     // Just a quick test for bad chars.
-    if (
-      /[a-d]/.test(values[i]) ||
-      /[f-z]/.test(values[i]) ||
-      /[A-D]/.test(values[i]) ||
-      /[F-Z]/.test(values[i])
-    ) {
+    if ((typeof value === "string") && (
+      /[a-d]/.test(value) ||
+      /[f-z]/.test(value) ||
+      /[A-D]/.test(value) ||
+      /[F-Z]/.test(value)
+    )) {
       warnings.push({
         level: 3,
-        text: values[i] + " is not an expected value for a time string",
+        text: value + " is not an expected value for a time string",
       });
     }
   }
   return warnings;
 }
 
-function validateUIDVR(tag): IValidatorWarning[] {
+function validateUIDVR(tag: TagValue): IValidatorWarning[] {
   let values = tag["Value"];
   let warnings = Array<IValidatorWarning>();
   for (var i = 0; i < values.length; i++) {
     // Just a quick test for bad chars.
-    if (/[a-z]/.test(values[i]) || /[A-Z]/.test(values[i])) {
+    const value = values[i];
+    if ((typeof value === "string") && (/[a-z]/.test(value) || /[A-Z]/.test(value))) {
       warnings.push({
         level: 3,
-        text: values[i] + " is not an expected value for a UID",
+        text: value + " is not an expected value for a UID",
       });
     }
   }
@@ -309,17 +318,17 @@ function validateUIDVR(tag): IValidatorWarning[] {
   return warnings;
 }
 
-function validateUnsignedLongVR(tag): IValidatorWarning[] {
+function validateUnsignedLongVR(tag: TagValue): IValidatorWarning[] {
   //TODO (Probably a cast?)
   return Array<IValidatorWarning>();
 }
 
-function validateUnsignedShortVR(tag): IValidatorWarning[] {
+function validateUnsignedShortVR(tag: TagValue): IValidatorWarning[] {
   //TODO (Probably a cast?)
   return Array<IValidatorWarning>();
 }
 
-function validateUndefinedVR(tag): IValidatorWarning[] {
+function validateUndefinedVR(tag: TagValue): IValidatorWarning[] {
   var warnings = Array<IValidatorWarning>();
   warnings.push({ level: 3, text: "Tag's VR field is undefined" });
   return warnings;
@@ -330,7 +339,9 @@ function validateUndefinedVR(tag): IValidatorWarning[] {
 //  return  Array<IValidatorWarning>();
 //};
 
-let validateDict = {
+let validateDict: {
+  [kind: string]: (tag: TagValue) => Array<IValidatorWarning>;
+} = {
   AE: validateAplicationEntityVR,
   AS: validateAgeStringVR,
   AR: validateAttributeTagVR,
@@ -359,59 +370,59 @@ let validateDict = {
   undefined: validateUndefinedVR,
 };
 
-export default function validate(dcm) {
-  var warnings = {};
+type Warnings = { [x: string]: Array<IValidatorWarning> };
+export default function validate(dcm: TagDict): Warnings {
+  var warnings: Warnings = {};
   for (const key of Object.keys(dcm)) {
-    var vrKey = dcm[key]["vr"];
-    if (validateDict[vrKey] == undefined) {
-      vrKey = undefined;
-    }
-    var warningsList = validateDict[vrKey](dcm[key]);
-    warnings[key] = warningsList;
+    var vrKey: string = dcm[key]["vr"];
+    if (validateDict[vrKey]) {
+      var warningsList = validateDict[vrKey](dcm[key]);
+      warnings[key] = warningsList;
 
-    // Check if the annotations are burnt in:
-    if (key == "00280301") {
-      var values = dcm[key]["Value"];
-      for (var i = 0; i < values.length; i++) {
-        // Just a quick test for bad chars.
-        if (values[i] != "NO") {
-          warnings["00280301"] = [
-            {
-              level: 1,
-              text:
-                "Image contains burnt-in annotations which cannot be anonymized.",
-            },
-          ];
+      // Check if the annotations are burnt in:
+      if (key == "00280301") {
+        var values = dcm[key]["Value"];
+        for (var i = 0; i < values.length; i++) {
+          // Just a quick test for bad chars.
+          if (values[i] != "NO") {
+            warnings["00280301"] = [
+              {
+                level: 1,
+                text:
+                  "Image contains burnt-in annotations which cannot be anonymized.",
+              },
+            ];
+          }
         }
       }
-    }
 
-    // Check if the there are recognizable features
-    if (key == "00280302") {
-      var values = dcm[key]["Value"];
-      for (var i = 0; i < values.length; i++) {
-        // Just a quick test for bad chars.
-        if (values[i] == "YES") {
-          warnings["00280302"] = [
-            {
-              level: 1,
-              text:
-                "Image contains recognizable visual features which cannot be anonymized.",
-            },
-          ];
+      // Check if the there are recognizable features
+      if (key == "00280302") {
+        var values = dcm[key]["Value"];
+        for (var i = 0; i < values.length; i++) {
+          // Just a quick test for bad chars.
+          if (values[i] == "YES") {
+            warnings["00280302"] = [
+              {
+                level: 1,
+                text:
+                  "Image contains recognizable visual features which cannot be anonymized.",
+              },
+            ];
+          }
         }
       }
-    }
 
-    // Check if the there are recognizable features
-    if (key == "00120062") {
-      var values = dcm[key]["Value"];
-      for (var i = 0; i < values.length; i++) {
-        // Just a quick test for bad chars.
-        if (values[i] == "NO") {
-          warnings["00120062"] = [
-            { level: 1, text: "Image has not had personal data removed." },
-          ];
+      // Check if the there are recognizable features
+      if (key == "00120062") {
+        var values = dcm[key]["Value"];
+        for (var i = 0; i < values.length; i++) {
+          // Just a quick test for bad chars.
+          if (values[i] == "NO") {
+            warnings["00120062"] = [
+              { level: 1, text: "Image has not had personal data removed." },
+            ];
+          }
         }
       }
     }

@@ -1,21 +1,21 @@
 import ValueRepresentation from "./ValueRepresentation";
-import DicomMessage from "./Message";
-import { WriteBufferStream } from "./BufferStream";
+import DicomMessage, { TagValueEntry } from "./Message";
+import { BufferStream, WriteBufferStream } from "./BufferStream";
 
 const IMPLICIT_LITTLE_ENDIAN = "1.2.840.10008.1.2";
 const EXPLICIT_LITTLE_ENDIAN = "1.2.840.10008.1.2.1";
 
-function paddingLeft(paddingValue, string) {
+function paddingLeft(paddingValue: string, string: string): string {
   return String(paddingValue + string).slice(-paddingValue.length);
 }
 
 export default class Tag {
   value: number;
-  constructor(value) {
+  constructor(value: number) {
     this.value = value;
   }
 
-  toString() {
+  toString(): string {
     return (
       "(" +
       paddingLeft("0000", this.group().toString(16).toUpperCase()) +
@@ -25,46 +25,46 @@ export default class Tag {
     );
   }
 
-  toCleanString() {
+  toCleanString(): string {
     return (
       paddingLeft("0000", this.group().toString(16).toUpperCase()) +
       paddingLeft("0000", this.element().toString(16).toUpperCase())
     );
   }
 
-  is(t) {
+  is(t: number): boolean {
     return this.value == t;
   }
 
-  group() {
+  group(): number {
     return this.value >>> 16;
   }
 
-  element() {
+  element(): number {
     return this.value & 0xffff;
   }
 
-  isPixelDataTag() {
+  isPixelDataTag(): boolean {
     return this.is(0x7fe00010);
   }
 
-  static fromString(str) {
+  static fromString(str: string): Tag {
     var group = parseInt(str.substring(0, 4), 16),
       element = parseInt(str.substring(4), 16);
     return Tag.fromNumbers(group, element);
   }
 
-  static fromPString(str) {
+  static fromPString(str: string): Tag {
     var group = parseInt(str.substring(1, 5), 16),
       element = parseInt(str.substring(6, 10), 16);
     return Tag.fromNumbers(group, element);
   }
 
-  static fromNumbers(group, element) {
+  static fromNumbers(group: number, element: number): Tag {
     return new Tag(((group << 16) | element) >>> 0);
   }
 
-  static readTag(stream) {
+  static readTag(stream: BufferStream): Tag {
     var group = stream.readUint16(),
       element = stream.readUint16();
     return Tag.fromNumbers(group, element);
@@ -73,9 +73,9 @@ export default class Tag {
   write(
     stream: WriteBufferStream,
     vrType: string,
-    values: Array<string>,
+    values: TagValueEntry | Array<TagValueEntry>,
     syntax: string
-  ) {
+  ): number {
     var vr = ValueRepresentation.createByTypeString(vrType),
       useSyntax = DicomMessage._normalizeSyntax(syntax);
 

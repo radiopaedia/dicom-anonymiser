@@ -112,6 +112,8 @@ function dxImageModulePolicy(): IPolicy {
     "00280301": { action: "keep", description: "Burned in Annotation" },
     "00281050": { action: "keep", description: "Window Center" }, // Type 1C, Handy for viewing
     "00281051": { action: "keep", description: "Window Width" }, // Type 1C, handy for viewing
+
+    // There's no
     "00180081": { action: "keep", description: "Echo Time" },
     "00180082": { action: "keep", description: "Inversion Time" },
     "00180091": { action: "keep", description: "Echo Train Length" },
@@ -1234,7 +1236,7 @@ function catchAllWhitelistPolicy(): IPolicy {
       This is what will be exposed.
 \******************************************************************************/
 
-let policydict = {
+let policydict: {[key: string]: () => IPolicy} = {
   "1.2.840.10008.5.1.4.1.1.1.1": digitalXRayPolicy,
   "1.2.840.10008.5.1.4.1.1.1.2": digitalMammographyXRayPolicy,
   "1.2.840.10008.5.1.4.1.1.2": ctImagePolicy,

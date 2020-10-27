@@ -1,19 +1,19 @@
-import ValueRepresentation from "./ValueRepresentation";
-import { DicomDict } from "./Message";
+import { TagDict, TagValueEntry } from "./Message";
 import dictionary from "./dictionary";
 
 export default class DicomMetaDictionary {
-  static punctuateTag(rawTag) {
+  static punctuateTag(rawTag: string): string {
     if (rawTag.indexOf(",") != -1) {
       return rawTag;
     }
-    if (rawTag.length == 8 && rawTag == rawTag.match(/[0-9a-fA-F]*/)[0]) {
+    if (rawTag.length == 8 && rawTag == rawTag.match(/[0-9a-fA-F]*/)?.[0]) {
       var tag = rawTag.toUpperCase();
       return "(" + tag.substring(0, 4) + "," + tag.substring(4, 8) + ")";
     }
+    return ""
   }
 
-  static unpunctuateTag(tag) {
+  static unpunctuateTag(tag: string): string {
     if (tag.indexOf(",") == -1) {
       return tag;
     }
@@ -23,14 +23,15 @@ export default class DicomMetaDictionary {
   // fixes some common errors in VRs
   // TODO: if this gets longer it could go in ValueRepresentation.js
   // or in a dedicated class
-  static cleanDataset(dataset) {
-    var cleanedDataset = {};
+  static cleanDataset(dataset: TagDict): TagDict {
+    var cleanedDataset: TagDict = {};
     for (var tag in dataset) {
       var data = dataset[tag];
       if (data.vr == "SQ") {
         var cleanedValues: Array<any> = [];
         for (var index in data.Value) {
           cleanedValues.push(
+            // @ts-expect-error "SQ" vr means you get objects in the Values array
             DicomMetaDictionary.cleanDataset(data.Value[index])
           );
         }
@@ -39,7 +40,7 @@ export default class DicomMetaDictionary {
         // remove null characters from strings
         for (var index in data.Value) {
           let dataItem = data.Value[index];
-          if (dataItem.constructor.name == "String") {
+          if (typeof dataItem == "string") {
             data.Value[index] = dataItem.replace(/\0/, "");
           }
         }
@@ -52,14 +53,15 @@ export default class DicomMetaDictionary {
   // unlike naturalizeDataset, this only
   // changes the names of the member variables
   // but leaves the values intact
-  static namifyDataset(dataset) {
-    var namedDataset = {};
+  static namifyDataset(dataset: TagDict): TagDict {
+    var namedDataset: TagDict = {};
     for (var tag in dataset) {
       var data = dataset[tag];
       if (data.vr == "SQ") {
         var namedValues: Array<any> = [];
         for (var index in data.Value) {
           namedValues.push(
+            // @ts-expect-error "SQ" vr means you get objects in the Values array
             DicomMetaDictionary.namifyDataset(data.Value[index])
           );
         }
@@ -83,8 +85,11 @@ export default class DicomMetaDictionary {
   // - the suffix "UID" is dropped
   // - uids are mapped to strings when known
   // - object member names are dictionary, not group/element tag
-  static naturalizeDataset(dataset) {
-    var naturalDataset = {
+
+  static naturalizeDataset(dataset: TagDict) {
+    type vrmap = {[name: string]: string};
+    type natural = {_vrMap: vrmap} & {[x: string]: TagValueEntry | Array<TagValueEntry>}
+    var naturalDataset: natural = {
       _vrMap: {},
     };
     for (var tag in dataset) {
@@ -94,6 +99,7 @@ export default class DicomMetaDictionary {
         var naturalValues: Array<any> = [];
         for (var index in data.Value) {
           naturalValues.push(
+            // @ts-expect-error "SQ" vr means you get objects in the Values array
             DicomMetaDictionary.naturalizeDataset(data.Value[index])
           );
         }
@@ -117,14 +123,16 @@ export default class DicomMetaDictionary {
         );
       }
       naturalDataset[naturalName] = data.Value;
-      if (naturalDataset[naturalName].length == 1) {
+      if (data.Value.length == 1) {
         // only one value is not a list
-        naturalDataset[naturalName] = naturalDataset[naturalName][0];
+        naturalDataset[naturalName] = data.Value[0];
       }
       if (/.*SOPClassUID/.test(naturalName)) {
         // give natural language name to UID if available
+        let uid = naturalDataset[naturalName]
+        if (typeof uid === "string") {
         var sopClassName =
-          DicomMetaDictionary.sopClassNamesByUID[naturalDataset[naturalName]];
+          DicomMetaDictionary.sopClassNamesByUID[uid];
         if (sopClassName) {
           var uidlessName = naturalName;
           if (/.*UID/.test(naturalName)) {
@@ -134,120 +142,11 @@ export default class DicomMetaDictionary {
           delete naturalDataset[naturalName];
           naturalDataset[uidlessName] = sopClassName;
         }
+        }
+
       }
     }
     return naturalDataset;
-  }
-
-  static denaturalizeName(naturalName) {
-    let name = naturalName;
-    var sequenceName = naturalName + "Sequence";
-    if (DicomMetaDictionary.nameMap[sequenceName]) {
-      name = sequenceName;
-    }
-    var uidName = name + "UID";
-    if (DicomMetaDictionary.nameMap[uidName]) {
-      name = uidName;
-    }
-    return name;
-  }
-
-  static denaturalizeValue(naturalValue): Array<string | number> {
-    let value = naturalValue;
-    // if it's a known UID, map back to numbers
-    var uid = DicomMetaDictionary.uidMap[naturalValue];
-    if (uid) {
-      value = uid;
-    }
-    if (!Array.isArray(value)) {
-      value = [value];
-    }
-    value = value.map((entry) =>
-      entry.constructor.name == "Number" ? String(entry) : entry
-    );
-    return value;
-  }
-
-  static denaturalizeDataset(dataset) {
-    var unnaturalDataset = {};
-    Object.keys(dataset).forEach((naturalName) => {
-      // check if it's a sequence
-      var name = naturalName;
-      name = DicomMetaDictionary.denaturalizeName(name);
-
-      var entry = DicomMetaDictionary.nameMap[name];
-      if (entry) {
-        let dataValue = dataset[naturalName];
-        if (dataValue === undefined || dataValue === null) {
-          // handle the case where it was deleted from the object but is in keys
-          return;
-        }
-        // process this one entry
-        var dataItem = {
-          vr: entry.vr,
-          Value: dataset[naturalName],
-        };
-        if (entry.vr == "ox") {
-          if (dataset._vrMap && dataset._vrMap[naturalName]) {
-            dataItem.vr = dataset._vrMap[naturalName];
-          } else {
-            console.error("No value representation given for", naturalName);
-          }
-        }
-
-        let div: Array<string | number> = DicomMetaDictionary.denaturalizeValue(
-          dataItem.Value
-        );
-        dataItem.Value = div;
-
-        if (entry.vr == "SQ") {
-          var unnaturalValues: Array<any> = [];
-          dataItem.Value.forEach((nestedDataset) => {
-            unnaturalValues.push(
-              DicomMetaDictionary.denaturalizeDataset(nestedDataset)
-            );
-          });
-          div = dataItem.Value = unnaturalValues;
-        }
-        let vr = ValueRepresentation.createByTypeString(dataItem.vr);
-        let ml = vr.maxLength;
-        if (!vr.isBinary() && ml) {
-          for (let i in div) {
-            let value = div[i];
-            if (value && typeof value === "string" && value.length > ml) {
-              div[i] = value.slice(0, ml);
-            }
-          }
-        }
-
-        var tag = DicomMetaDictionary.unpunctuateTag(entry.tag);
-        unnaturalDataset[tag] = dataItem;
-      } else {
-        console.warn("Unknown name in dataset", name, ":", dataset[name]);
-      }
-    });
-    return unnaturalDataset;
-  }
-
-  static datasetToBlob(dataset) {
-    // create a meta dataset,
-    // then associate it with a part 10 binary stream
-    // as a file blob
-    const meta = DicomMetaDictionary.denaturalizeDataset({
-      // TODO: generate FileMetaInformationVersion de novo
-      FileMetaInformationVersion:
-        dataset._meta.FileMetaInformationVersion.Value[0],
-      MediaStorageSOPClass: dataset.SOPClass,
-      MediaStorageSOPInstance: dataset.SOPInstanceUID,
-      TransferSyntaxUID: "1.2.840.10008.1.2",
-      ImplementationClassUID: DicomMetaDictionary.uid(),
-      ImplementationVersionName: "dcmio-0.0",
-    });
-    let dicomDict = new DicomDict(meta);
-    dicomDict.dict = DicomMetaDictionary.denaturalizeDataset(dataset);
-    var buffer = dicomDict.write();
-    var blob = new Blob([buffer], { type: "application/dicom" });
-    return blob;
   }
 
   static uid() {
@@ -288,7 +187,7 @@ export default class DicomMetaDictionary {
     }
   }
 
-  static uidMap = {};
+  static uidMap: {[name: string]: string} = {};
   static _generateUIDMap() {
     DicomMetaDictionary.uidMap = {};
     for (var uid in DicomMetaDictionary.sopClassNamesByUID) {
@@ -299,7 +198,7 @@ export default class DicomMetaDictionary {
 
   // Subset of those listed at:
   // http://dicom.nema.org/medical/dicom/current/output/html/part04.html#sect_B.5
-  static sopClassNamesByUID = {
+  static sopClassNamesByUID: {[x: string]: string} = {
     "1.2.840.10008.5.1.4.1.1.2": "CTImage",
     "1.2.840.10008.5.1.4.1.1.2.1": "EnhancedCTImage",
     "1.2.840.10008.5.1.4.1.1.2.2": "LegacyConvertedEnhancedCTImage",
