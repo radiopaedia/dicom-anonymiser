@@ -250,20 +250,15 @@ function imagePixelModulePolicy(): IPolicy {
 function patientModulePolicy(): IPolicy {
   return {
     "00100010": {
-      action: "replace",
-      value: [],
-      description: "Patient name will be replaced",
-    },
-    "00100020": {
-      action: "replace",
-      value: [],
-      description: "Patient ID will be replaced",
-    },
-    "00100030": {
       action: "regenerate",
       method: "age",
       description:
         "Patient DOB will be rounded to 1 year and replaced if over 90",
+    },
+    "00100020": {
+      action: "replace",
+      value: [],
+      description: "Patient size will be replaced",
     },
     "00101030": {
       action: "regenerate",
