@@ -54,6 +54,139 @@ function addPolicies(...policies: IPolicy[]): IPolicy {
       MODULE POLICIES
       The module policies are used to build SOP class policies.
 \******************************************************************************/
+function broadlySafeFieldsPolicy(): IPolicy {
+  // This is type 2 but useful data
+  return {
+    "00041142": {action: "keep", description: "SpecificCharacterSet"},
+    "00082122": {action: "keep", description: "Stage number"},
+    "00082124": {action: "keep", description: "Stage count"},
+    "0008212A": {action: "keep", description: "Number of Views in Stage"},
+    "00180015": {action: "keep", description: "BodyPartExamined"},
+    "00180025": {action: "keep", description: "AngioFlag"},
+    "00180060": {action: "keep", description: "KVP"},
+    "00180080": {action: "keep", description: "RepetitionTime"},
+    "00180081": {action: "keep", description: "EchoTime"},
+    "00180082": {action: "keep", description: "InversionTime"},
+    "00180083": {action: "keep", description: "NumberOfAverages"},
+    "00180084": {action: "keep", description: "ImagingFrequency"},
+    "00180085": {action: "keep", description: "ImagedNucleus"},
+    "00180086": {action: "keep", description: "EchoNumbers"},
+    "00180087": {action: "keep", description: "MagneticFieldStrength"},
+    "00180088": {action: "keep", description: "SpacingBetweenSlices"},
+    "00180089": {action: "keep", description: "NumberOfPhaseEncodingSteps"},
+    "00180090": {action: "keep", description: "DataCollectionDiameter"},
+    "00180091": {action: "keep", description: "EchoTrainLength"},
+    "00180093": {action: "keep", description: "PercentSampling"},
+    "00180094": {action: "keep", description: "PercentPhaseFieldofView"},
+    "00180095": {action: "keep", description: "PixelBandwidth"},
+    "00181042": {action: "keep", description: "Contrast/Bolus Start Time"},
+    "00181050": {action: "keep", description: "Spatial Resolution"},
+    "00181064": {action: "keep", description: "Cardiac Framing Type Attribute"},
+    "00181081": {action: "keep", description: "Low R-R Value Attribute"},
+    "00181082": {action: "keep", description: "High R-R Value Attribute"},
+    "00181083": {action: "keep", description: "Intervals Acquired Attribute"},
+    "00181084": {action: "keep", description: "Intervals Rejected Attribute"},
+    "00181086": {action: "keep", description: "Skip Beats Attribute"},
+    "00181088": {action: "keep", description: "HeartRate"},
+    "00181090": {action: "keep", description: "CardiacNumberofImages"},
+    "00181094": {action: "keep", description: "TriggerWindow"},
+    "00181100": {action: "keep", description: "ReconstructionDiameter"},
+    "00181110": {action: "keep", description: "Distance Source to Detector"},
+    "00181111": {action: "keep", description: "Distance Source to Patient"},
+    "00181114": {action: "keep", description: "Estimated Radiographic Magnification Factor"},
+    "00181120": {action: "keep", description: "Gantry/Detector Tilt"},
+    "00181130": {action: "keep", description: "Table Height"},
+    "00181140": {action: "keep", description: "Rotation Direction"},
+    "00181150": {action: "keep", description: "Exposure Time"},
+    "00181151": {action: "keep", description: "X-Ray Tube Current"},
+    "00181152": {action: "keep", description: "Exposure"},
+    "00181153": {action: "keep", description: "Exposure in µAs"},
+    "0018115E": {action: "keep", description: "Image and Fluoroscopy Area Dose Product"},
+    "00181160": {action: "keep", description: "Filter Type"},
+    "00181162": {action: "keep", description: "Intensifier Size"},
+    "00181166": {action: "keep", description: "Grid"},
+    "00181170": {action: "keep", description: "Generator Power"},
+    "00181190": {action: "keep", description: "Focal Spot(s)"},
+    "00181191": {action: "keep", description: "Anode Target Material"},
+    "001811A0": {action: "keep", description: "Body Part Thickness"},
+    "001811A2": {action: "keep", description: "Compression Force"},
+    "001811A4": {action: "keep", description: "Paddle Description"},
+    "00181210": {action: "keep", description: "Convolution Kernel"},
+    "00181310": {action: "keep", description: "AcquisitionMatrix"},
+    "00181312": {action: "keep", description: "In-planePhaseEncodingDirection"},
+    "00181314": {action: "keep", description: "FlipAngle"},
+    "00181315": {action: "keep", description: "VariableFlipAngleFlag"},
+    "00181316": {action: "keep", description: "SAR"},
+    "00181405": {action: "keep", description: "Relative X-Ray Exposure"},
+    "00181500": {action: "keep", description: "Positioner Motion"},
+    "00181510": {action: "keep", description: "Positioner Primary Angle"},
+    "00181511": {action: "keep", description: "Positioner Secondary Angle"},
+    "00185100": {action: "keep", description: "PatientPosition"},
+    "00185101": {action: "keep", description: "View Position"},
+    "00187001": {action: "keep", description: "Detector Temperature"},
+    "0018701A": {action: "keep", description: "Detector Binning"},
+    "00187030": {action: "keep", description: "Field of View Origin"},
+    "00187032": {action: "keep", description: "Field of View Rotation"},
+    "00187034": {action: "keep", description: "Field of View Horizontal Flip"},
+    "00187050": {action: "keep", description: "Filter Material"},
+    "00187052": {action: "keep", description: "Filter Thickness Minimum"},
+    "00187054": {action: "keep", description: "Filter Thickness Maximum"},
+    "00187060": {action: "keep", description: "Exposure Control Mode"},
+    "00187062": {action: "keep", description: "Exposure Control Mode Description"},
+    "00189037": {action: "keep", description: "Cardiac Synchronization Technique Attribute"},
+    "00189070": {action: "keep", description: "Cardiac R-R Interval Specified Attribute"},
+    "00189085": {action: "keep", description: "Cardiac Signal Source Attribute"},
+    "00189169": {action: "keep", description: "Cardiac Beat Rejection Technique Attribute"},
+    "00189170": {action: "keep", description: "Respiratory Motion Compensation Technique Attribute"},
+    "00189171": {action: "keep", description: "Respiratory Signal Source Attribute"},
+    "00189172": {action: "keep", description: "Bulk Motion Compensation Technique Attribute"},
+    "00189173": {action: "keep", description: "Bulk Motion Signal Source Attribute"},
+    "00189306": {action: "keep", description: "Single Collimation Width"},
+    "00189307": {action: "keep", description: "Total Collimation Width"},
+    "00189309": {action: "keep", description: "Table Speed"},
+    "00189310": {action: "keep", description: "Table Feed per Rotation"},
+    "00189311": {action: "keep", description: "Spiral Pitch Factor"},
+    "00189318": {action: "keep", description: "Reconstruction Target Center (Patient)"},
+    "00189323": {action: "keep", description: "Exposure Modulation Type"},
+    "00189324": {action: "keep", description: "Estimated Dose Saving"},
+    "00189345": {action: "keep", description: "CTDIvol"},
+    "00189346": {action: "keep", description: "CTDI Phantom Type Code Sequence"},
+    "00189559": {action: "keep", description: "Positioner Primary Angle Direction"},
+    "00200011": {action: "keep", description: "Series Number"},
+    "00200012": {action: "keep", description: "Acquisition number"},
+    "00200013": {action: "keep", description: "Instance number is used for ordering the stack."},
+    "00200020": {action: "keep", description: "Patient Orientation"},
+    "00200060": {action: "keep", description: "Laterality"},
+    "00201002": {action: "keep", description: "Images in Acquisition"},
+    "00201040": {action: "keep", description: "PositionReferenceIndicator"},
+    "00201041": {action: "keep", description: "SliceLocation"},
+    "00209250": {action: "keep", description: "Respiratory Trigger Type Attribute"},
+    "00209256": {action: "keep", description: "Respiratory Trigger Delay Threshold Attribute"},
+    "00280106": {action: "keep", description: "Smallest Image Pixel Value"},
+    "00280107": {action: "keep", description: "Largest Image Pixel Value"},
+    "00280121": {action: "keep", description: "Pixel Padding Range Limit"},
+    "00280300": {action: "keep", description: "Quality Control Image"},
+    "00280A04": {action: "keep", description: "Pixel Spacing Calibration Description"},
+    "00281055": {action: "keep", description: "Window Center & Width Explanation"},
+    "00281300": {action: "keep", description: "Breast Implant Present"},
+    "00400301": {action: "keep", description: "Total Number of Exposures"},
+    "0040030E": {action: "keep", description: "Exposure Dose Sequence"},
+    "00400314": {action: "keep", description: "Half Value Layer"},
+    "00400316": {action: "keep", description: "Organ Dose"},
+    "00408302": {action: "keep", description: "Entrance Dose in mGy"},
+    "00540220": {action: "keep", description: "View Code Sequence"},
+    "00180010": {action: "keep", description: "Contrast/Bolus Agent"},
+    "00189352": {action: "keep", description: "Calcium Scoring Mass Factor Device"},
+    "00181048": {action: "keep", description: "Contrast/Bolus Ingredient"},
+    "00181154": {action: "keep", description: "Average Pulse Width"},
+    "0018115A": {action: "keep", description: "Radiation Mode"},
+    "00187006": {action: "keep", description: "Detector Description"},
+    "00281056": {action: "keep", description: "VOI LUT Function"},
+    "00286010": {action: "keep", description: "Representative Frame Number"},
+    "00400275": {action: "keep", description: "Request Attributes Sequence"},
+
+  }
+}
 
 function acquisitionContextModulePolicy(): IPolicy {
   return {
@@ -69,8 +202,7 @@ function dxAnatomyImagedModulePolicy(): IPolicy {
   return {
     "00200062": { action: "keep", description: "Image Laterality" },
     "00082218": {
-      action: "replace",
-      value: [],
+      action: "keep",
       description: "Anatomic Region Sequence.",
     },
   };
@@ -78,7 +210,7 @@ function dxAnatomyImagedModulePolicy(): IPolicy {
 
 function dxDetectorModulePolicy(): IPolicy {
   return {
-    "00187004": { action: "replace", value: [], description: "Detector type." },
+    "00187004": { action: "keep", description: "Detector type." },
     "00181164": { action: "keep", description: "Imager pixel spacing" },
   };
 }
@@ -166,15 +298,6 @@ function generalEquipmentModulePolicy(): IPolicy {
   };
 }
 
-function generalImageModulePolicy(): IPolicy {
-  return {
-    "00200013": {
-      action: "keep",
-      description: "Instance number is used for ordering the0008 stack.",
-    }, //This is type 2 but useful
-  };
-}
-
 function generalSeriesModulePolicy(): IPolicy {
   return {
     "00080060": { action: "keep", description: "Modality" },
@@ -182,11 +305,6 @@ function generalSeriesModulePolicy(): IPolicy {
       action: "regenerate",
       method: "hash",
       description: "Series instance UID is hashed to preserve structure.",
-    },
-    "00200011": {
-      action: "replace",
-      value: [],
-      description: "Series number is replaced.",
     },
   };
 }
@@ -249,7 +367,7 @@ function imagePixelModulePolicy(): IPolicy {
 
 function patientModulePolicy(): IPolicy {
   return {
-    "00100010": {
+    "00101010": {
       action: "regenerate",
       method: "age",
       description:
@@ -267,9 +385,8 @@ function patientModulePolicy(): IPolicy {
         "Patient weight will be rounded to nearest 5kg if within 30..140kg, else replaced.",
     },
     "00100040": {
-      action: "replace",
-      value: [],
-      description: "Patient's sex will be replaced",
+      action: "keep",
+      description: "Patient's sex is not identifying",
     },
   };
 }
@@ -413,16 +530,7 @@ function ultrasoundImageModulePolicy(): IPolicy {
     "00280009": { action: "keep", description: "Frame Increment Pointer" },
     "00080008": { action: "replace", value: [], description: "Image Type" },
     "00282110": { action: "keep", description: "Lossy Image Compression" },
-    "00082124": {
-      action: "replace",
-      value: [],
-      description: "Number of Stages",
-    },
-    "0008212A": {
-      action: "replace",
-      value: [],
-      description: "Number of Views in Stage",
-    },
+
   };
 }
 
@@ -437,19 +545,6 @@ function mrImageModulePolicy(): IPolicy {
     "00180021": { action: "keep", description: "Sequence Variant" },
     "00180022": { action: "keep", description: "Scan Options" }, // Type 2 but might want to display
     "00180023": { action: "keep", description: "MR Acquisition Type" }, // Type 2 but might want to display
-    "00180080": {
-      action: "replace",
-      value: [],
-      description: "Repetition Time",
-    },
-    "00180081": { action: "replace", value: [], description: "Echo Time" },
-    "00180091": {
-      action: "replace",
-      value: [],
-      description: "Echo Train Length",
-    },
-    "00180082": { action: "replace", value: [], description: "Inversion Time" },
-    "00181060": { action: "replace", value: [], description: "Trigger Time" },
   };
 }
 
@@ -580,15 +675,7 @@ function xRayImageModulePolicy(): IPolicy {
 
 function xRayAcquisitionModulePolicy(): IPolicy {
   return {
-    "00180060": { action: "replace", value: [], description: "KVP" },
     "00181155": { action: "keep", description: "Radiation Setting" },
-    "00181151": {
-      action: "replace",
-      value: [],
-      description: "X-Ray Tube Current",
-    },
-    "00181150": { action: "replace", value: [], description: "Exposure Time" },
-    "00181152": { action: "replace", value: [], description: "Exposure" },
     "00280030": { action: "keep", description: "Pixel Spacing" },
   };
 }
@@ -639,16 +726,6 @@ function xRay3DImageModulePolicy(): IPolicy {
 
 function nmPETPatientOrientationModulePolicy(): IPolicy {
   return {
-    "00540410": {
-      action: "replace",
-      value: [],
-      description: "Patient Orientation Sequence",
-    },
-    "00540414": {
-      action: "replace",
-      value: [],
-      description: "Patient Gantry Relationship Code Sequence",
-    },
   };
 }
 
@@ -699,29 +776,22 @@ function nmImageModulePolicy(): IPolicy {
   return {
     "00080008": { action: "keep", description: "Image Type" },
     "00282110": { action: "keep", description: "Lossy Image Compression" },
-    "00180070": {
-      action: "replace",
-      value: [],
-      description: "Counts Accumulated",
-    },
+    "00180070": { action: "keep", description: "Counts Accumulated" },
     "00181242": { action: "keep", description: "Actual Frame Duration" },
-    "00181300": { action: "replace", value: [], description: "Scan Velocity" },
-    "00181302": { action: "replace", value: [], description: "Scan Length" },
   };
 }
 
 function nmIsotopeModulePolicy(): IPolicy {
   return {
-    "00540012": { action: "replace", value: [], description: "Scan Velocity" },
-    "00540016": { action: "replace", value: [], description: "Scan Length" },
+    "00540012": { action: "keep", description: "Scan Velocity" },
+    "00540016": { action: "keep", description: "Scan Length" },
   };
 }
 
 function nmDetectorModulePolicy(): IPolicy {
   return {
     "00540022": {
-      action: "replace",
-      value: [],
+      action: "keep",
       description: "Detector Information Sequence",
     },
   };
@@ -749,8 +819,7 @@ function petSeriesModulePolicy(): IPolicy {
     "00540081": { action: "keep", description: "Number of Slices" },
     "00541102": { action: "keep", description: "Decay Correction" },
     "00181181": {
-      action: "replace",
-      value: [],
+      action: "keep",
       description: "Collimator Type",
     },
   };
@@ -759,8 +828,7 @@ function petSeriesModulePolicy(): IPolicy {
 function petIsotopeModulePolicy(): IPolicy {
   return {
     "00540016": {
-      action: "replace",
-      value: [],
+      action: "keep",
       description: "Radiopharmaceuitical Information Sequence",
     },
   };
@@ -827,7 +895,6 @@ function digitalXRayPolicy(): IPolicy {
     generalSeriesModulePolicy(),
     dxSeriesModulePolicy(),
     generalEquipmentModulePolicy(),
-    generalImageModulePolicy(),
     imagePixelModulePolicy(),
     dxAnatomyImagedModulePolicy(),
     dxImageModulePolicy(),
@@ -857,7 +924,6 @@ function digitalMammographyXRayPolicy(): IPolicy {
     dxSeriesModulePolicy(),
     mammographySeriesModulePolicy(),
     generalEquipmentModulePolicy(),
-    generalImageModulePolicy(),
     imagePixelModulePolicy(),
     dxAnatomyImagedModulePolicy(),
     dxImageModulePolicy(),
@@ -888,7 +954,6 @@ function ctImagePolicy(): IPolicy {
     dxImageModulePolicy(),
     frameOfReferenceModulePolicy(),
     generalEquipmentModulePolicy(),
-    generalImageModulePolicy(),
     imagePlaneModulePolicy(),
     imagePixelModulePolicy(),
     ctImageModulePolicy(),
@@ -917,7 +982,6 @@ function ultrasoundMultiframeImagePolicy(): IPolicy {
     dxImageModulePolicy(),
     frameOfReferenceModulePolicy(),
     generalEquipmentModulePolicy(),
-    generalImageModulePolicy(),
     imagePixelModulePolicy(),
     cineModulePolicy(),
     mutliFrameModulePolicy(),
@@ -947,7 +1011,6 @@ function mrImagePolicy(): IPolicy {
     dxImageModulePolicy(),
     frameOfReferenceModulePolicy(),
     generalEquipmentModulePolicy(),
-    generalImageModulePolicy(),
     imagePlaneModulePolicy(),
     imagePixelModulePolicy(),
     mrImageModulePolicy(),
@@ -1005,7 +1068,6 @@ function ultrasoundImagePolicy(): IPolicy {
     generalSeriesModulePolicy(),
     generalEquipmentModulePolicy(),
     dxImageModulePolicy(),
-    generalImageModulePolicy(),
     imagePixelModulePolicy(),
     ultrasoundImageModulePolicy(),
     sopCommonModulePolicy(),
@@ -1031,7 +1093,6 @@ function xRayAngiographicImagePolicy(): IPolicy {
     generalSeriesModulePolicy(),
     dxImageModulePolicy(),
     generalEquipmentModulePolicy(),
-    generalImageModulePolicy(),
     imagePixelModulePolicy(),
     xRayImageModulePolicy(),
     xRayAcquisitionModulePolicy(),
@@ -1058,7 +1119,6 @@ function xRayRadiofluoroscopicImagePolicy(): IPolicy {
     generalSeriesModulePolicy(),
     generalEquipmentModulePolicy(),
     dxImageModulePolicy(),
-    generalImageModulePolicy(),
     imagePixelModulePolicy(),
     xRayImageModulePolicy(),
     xRayAcquisitionModulePolicy(),
@@ -1116,7 +1176,6 @@ function nuclearMedicineImagePolicy(): IPolicy {
     dxImageModulePolicy(),
     nmPETPatientOrientationModulePolicy(),
     generalEquipmentModulePolicy(),
-    generalImageModulePolicy(),
     imagePixelModulePolicy(),
     nmImagePixelModulePolicy(),
     multiframeModulePolicy(),
@@ -1151,7 +1210,6 @@ function positronEmissionTomographyImagePolicy(): IPolicy {
     nmPETPatientOrientationModulePolicy(),
     frameOfReferenceModulePolicy(),
     generalEquipmentModulePolicy(),
-    generalImageModulePolicy(),
     imagePlaneModulePolicy(),
     imagePixelModulePolicy(),
     petImageModulePolicy(),
@@ -1173,13 +1231,13 @@ function positronEmissionTomographyImagePolicy(): IPolicy {
 // This policy captures all module policies and will be thrown at unknowns.
 function catchAllWhitelistPolicy(): IPolicy {
   return addPolicies(
+    broadlySafeFieldsPolicy(),
     acquisitionContextModulePolicy(),
     dxAnatomyImagedModulePolicy(),
     dxDetectorModulePolicy(),
     dxImageModulePolicy(),
     dxSeriesModulePolicy(),
     generalEquipmentModulePolicy(),
-    generalImageModulePolicy(),
     generalSeriesModulePolicy(),
     generalStudyModulePolicy(),
     imagePixelModulePolicy(),
@@ -1250,6 +1308,6 @@ export default function policyFor(sopClassUid: string): IPolicy {
   if (policydict[sopClassUid] == undefined) {
     return catchAllWhitelistPolicy();
   } else {
-    return policydict[sopClassUid]();
+    return addPolicies(catchAllWhitelistPolicy(), policydict[sopClassUid]());
   }
 }
