@@ -123,7 +123,7 @@ export default class DicomMessage {
     return EXPLICIT_LITTLE_ENDIAN;
   }
 
-  static isEncapsulated(syntax: string) {
+  static isEncapsulated(syntax: string): boolean {
     return encapsulatedSyntaxes.indexOf(syntax) != -1;
   }
 
