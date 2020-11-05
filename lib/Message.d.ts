@@ -24,7 +24,7 @@ export default class DicomMessage {
     static isEncapsulated(syntax: string): boolean;
     static readFile(buffer: ArrayBuffer): DicomDict;
     static writeTagObject(stream: BufferStream, tagString: string, vr: string, values: number, syntax: NormalizedSyntax): number;
-    static write(jsonObjects: TagDict, useStream: BufferStream, syntax: NormalizedSyntax): number;
+    static write(jsonObjects: TagDict, useStream: BufferStream, syntax: string): number;
     /**
      * Read a tag from a byte stream.
      * Tags are organised as follows:

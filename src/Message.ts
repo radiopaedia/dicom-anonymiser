@@ -77,8 +77,11 @@ export class DicomDict {
     );
     fileStream.concat(metaStream);
 
-    var useSyntax = DicomMessage._normalizeSyntax(this.meta["00020010"].Value[0]);
+    var useSyntax = this.meta["00020010"].Value[0];
 
+    if (typeof useSyntax !== "string") {
+      throw new Error(`Invalid syntax type ${typeof useSyntax}: ${useSyntax} for meta 00020010`)
+    }
     DicomMessage.write(dict, fileStream, useSyntax);
     return fileStream.getBuffer();
   }
@@ -168,7 +171,7 @@ export default class DicomMessage {
   static write(
     jsonObjects: TagDict,
     useStream: BufferStream,
-    syntax: NormalizedSyntax
+    syntax: string
   ): number {
     var written = 0;
 
