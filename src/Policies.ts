@@ -245,7 +245,6 @@ function dxImageModulePolicy(): IPolicy {
     "00281050": { action: "keep", description: "Window Center" }, // Type 1C, Handy for viewing
     "00281051": { action: "keep", description: "Window Width" }, // Type 1C, handy for viewing
 
-    // There's no
     "00180081": { action: "keep", description: "Echo Time" },
     "00180082": { action: "keep", description: "Inversion Time" },
     "00180091": { action: "keep", description: "Echo Train Length" },
@@ -266,10 +265,7 @@ function dxImageModulePolicy(): IPolicy {
     "00181100": { action: "keep", description: "Reconstruction Diameter" },
     "00181250": { action: "keep", description: "Receive Coil Name" },
     "00181310": { action: "keep", description: "Acquisition Matrix" },
-    "00181312": {
-      action: "keep",
-      description: "In-plane Phase Encoding Direction",
-    },
+    "00181312": { action: "keep", description: "In-plane Phase Encoding Direction" },
     "00181314": { action: "keep", description: "Flip Angle" },
     "00181315": { action: "keep", description: "Variable Flip Angle Flag" },
     "00181316": { action: "keep", description: "SAR" },

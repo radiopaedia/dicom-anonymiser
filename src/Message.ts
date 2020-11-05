@@ -274,7 +274,9 @@ export default class DicomMessage {
         // Read the max length of the VR?
         const value = vr.read(stream, vr.maxLength, syntax)
         if (value) {
-          // @ts-expect-error TODO: How does this *work*?!?
+          // @ts-expect-error
+          // vr.read returns Value | Array<Value>, but
+          // for a binary VR it always returns Value
           values.push(value);
         }
       }
