@@ -1,9 +1,6 @@
-import {
-  BufferStream,
-  WriteBufferStream,
-  ReadBufferStream,
-} from "./BufferStream";
-import { BinaryRepresentation, OtherByteString } from "./ValueRepresentation";
+import { BufferStream } from "./BufferStream";
+import { IMPLICIT_LITTLE_ENDIAN } from "./Message";
+import { OtherByteString } from "./ValueRepresentation";
 
 describe("BinaryRepresentation tests...", () => {
   it("Try to write binary bits...", () => {
@@ -13,6 +10,6 @@ describe("BinaryRepresentation tests...", () => {
     const b2 = new BufferStream(16, true);
     b1.writeString("1234567890ABCEF");
     b2.writeString("1234567890ABCEF");
-    vr.writeBytes(buf, { b1, b2 }, "Who cares?", true);
+    vr.writeBytes(buf, [b1.buffer, b2.buffer], IMPLICIT_LITTLE_ENDIAN, true);
   });
 });

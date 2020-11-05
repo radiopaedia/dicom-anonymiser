@@ -1,5 +1,5 @@
 //http://jonisalonen.com/2012/from-utf-16-to-utf-8-in-javascript/
-export function toUTF8Array(str) {
+export function toUTF8Array(str: string): Array<number> {
   var utf8: Array<number> = [];
   for (var i = 0; i < str.length; i++) {
     var charcode = str.charCodeAt(i);
@@ -32,19 +32,19 @@ export function toUTF8Array(str) {
   return utf8;
 }
 
-function toInt(val) {
-  if (isNaN(val)) {
-    throw new Error("Not a number: " + val);
-  } else if (typeof val == "string") {
+function toInt(val: number | string) {
+  if (typeof val == "string") {
     return parseInt(val);
+  } else if (isNaN(val)) {
+    throw new Error("Not a number: " + val);
   } else return val;
 }
 
-function toFloat(val) {
-  if (isNaN(val)) {
-    throw new Error("Not a number: " + val);
-  } else if (typeof val == "string") {
+function toFloat(val: number | string) {
+  if (typeof val == "string") {
     return parseFloat(val);
+  } else if (isNaN(val)) {
+    throw new Error("Not a number: " + val);
   } else return val;
 }
 
@@ -54,7 +54,7 @@ export class BufferStream {
   view: DataView;
   offset: number;
   isLittleEndian: boolean;
-  constructor(sizeOrBuffer, littleEndian) {
+  constructor(sizeOrBuffer: number | ArrayBuffer, littleEndian: boolean) {
     this.buffer =
       typeof sizeOrBuffer == "number"
         ? new ArrayBuffer(sizeOrBuffer)
@@ -68,59 +68,59 @@ export class BufferStream {
     this.size = 0;
   }
 
-  setEndian(isLittle) {
+  setEndian(isLittle: boolean): void {
     this.isLittleEndian = isLittle;
   }
 
-  writeUint8(value) {
+  writeUint8(value: number | string): number {
     this.checkSize(1);
     this.view.setUint8(this.offset, toInt(value));
     return this.increment(1);
   }
 
-  writeInt8(value) {
+  writeInt8(value: number | string): number {
     this.checkSize(1);
     this.view.setInt8(this.offset, toInt(value));
     return this.increment(1);
   }
 
-  writeUint16(value) {
+  writeUint16(value: number | string): number {
     this.checkSize(2);
     this.view.setUint16(this.offset, toInt(value), this.isLittleEndian);
     return this.increment(2);
   }
 
-  writeInt16(value) {
+  writeInt16(value: number | string): number {
     this.checkSize(2);
     this.view.setInt16(this.offset, toInt(value), this.isLittleEndian);
     return this.increment(2);
   }
 
-  writeUint32(value) {
+  writeUint32(value: number | string): number {
     this.checkSize(4);
     this.view.setUint32(this.offset, toInt(value), this.isLittleEndian);
     return this.increment(4);
   }
 
-  writeInt32(value) {
+  writeInt32(value: number | string): number {
     this.checkSize(4);
     this.view.setInt32(this.offset, toInt(value), this.isLittleEndian);
     return this.increment(4);
   }
 
-  writeFloat(value) {
+  writeFloat(value: number | string): number {
     this.checkSize(4);
     this.view.setFloat32(this.offset, toFloat(value), this.isLittleEndian);
     return this.increment(4);
   }
 
-  writeDouble(value) {
+  writeDouble(value: number | string): number {
     this.checkSize(8);
     this.view.setFloat64(this.offset, toFloat(value), this.isLittleEndian);
     return this.increment(8);
   }
 
-  writeString(value) {
+  writeString(value: string): number {
     value = value || "";
     var utf8 = toUTF8Array(value),
       bytelen = utf8.length;
@@ -134,8 +134,7 @@ export class BufferStream {
     return this.increment(bytelen);
   }
 
-  writeHex(value) {
-    //console.log('writeHex: ' + value );
+  writeHex(value: string): number {
     var len = value.length,
       blen = len / 2,
       startOffset = this.offset;
@@ -157,31 +156,31 @@ export class BufferStream {
     return this.increment(blen);
   }
 
-  readUint32() {
+  readUint32(): number {
     var val: number = this.view.getUint32(this.offset, this.isLittleEndian);
     this.increment(4);
     return val;
   }
 
-  readUint16() {
+  readUint16(): number {
     var val = this.view.getUint16(this.offset, this.isLittleEndian);
     this.increment(2);
     return val;
   }
 
-  readUint8() {
+  readUint8(): number {
     var val = this.view.getUint8(this.offset);
     this.increment(1);
     return val;
   }
 
-  readUint8Array(length) {
+  readUint8Array(length: number): Uint8Array {
     var arr = new Uint8Array(this.buffer, this.offset, length);
     this.increment(length);
     return arr;
   }
 
-  readUint16Array(length) {
+  readUint16Array(length: number): Uint16Array {
     var sixlen = length / 2,
       arr = new Uint16Array(sixlen),
       i = 0;
@@ -192,31 +191,31 @@ export class BufferStream {
     return arr;
   }
 
-  readInt8() {
+  readInt8(): number {
     var val = this.view.getInt8(this.offset);
     this.increment(1);
     return val;
   }
 
-  readInt16() {
+  readInt16(): number {
     var val = this.view.getInt16(this.offset, this.isLittleEndian);
     this.increment(2);
     return val;
   }
 
-  readInt32() {
+  readInt32(): number {
     var val = this.view.getInt32(this.offset, this.isLittleEndian);
     this.increment(4);
     return val;
   }
 
-  readFloat() {
+  readFloat(): number {
     var val = this.view.getFloat32(this.offset, this.isLittleEndian);
     this.increment(4);
     return val;
   }
 
-  readDouble() {
+  readDouble(): number {
     var val = this.view.getFloat64(this.offset, this.isLittleEndian);
     this.increment(8);
     return val;
@@ -288,7 +287,7 @@ export class BufferStream {
     return this.buffer.slice(start, end);
   }
 
-  more(length) {
+  more(length: number): ReadBufferStream {
     if (this.offset + length > this.buffer.byteLength) {
       throw new Error("Request more than currently allocated buffer");
     }
@@ -313,14 +312,14 @@ export class BufferStream {
 }
 
 export class ReadBufferStream extends BufferStream {
-  constructor(buffer, littleEndian = false) {
+  constructor(buffer: ArrayBuffer, littleEndian: boolean = false) {
     super(buffer, littleEndian);
     this.size = this.buffer.byteLength;
   }
 }
 
 export class WriteBufferStream extends BufferStream {
-  constructor(buffer, littleEndian = false) {
+  constructor(buffer: number | ArrayBuffer, littleEndian: boolean = false) {
     super(buffer, littleEndian);
     this.size = 0;
   }

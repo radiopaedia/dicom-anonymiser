@@ -3,18 +3,22 @@ import {
   ReadBufferStream,
   BufferStream,
 } from "./BufferStream";
-import DicomMessage from "./Message";
+import DicomMessage, {
+  NormalizedSyntax,
+  TagDict,
+  TagValueEntry,
+} from "./Message";
 import Tag from "./Tag";
 
-function rtrim(str) {
+function rtrim(str: string): string {
   return str.replace(/\s*$/g, "");
 }
 
-export function tagFromNumbers(group, element) {
+export function tagFromNumbers(group: number, element: number): Tag {
   return new Tag(((group << 16) | element) >>> 0);
 }
 
-function readTag(stream) {
+function readTag(stream: BufferStream): Tag {
   var group = stream.readUint16(),
     element = stream.readUint16();
 
@@ -25,29 +29,41 @@ function readTag(stream) {
 const binaryVRs = ["FL", "FD", "SL", "SS", "UL", "US", "AT"];
 const explicitVRList = ["OB", "OW", "OF", "SQ", "UC", "UR", "UT", "UN"];
 const singleVRs = ["SQ", "OF", "OW", "OB", "UN"];
+export type WriteType =
+  | "Uint8"
+  | "Int8"
+  | "Uint16"
+  | "Int16"
+  | "Uint32"
+  | "Int32"
+  | "Float"
+  | "Double"
+  | "String"
+  | "Hex";
 
-export default class ValueRepresentation {
+export default abstract class ValueRepresentation<Value extends TagValueEntry> {
   type: string;
   multi: boolean;
   maxLength: number | undefined;
   noMultiple: boolean;
   fillWith: string;
   padByte: string;
-  fixed: boolean;
-  16;
-  defaultValue: string | number;
-  valueLength: number;
-  maxCharLength: number;
+  fixed?: boolean;
+  defaultValue?: Value;
+  valueLength?: number;
+  maxCharLength?: number;
   checkLength?: (value: string) => boolean;
 
-  constructor(type, value = undefined) {
+  constructor(type: string) {
     this.type = type;
     this.multi = false;
     this.maxLength = 0;
+    this.fillWith = "";
+    this.padByte = "";
     this.noMultiple = false;
   }
 
-  isBinary() {
+  isBinary(): boolean {
     return binaryVRs.indexOf(this.type) != -1;
   }
 
@@ -59,7 +75,11 @@ export default class ValueRepresentation {
     return explicitVRList.indexOf(this.type) != -1;
   }
 
-  read(stream, length, syntax) {
+  read(
+    stream: BufferStream,
+    length: number,
+    syntax: NormalizedSyntax
+  ): undefined | Value | Array<Value> {
     if (this.fixed && this.maxLength) {
       if (!length) return this.defaultValue;
       // if (this.maxLength != length)
@@ -68,11 +88,13 @@ export default class ValueRepresentation {
     return this.readBytes(stream, length, syntax);
   }
 
-  readBytes(stream, length, _syntax) {
-    return stream.readString(length);
-  }
+  abstract readBytes(
+    stream: BufferStream,
+    length: number,
+    _syntax: NormalizedSyntax
+  ): Value | Array<Value>;
 
-  readNullPaddedString(stream, length) {
+  readNullPaddedString(stream: BufferStream, length: number): string {
     if (!length) return "";
 
     var str = stream.readString(length - 1);
@@ -83,7 +105,7 @@ export default class ValueRepresentation {
     return str;
   }
 
-  writeFilledString(stream, value, length) {
+  writeFilledString(stream: BufferStream, value: string, length: number) {
     if (this.maxLength && length < this.maxLength && length >= 0) {
       var written = 0;
       if (length > 0) written += stream.writeString(value);
@@ -97,45 +119,107 @@ export default class ValueRepresentation {
     }
   }
 
-  write(stream, type, ...valueArgs) {
-    var args = Array.from(arguments);
-    if (args[2] === null || args[2] === "" || args[2] === undefined) {
-      return [stream.writeString("")];
-    } else {
-      let written: Array<number> = [];
-      let func = stream["write" + type];
-      if (Array.isArray(valueArgs[0])) {
-        if (valueArgs[0].length < 1) {
-          written.push(0);
-        } else {
-          var self = this;
-          valueArgs[0].forEach(function (v, k) {
-            if (self.allowMultiple() && k > 0) {
-              stream.writeHex("5C");
-              //byteCount++;
-            }
-            var singularArgs = [v].concat(valueArgs.slice(1));
-
-            var byteCount = func.apply(stream, singularArgs);
-            written.push(byteCount);
-          });
-        }
+  write(
+    stream: BufferStream,
+    type: "Uint8",
+    ...valueArgs: Array<number>
+  ): Array<number>;
+  write(
+    stream: BufferStream,
+    type: "Int8",
+    ...valueArgs: Array<number>
+  ): Array<number>;
+  write(
+    stream: BufferStream,
+    type: "Uint16",
+    ...valueArgs: Array<number>
+  ): Array<number>;
+  write(
+    stream: BufferStream,
+    type: "Int16",
+    ...valueArgs: Array<number>
+  ): Array<number>;
+  write(
+    stream: BufferStream,
+    type: "Uint32",
+    ...valueArgs: Array<number>
+  ): Array<number>;
+  write(
+    stream: BufferStream,
+    type: "Int32",
+    ...valueArgs: Array<number>
+  ): Array<number>;
+  write(
+    stream: BufferStream,
+    type: "Float",
+    ...valueArgs: Array<number>
+  ): Array<number>;
+  write(
+    stream: BufferStream,
+    type: "Double",
+    ...valueArgs: Array<number>
+  ): Array<number>;
+  write(
+    stream: BufferStream,
+    type: "String",
+    ...valueArgs: Array<string>
+  ): Array<number>;
+  write(
+    stream: BufferStream,
+    type: "Hex",
+    ...valueArgs: Array<string>
+  ): Array<number>;
+  write(
+    stream: BufferStream,
+    type: WriteType,
+    ...valueArgs: Array<number | string>
+  ): Array<number> {
+    let written: Array<number> = [];
+    // @ts-expect-error until typescript 4.1 allows templated lookups
+    let func = stream["write" + type];
+    const firstValue = valueArgs[0];
+    if (Array.isArray(firstValue)) {
+      if (firstValue.length < 1) {
+        written.push(0);
       } else {
-        written.push(func.apply(stream, valueArgs));
+        var self = this;
+        firstValue.forEach(function (v, k) {
+          if (self.allowMultiple() && k > 0) {
+            stream.writeHex("5C");
+          }
+          var singularArgs = [v].concat(valueArgs.slice(1));
+
+          var byteCount = func.apply(stream, singularArgs);
+          written.push(byteCount);
+        });
       }
-      return written;
+    } else {
+      written.push(func.apply(stream, valueArgs));
     }
+    return written;
   }
 
-  writeBytes(stream, value, lengths, isEncapsulated = false) {
+  abstract writeBytes(
+    stream: BufferStream,
+    value: Value | Array<Value>,
+    syntax: NormalizedSyntax,
+    isEncapsulated?: boolean
+  ): number;
+
+  writeByteLengths(
+    stream: BufferStream,
+    value: Value | Array<Value>,
+    lengths: Array<number>,
+    isEncapsulated = false
+  ) {
     var valid = true,
       valarr = Array.isArray(value) ? value : [value],
       total = 0;
     for (var i = 0; i < valarr.length; i++) {
-      let checkValue: string | number = valarr[i];
+      let checkValue: Value = valarr[i];
       let checklen = lengths[i],
         isString = false,
-        displaylen = checklen;
+        displaylen: string | number = checklen;
       if (this.checkLength && typeof checkValue == "string") {
         valid = this.checkLength(checkValue);
       } else if (this.maxCharLength && typeof checkValue == "string") {
@@ -173,13 +257,15 @@ export default class ValueRepresentation {
     return written;
   }
 
-  static createByTypeString(type: string): ValueRepresentation {
-    let vr: ValueRepresentation;
+  static createByTypeString(
+    type: string
+  ): ValueRepresentation<TagValueEntry> {
+    let vr: ValueRepresentation<TagValueEntry>;
     if (type == "AE") vr = new ApplicationEntity();
     else if (type == "AS") vr = new AgeString();
     else if (type == "AT") vr = new AttributeTag();
     else if (type == "CS") vr = new CodeString();
-    else if (type == "DA") vr = new DateValue(null);
+    else if (type == "DA") vr = new DateValue();
     else if (type == "DS") vr = new DecimalString();
     else if (type == "DT") vr = new DateTime();
     else if (type == "FL") vr = new FloatingPointSingle();
@@ -211,20 +297,34 @@ export default class ValueRepresentation {
   }
 }
 
-export class StringRepresentation extends ValueRepresentation {
-  readBytes(stream, length, _syntax) {
+export class StringRepresentation extends ValueRepresentation<string> {
+  readBytes(
+    stream: BufferStream,
+    length: number,
+    _syntax: NormalizedSyntax
+  ): string {
     return stream.readString(length);
   }
 
-  writeBytes(stream, value, syntax, isEncapsulated) {
+  writeBytes(
+    stream: BufferStream,
+    value: string,
+    syntax: NormalizedSyntax,
+    isEncapsulated: boolean
+  ): number {
     var written = super.write(stream, "String", value);
 
-    return super.writeBytes(stream, value, written);
+    return this.writeByteLengths(stream, value, written);
   }
 }
 
-export class BinaryRepresentation extends ValueRepresentation {
-  writeBytes(stream, value, syntax, isEncapsulated) {
+export class BinaryRepresentation extends ValueRepresentation<ArrayBuffer> {
+  writeBytes(
+    stream: BufferStream,
+    value: Array<ArrayBuffer>,
+    syntax: NormalizedSyntax,
+    isEncapsulated: boolean
+  ): number {
     if (isEncapsulated) {
       var fragmentSize = 1024 * 20,
         frames = value.length;
@@ -275,11 +375,15 @@ export class BinaryRepresentation extends ValueRepresentation {
       var binaryData = value[0],
         binaryStream = new ReadBufferStream(binaryData);
       stream.concat(binaryStream);
-      return super.writeBytes(stream, binaryData, [binaryStream.size]);
+      return this.writeByteLengths(stream, binaryData, [binaryStream.size]);
     }
   }
 
-  readBytes(stream, length, _syntax) {
+  readBytes(
+    stream: BufferStream,
+    length: number,
+    _syntax: NormalizedSyntax
+  ): Array<ArrayBuffer> {
     if (length == 0xffffffff) {
       var itemTagValue = Tag.readTag(stream),
         frames: Array<any> = [];
@@ -314,9 +418,6 @@ export class BinaryRepresentation extends ValueRepresentation {
           frameOffset = offsets.shift();
         // Alright, so that means we have a bunch of binary data, encapsulated in a (FFFE,E000) tag.
         // I think I get it...
-        var fragCount = 0;
-        var fragSizeRead = 0;
-        var iCount = 0;
         while (nextTag.is(0xfffee000)) {
           // I guess this is for starting a new frame?
           if (frameOffset == start) {
@@ -328,8 +429,6 @@ export class BinaryRepresentation extends ValueRepresentation {
           }
           var frameItemLength = stream.readUint32(),
             thisStream = stream.more(frameItemLength);
-          fragCount++;
-          fragSizeRead += frameItemLength;
           // Set the fragment stream to this stream on the first try
           if (fragmentStream === null) {
             fragmentStream = thisStream;
@@ -374,7 +473,11 @@ export class ApplicationEntity extends StringRepresentation {
     this.fillWith = "20";
   }
 
-  readBytes(stream, length, _syntax) {
+  readBytes(
+    stream: BufferStream,
+    length: number,
+    _syntax: NormalizedSyntax
+  ): string {
     return stream.readString(length).trim();
   }
 }
@@ -386,8 +489,11 @@ export class CodeString extends StringRepresentation {
     this.padByte = "20";
   }
 
-  readBytes(stream, length, _syntax) {
-    //return this.readNullPaddedString(stream, length).trim();
+  readBytes(
+    stream: BufferStream,
+    length: number,
+    _syntax: NormalizedSyntax
+  ): string {
     return stream.readString(length).trim();
   }
 }
@@ -402,7 +508,11 @@ export class AgeString extends StringRepresentation {
   }
 }
 
-export class AttributeTag extends ValueRepresentation {
+export class AttributeTag extends ValueRepresentation<number> {
+  maxLength: number;
+  valueLength: number;
+  padByte: string;
+  fixed: boolean;
   constructor() {
     super("AT");
     this.maxLength = 4;
@@ -411,14 +521,18 @@ export class AttributeTag extends ValueRepresentation {
     this.fixed = true;
   }
 
-  readBytes(stream, length, _syntax) {
+  readBytes(
+    stream: BufferStream,
+    length: number,
+    _syntax: NormalizedSyntax
+  ): number {
     var group = stream.readUint16(),
       element = stream.readUint16();
     return tagFromNumbers(group, element).value;
   }
 
-  writeBytes(stream, value) {
-    return super.writeBytes(
+  writeBytes(stream: BufferStream, value: number) {
+    return this.writeByteLengths(
       stream,
       value,
       super.write(stream, "Uint32", value)
@@ -427,11 +541,10 @@ export class AttributeTag extends ValueRepresentation {
 }
 
 export class DateValue extends StringRepresentation {
-  constructor(value) {
-    super("DA", value);
+  constructor() {
+    super("DA");
     this.maxLength = 18;
     this.padByte = "20";
-    //this.fixed = true;
     this.defaultValue = "";
   }
 }
@@ -443,8 +556,11 @@ export class DecimalString extends StringRepresentation {
     this.padByte = "20";
   }
 
-  readBytes(stream, length, _syntax) {
-    //return this.readNullPaddedString(stream, length).trim();
+  readBytes(
+    stream: BufferStream,
+    length: number,
+    _syntax: NormalizedSyntax
+  ): string {
     return stream.readString(length).trim();
   }
 }
@@ -457,7 +573,11 @@ export class DateTime extends StringRepresentation {
   }
 }
 
-export class FloatingPointSingle extends ValueRepresentation {
+export class FloatingPointSingle extends ValueRepresentation<number> {
+  maxLength: number;
+  padByte: string;
+  fixed: boolean;
+  defaultValue: number;
   constructor() {
     super("FL");
     this.maxLength = 4;
@@ -466,16 +586,28 @@ export class FloatingPointSingle extends ValueRepresentation {
     this.defaultValue = 0.0;
   }
 
-  readBytes(stream, length, _syntax) {
+  readBytes(
+    stream: BufferStream,
+    length: number,
+    _syntax: NormalizedSyntax
+  ): number {
     return stream.readFloat();
   }
 
-  writeBytes(stream, value) {
-    return super.writeBytes(stream, value, super.write(stream, "Float", value));
+  writeBytes(stream: BufferStream, value: number) {
+    return this.writeByteLengths(
+      stream,
+      value,
+      super.write(stream, "Float", value)
+    );
   }
 }
 
-export class FloatingPointDouble extends ValueRepresentation {
+export class FloatingPointDouble extends ValueRepresentation<number> {
+  maxLength: number;
+  padByte: string;
+  fixed: boolean;
+  defaultValue: number;
   constructor() {
     super("FD");
     this.maxLength = 8;
@@ -484,12 +616,16 @@ export class FloatingPointDouble extends ValueRepresentation {
     this.defaultValue = 0.0;
   }
 
-  readBytes(stream, length, _syntax) {
+  readBytes(
+    stream: BufferStream,
+    length: number,
+    _syntax: NormalizedSyntax
+  ): number {
     return stream.readDouble();
   }
 
-  writeBytes(stream, value) {
-    return super.writeBytes(
+  writeBytes(stream: BufferStream, value: number) {
+    return this.writeByteLengths(
       stream,
       value,
       super.write(stream, "Double", value)
@@ -504,8 +640,11 @@ export class IntegerString extends StringRepresentation {
     this.padByte = "20";
   }
 
-  readBytes(stream, length, _syntax) {
-    //return this.readNullPaddedString(stream, length);
+  readBytes(
+    stream: BufferStream,
+    length: number,
+    _syntax: NormalizedSyntax
+  ): string {
     return stream.readString(length).trim();
   }
 }
@@ -517,8 +656,11 @@ export class LongString extends StringRepresentation {
     this.padByte = "20";
   }
 
-  readBytes(stream, length, _syntax) {
-    //return this.readNullPaddedString(stream, length).trim();
+  readBytes(
+    stream: BufferStream,
+    length: number,
+    _syntax: NormalizedSyntax
+  ): string {
     return stream.readString(length).trim();
   }
 }
@@ -530,8 +672,11 @@ export class LongText extends StringRepresentation {
     this.padByte = "20";
   }
 
-  readBytes(stream, length, _syntax) {
-    //return rtrim(this.readNullPaddedString(stream, length));
+  readBytes(
+    stream: BufferStream,
+    length: number,
+    _syntax: NormalizedSyntax
+  ): string {
     return rtrim(stream.readString(length));
   }
 }
@@ -551,8 +696,11 @@ export class PersonName extends StringRepresentation {
     };
   }
 
-  readBytes(stream, length, _syntax) {
-    //return rtrim(this.readNullPaddedString(stream, length));
+  readBytes(
+    stream: BufferStream,
+    length: number,
+    _syntax: NormalizedSyntax
+  ): string {
     return rtrim(stream.readString(length));
   }
 }
@@ -564,13 +712,20 @@ export class ShortString extends StringRepresentation {
     this.padByte = "20";
   }
 
-  readBytes(stream, length, _syntax) {
-    //return this.readNullPaddedString(stream, length).trim();
+  readBytes(
+    stream: BufferStream,
+    length: number,
+    _syntax: NormalizedSyntax
+  ): string {
     return stream.readString(length).trim();
   }
 }
 
-export class SignedLong extends ValueRepresentation {
+export class SignedLong extends ValueRepresentation<number> {
+  maxLength: number;
+  padByte: string;
+  fixed: boolean;
+  defaultValue: number;
   constructor() {
     super("SL");
     this.maxLength = 4;
@@ -579,16 +734,28 @@ export class SignedLong extends ValueRepresentation {
     this.defaultValue = 0;
   }
 
-  readBytes(stream, length, _syntax) {
+  readBytes(
+    stream: BufferStream,
+    length: number,
+    _syntax: NormalizedSyntax
+  ): number {
     return stream.readInt32();
   }
 
-  writeBytes(stream, value) {
-    return super.writeBytes(stream, value, super.write(stream, "Int32", value));
+  writeBytes(stream: BufferStream, value: number) {
+    return this.writeByteLengths(
+      stream,
+      value,
+      super.write(stream, "Int32", value)
+    );
   }
 }
 
-export class SequenceOfItems extends ValueRepresentation {
+export class SequenceOfItems extends ValueRepresentation<TagDict> {
+  maxLength: undefined | number;
+  padByte: string;
+  noMultiple: boolean;
+  defaultValue: undefined;
   constructor() {
     super("SQ");
     this.maxLength = undefined;
@@ -596,12 +763,16 @@ export class SequenceOfItems extends ValueRepresentation {
     this.noMultiple = true;
   }
 
-  readBytes(stream, sqlength, syntax) {
+  readBytes(
+    stream: BufferStream,
+    sqlength: number,
+    syntax: NormalizedSyntax
+  ): Array<TagDict> {
     if (sqlength == 0x0) {
       return []; //contains no dataset
     } else {
       var undefLength = sqlength == 0xffffffff,
-        elements: Array<any> = [],
+        elements: Array<TagDict> = [],
         read = 0;
 
       while (true) {
@@ -668,8 +839,11 @@ export class SequenceOfItems extends ValueRepresentation {
     }
   }
 
-  writeBytes(stream, value, syntax) {
-    // var startOffset = stream.offset,
+  writeBytes(
+    stream: BufferStream,
+    value: Array<TagDict>,
+    syntax: NormalizedSyntax
+  ) {
     let written = 0;
     if (value) {
       for (var i = 0; i < value.length; i++) {
@@ -691,12 +865,11 @@ export class SequenceOfItems extends ValueRepresentation {
     super.write(stream, "Uint32", 0x00000000);
     written += 8;
 
-    // var totalLength = stream.offset - startOffset;
-    return super.writeBytes(stream, value, [written]);
+    return this.writeByteLengths(stream, value, [written]);
   }
 }
 
-export class SignedShort extends ValueRepresentation {
+export class SignedShort extends ValueRepresentation<number> {
   constructor() {
     super("SS");
     this.maxLength = 2;
@@ -706,12 +879,20 @@ export class SignedShort extends ValueRepresentation {
     this.defaultValue = 0;
   }
 
-  readBytes(stream, length, _syntax) {
+  readBytes(
+    stream: BufferStream,
+    length: number,
+    _syntax: NormalizedSyntax
+  ): number {
     return stream.readInt16();
   }
 
-  writeBytes(stream, value) {
-    return super.writeBytes(stream, value, super.write(stream, "Int16", value));
+  writeBytes(stream: BufferStream, value: number) {
+    return this.writeByteLengths(
+      stream,
+      value,
+      super.write(stream, "Int16", value)
+    );
   }
 }
 
@@ -722,8 +903,11 @@ export class ShortText extends StringRepresentation {
     this.padByte = "20";
   }
 
-  readBytes(stream, length, _syntax) {
-    //return rtrim(this.readNullPaddedString(stream, length));
+  readBytes(
+    stream: BufferStream,
+    length: number,
+    _syntax: NormalizedSyntax
+  ): string {
     return rtrim(stream.readString(length));
   }
 }
@@ -735,7 +919,11 @@ export class TimeValue extends StringRepresentation {
     this.padByte = "20";
   }
 
-  readBytes(stream, length, _syntax) {
+  readBytes(
+    stream: BufferStream,
+    length: number,
+    _syntax: NormalizedSyntax
+  ): string {
     return rtrim(stream.readString(length));
   }
 }
@@ -748,7 +936,11 @@ export class UnlimitedCharacters extends StringRepresentation {
     this.padByte = "20";
   }
 
-  readBytes(stream, length, _syntax) {
+  readBytes(
+    stream: BufferStream,
+    length: number,
+    _syntax: NormalizedSyntax
+  ): string {
     return rtrim(stream.readString(length));
   }
 }
@@ -760,13 +952,16 @@ export class UnlimitedText extends StringRepresentation {
     this.padByte = "20";
   }
 
-  readBytes(stream, length, _syntax) {
-    //return this.readNullPaddedString(stream, length);
+  readBytes(
+    stream: BufferStream,
+    length: number,
+    _syntax: NormalizedSyntax
+  ): string {
     return rtrim(stream.readString(length));
   }
 }
 
-export class UnsignedShort extends ValueRepresentation {
+export class UnsignedShort extends ValueRepresentation<number> {
   constructor() {
     super("US");
     this.maxLength = 2;
@@ -775,12 +970,16 @@ export class UnsignedShort extends ValueRepresentation {
     this.defaultValue = 0;
   }
 
-  readBytes(stream, length, _syntax) {
+  readBytes(
+    stream: BufferStream,
+    length: number,
+    _syntax: NormalizedSyntax
+  ): number {
     return stream.readUint16();
   }
 
-  writeBytes(stream, value) {
-    return super.writeBytes(
+  writeBytes(stream: BufferStream, value: number) {
+    return this.writeByteLengths(
       stream,
       value,
       super.write(stream, "Uint16", value)
@@ -788,7 +987,7 @@ export class UnsignedShort extends ValueRepresentation {
   }
 }
 
-export class UnsignedLong extends ValueRepresentation {
+export class UnsignedLong extends ValueRepresentation<number> {
   constructor() {
     super("UL");
     this.maxLength = 4;
@@ -797,12 +996,16 @@ export class UnsignedLong extends ValueRepresentation {
     this.defaultValue = 0;
   }
 
-  readBytes(stream, length, _syntax) {
+  readBytes(
+    stream: BufferStream,
+    length: number,
+    _syntax: NormalizedSyntax
+  ): number {
     return stream.readUint32();
   }
 
-  writeBytes(stream, value) {
-    return super.writeBytes(
+  writeBytes(stream: BufferStream, value: number) {
+    return this.writeByteLengths(
       stream,
       value,
       super.write(stream, "Uint32", value)
@@ -817,7 +1020,11 @@ export class UniqueIdentifier extends StringRepresentation {
     this.padByte = "00";
   }
 
-  readBytes(stream, length, _syntax) {
+  readBytes(
+    stream: BufferStream,
+    length: number,
+    _syntax: NormalizedSyntax
+  ): string {
     return this.readNullPaddedString(stream, length);
   }
 }
@@ -829,7 +1036,11 @@ export class UniversalResource extends StringRepresentation {
     this.padByte = "20";
   }
 
-  readBytes(stream, length, _syntax) {
+  readBytes(
+    stream: BufferStream,
+    length: number,
+    _syntax: NormalizedSyntax
+  ): string {
     return stream.readString(length);
   }
 }
@@ -842,7 +1053,11 @@ export class UnknownValue extends StringRepresentation {
     this.noMultiple = true;
   }
 
-  readBytes(stream, length, _syntax) {
+  readBytes(
+    stream: BufferStream,
+    length: number,
+    _syntax: NormalizedSyntax
+  ): string {
     return stream.readString(length);
   }
 }
@@ -866,6 +1081,6 @@ export class OtherByteString extends BinaryRepresentation {
 
   /*writeBytes(stream, value) {
         var written = super.write(stream, 'Hex', value);
-        return super.writeBytes(stream, value, written);
+        return this.writeByteLengths(stream, value, written);
     } */
 }

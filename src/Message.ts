@@ -1,11 +1,15 @@
-import { WriteBufferStream, ReadBufferStream } from "./BufferStream";
+import {
+  WriteBufferStream,
+  ReadBufferStream,
+  BufferStream,
+} from "./BufferStream";
 import ValueRepresentation, { tagFromNumbers } from "./ValueRepresentation";
 import Tag from "./Tag";
 import DicomMetaDictionary from "./MetaDictionary";
 
-const IMPLICIT_LITTLE_ENDIAN = "1.2.840.10008.1.2";
-const EXPLICIT_LITTLE_ENDIAN = "1.2.840.10008.1.2.1";
-const EXPLICIT_BIG_ENDIAN = "1.2.840.10008.1.2.2";
+export const IMPLICIT_LITTLE_ENDIAN = "1.2.840.10008.1.2";
+export const EXPLICIT_LITTLE_ENDIAN = "1.2.840.10008.1.2.1";
+export const EXPLICIT_BIG_ENDIAN = "1.2.840.10008.1.2.2";
 
 const singleVRs = ["SQ", "OF", "OW", "OB", "UN"];
 const encapsulatedSyntaxes = [
@@ -28,10 +32,15 @@ const encapsulatedSyntaxes = [
   "1.2.840.10008.1.2.4.103",
 ];
 
+export type NormalizedSyntax =
+  | typeof IMPLICIT_LITTLE_ENDIAN
+  | typeof EXPLICIT_LITTLE_ENDIAN
+  | typeof EXPLICIT_BIG_ENDIAN;
+
 export class DicomDict {
-  meta: any;
-  dict: Record<string, TagValue>;
-  constructor(meta) {
+  meta: TagDict;
+  dict: TagDict;
+  constructor(meta: TagDict) {
     this.meta = meta;
     this.dict = {};
   }
@@ -48,11 +57,8 @@ export class DicomDict {
     }
   }
 
-  write(
-    dict: Record<string, TagValue> = this.dict,
-    size: number = 4096
-  ): ArrayBuffer {
-    var metaSyntax = EXPLICIT_LITTLE_ENDIAN;
+  write(dict: TagDict = this.dict, size: number = 4096): ArrayBuffer {
+    var metaSyntax: NormalizedSyntax = EXPLICIT_LITTLE_ENDIAN;
     var fileStream = new WriteBufferStream(size, true);
     fileStream.writeHex("00".repeat(128));
     fileStream.writeString("DICM");
@@ -71,20 +77,28 @@ export class DicomDict {
     );
     fileStream.concat(metaStream);
 
-    var useSyntax = this.meta["00020010"].Value[0];
+    var useSyntax = DicomMessage._normalizeSyntax(this.meta["00020010"].Value[0]);
+
     DicomMessage.write(dict, fileStream, useSyntax);
     return fileStream.getBuffer();
   }
 }
 
+export type TagDict = Record<string, TagValue>;
+export type TagValueEntry = string | ArrayBuffer | number | TagDict;
+
 export type TagValue = {
   vr: string;
-  Value: Array<string | ArrayBuffer | number>;
+  Value: Array<TagValueEntry>;
 };
 
 export default class DicomMessage {
-  static read(bufferStream, syntax, length = 0) {
-    var dict = {};
+  static read(
+    bufferStream: BufferStream,
+    syntax: NormalizedSyntax,
+    length: number = 0
+  ): TagDict {
+    var dict: TagDict = {};
     while (!bufferStream.end()) {
       var readInfo = DicomMessage.readTag(bufferStream, syntax);
 
@@ -96,25 +110,26 @@ export default class DicomMessage {
     return dict;
   }
 
-  static _normalizeSyntax(syntax) {
-    if (
-      syntax == IMPLICIT_LITTLE_ENDIAN ||
-      syntax == EXPLICIT_LITTLE_ENDIAN ||
-      syntax == EXPLICIT_BIG_ENDIAN
-    ) {
-      return syntax;
-    } else {
-      return EXPLICIT_LITTLE_ENDIAN;
+  static _normalizeSyntax(syntax: unknown): NormalizedSyntax {
+    if (syntax == IMPLICIT_LITTLE_ENDIAN) {
+      return IMPLICIT_LITTLE_ENDIAN
     }
+    if (syntax == EXPLICIT_LITTLE_ENDIAN) {
+      return EXPLICIT_LITTLE_ENDIAN
+    }
+    if (syntax == EXPLICIT_BIG_ENDIAN) {
+      return EXPLICIT_BIG_ENDIAN
+    }
+    return EXPLICIT_LITTLE_ENDIAN;
   }
 
-  static isEncapsulated(syntax) {
+  static isEncapsulated(syntax: string): boolean {
     return encapsulatedSyntaxes.indexOf(syntax) != -1;
   }
 
-  static readFile(buffer) {
+  static readFile(buffer: ArrayBuffer) {
     var stream = new ReadBufferStream(buffer),
-      useSyntax = EXPLICIT_LITTLE_ENDIAN;
+      useSyntax: NormalizedSyntax = EXPLICIT_LITTLE_ENDIAN;
     stream.reset();
     stream.increment(128);
     if (stream.readString(4) != "DICM") {
@@ -128,8 +143,8 @@ export default class DicomMessage {
 
     var metaHeader = DicomMessage.read(metaStream, useSyntax);
     //get the syntax
-    var mainSyntax = metaHeader["00020010"].Value[0];
-    mainSyntax = DicomMessage._normalizeSyntax(mainSyntax);
+    var mainSyntax: NormalizedSyntax = DicomMessage._normalizeSyntax(metaHeader["00020010"].Value[0]);
+
     var objects = DicomMessage.read(stream, mainSyntax);
 
     var dicomDict = new DicomDict(metaHeader);
@@ -138,13 +153,23 @@ export default class DicomMessage {
     return dicomDict;
   }
 
-  static writeTagObject(stream, tagString, vr, values, syntax) {
+  static writeTagObject(
+    stream: BufferStream,
+    tagString: string,
+    vr: string,
+    values: number,
+    syntax: NormalizedSyntax
+  ): number {
     var tag = Tag.fromString(tagString);
 
-    tag.write(stream, vr, values, syntax);
+    return tag.write(stream, vr, values, syntax);
   }
 
-  static write(jsonObjects, useStream, syntax) {
+  static write(
+    jsonObjects: TagDict,
+    useStream: BufferStream,
+    syntax: NormalizedSyntax
+  ): number {
     var written = 0;
 
     var sortedTags = Object.keys(jsonObjects).sort();
@@ -173,9 +198,9 @@ export default class DicomMessage {
    * @param syntax
    */
   static readTag(
-    stream,
-    syntax
-  ): { tag: Tag; vr: ValueRepresentation; values: any } {
+    stream: BufferStream,
+    syntax: NormalizedSyntax
+  ): { tag: Tag; vr: ValueRepresentation<TagValueEntry>; values: any } {
     var implicit = syntax == IMPLICIT_LITTLE_ENDIAN,
       isLittleEndian =
         syntax == IMPLICIT_LITTLE_ENDIAN || syntax == EXPLICIT_LITTLE_ENDIAN;
@@ -188,7 +213,7 @@ export default class DicomMessage {
       tag = tagFromNumbers(group, element);
 
     let length = 0;
-    let vr: ValueRepresentation;
+    let vr: ValueRepresentation<TagValueEntry>;
     let vrType: string = "";
 
     if (implicit) {
@@ -234,7 +259,7 @@ export default class DicomMessage {
       throw new TypeError("Could not find a value representation");
     }
 
-    var values: Array<ValueRepresentation> = [];
+    var values: Array<TagValueEntry> = [];
     // If the vr is a binary sequence(?)
     if (
       vr.isBinary() &&
@@ -247,18 +272,30 @@ export default class DicomMessage {
       //console.log('Reading: ' + vr.type + ' ' + times + ' times');
       while (i++ < times) {
         // Read the max length of the VR?
-        values.push(vr.read(stream, vr.maxLength, syntax));
+        const value = vr.read(stream, vr.maxLength, syntax)
+        if (value) {
+          // @ts-expect-error
+          // vr.read returns Value | Array<Value>, but
+          // for a binary VR it always returns Value
+          values.push(value);
+        }
       }
     } else {
       var val = vr.read(stream, length, syntax);
-      if (!vr.isBinary() && singleVRs.indexOf(vr.type) == -1) {
-        values = val.split(String.fromCharCode(0x5c));
-      } else if (vr.type == "SQ") {
-        values = val;
-      } else if (vr.type == "OW" || vr.type == "OB") {
-        values = val;
-      } else {
-        values.push(val);
+      if (val !== undefined) {
+        if (!vr.isBinary() && singleVRs.indexOf(vr.type) == -1) {
+          // @ts-expect-error the type of `val` could be inferred from knowing the kind of VR but it doesn't propagate
+          values = val.split(String.fromCharCode(0x5c));
+        } else if (vr.type == "SQ") {
+          // @ts-expect-error the type of `val` could be inferred from knowing the kind of VR but it doesn't propagate
+          values = val;
+        } else if (vr.type == "OW" || vr.type == "OB") {
+          // @ts-expect-error the type of `val` could be inferred from knowing the kind of VR but it doesn't propagate
+          values = val;
+        } else {
+          // @ts-expect-error the type of `val` could be inferred from knowing the kind of VR but it doesn't propagate
+          values.push(val);
+        }
       }
     }
     stream.setEndian(oldEndian);
@@ -266,7 +303,7 @@ export default class DicomMessage {
     return { tag: tag, vr: vr, values: values };
   }
 
-  static lookupTag(tag) {
+  static lookupTag(tag: Tag) {
     var tagInfo = DicomMetaDictionary.dictionary[tag.toString()];
     if (!tagInfo) {
       throw new Error("Failed to lookup tag " + tag.toString());

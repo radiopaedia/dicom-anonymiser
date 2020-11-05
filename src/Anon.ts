@@ -1,8 +1,8 @@
 import policyFor, { IPolicy } from "./Policies";
+// @ts-expect-error no typedef for sjcl
 import sjcl from "./sjcl.sha512";
 import Validator from "./Validator";
-import { CodeString, LongString } from "./ValueRepresentation";
-import DicomDict, { TagValue } from "./Message";
+import { TagDict, TagValue } from "./Message";
 
 // Prefix from Medical Connections
 const UIDPREFIX = "1.2.826.0.1.3680043.10.341.";
@@ -96,19 +96,8 @@ function randomUid() {
   return UIDPREFIX + "777." + rando;
 }
 
-/**
- * Generate a randomised Patient ID which of <= 8 chars
- */
-function randomPatientID() {
-  const max: number = Math.pow(36, 8);
-  var id: string = Math.floor(Math.random() * max)
-    .toString(36)
-    .toUpperCase();
-  return id;
-}
-
-function applyPolicy(dcm: Record<string, TagValue>, policy: IPolicy) {
-  var newDcm = {};
+function applyPolicy(dcm: TagDict, policy: IPolicy) {
+  var newDcm: TagDict = {};
   for (const key of Object.keys(dcm)) {
     // Use default action or action specified in policy
     var rule = policy["default"];
@@ -135,7 +124,7 @@ function applyPolicy(dcm: Record<string, TagValue>, policy: IPolicy) {
         // do nothing if action is undefined
       } else {
         // exhastiveness
-        const _: never = rule["method"];
+        assertUnreachable(rule["method"]);
       }
       newDcm[key] = oldTag;
       // Then to remove we're just not going to add anything for now.
@@ -152,12 +141,18 @@ function applyPolicy(dcm: Record<string, TagValue>, policy: IPolicy) {
 
   return newDcm;
 }
+function assertUnreachable(x: never): never {
+  throw new Error("Didn't expect to get here")
+}
 
 // This is the main anonymization function.
-export default function anonymize(dcm) {
+export default function anonymize(dcm: TagDict): TagDict {
   // Get the policy for this SOP Class
-  var sopClassUid = dcm["00080016"];
-  var policy = policyFor(sopClassUid["Value"][0]);
+  var sopClassUid = dcm["00080016"]["Value"][0];
+  if (typeof sopClassUid !== "string") {
+    throw new Error("Invalid dicom; SOP class must be a string.");
+  }
+  var policy = policyFor(sopClassUid);
   // Apply the anonymization policy.
   var newDcm = applyPolicy(dcm, policy);
 

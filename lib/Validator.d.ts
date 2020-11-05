@@ -1,3 +1,4 @@
+import { TagDict } from "./Message";
 /**
  * The validate(dict) method will do some type checking against value representations.
  * The returned result will be a list of IValidatorWarnings, which are composed of
@@ -9,4 +10,8 @@ export interface IValidatorWarning {
     text: string;
 }
 export declare function supportedSOPClasses(): string[];
-export default function validate(dcm: any): {};
+declare type Warnings = {
+    [x: string]: Array<IValidatorWarning>;
+};
+export default function validate(dcm: TagDict): Warnings;
+export {};
