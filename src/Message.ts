@@ -134,18 +134,51 @@ export default class DicomMessage {
     var stream = new ReadBufferStream(buffer),
       useSyntax: NormalizedSyntax = EXPLICIT_LITTLE_ENDIAN;
     stream.reset();
+    // Skip the File Preamble (128 bytes)
     stream.increment(128);
+    // Check the DICOM Prefix
     if (stream.readString(4) != "DICM") {
       throw new Error("Invalid: not a dicom file");
     }
-    var el = DicomMessage.readTag(stream, useSyntax),
+    var el = DicomMessage.readTag(stream, useSyntax);
+
+    var metaLength
+
+    // File Meta Information Group Length is correctly suplied
+    if (el.tag.value == 0x00020000) {
       metaLength = el.values[0];
+    // No Length but there are metadata tags
+    } else if (el.tag.value>>16 == 2) {
+      console.warn("Warning: missing File Meta Information Group Length! (0002,0000)");
+
+      // Try to calculate the size of the metadata block by reading all (0002,xxxx) tags
+      while (true) {
+        // Metadata is at least this long
+        metaLength = stream.offset-128-4;
+
+        var isMetaTag = DicomMessage.readTag(stream, useSyntax);
+        if (isMetaTag.tag.value>>16 != 2) {
+          // Rewind the stream to the start of the metadata
+          stream.reset();
+          stream.increment(128+4);
+          break;
+        }
+      }
+    // Malformed data, no metadata at all
+    } else {
+      throw new Error("Invalid: missing meta information");
+    }
+
 
     //read header buffer
     var metaStream = stream.more(metaLength);
 
     var metaHeader = DicomMessage.read(metaStream, useSyntax);
-    //get the syntax
+
+    // We rely on the Transfer Syntax being supplied so make sure it is
+    if ("00020010" in metaHeader === false) {
+      throw new Error("Invalid: missing transfer syntax");
+    }
     var mainSyntax: NormalizedSyntax = DicomMessage._normalizeSyntax(metaHeader["00020010"].Value[0]);
 
     var objects = DicomMessage.read(stream, mainSyntax);
