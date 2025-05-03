@@ -142,7 +142,7 @@ export default class DicomMessage {
     }
     var el = DicomMessage.readTag(stream, useSyntax);
 
-    var metaLength
+    var metaLength;
 
     // File Meta Information Group Length is correctly suplied
     if (el.tag.value == 0x00020000) {
