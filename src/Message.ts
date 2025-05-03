@@ -157,7 +157,7 @@ export default class DicomMessage {
         metaLength = stream.offset-128-4;
 
         var isMetaTag = DicomMessage.readTag(stream, useSyntax);
-        if (isMetaTag.tag.value>>16 != 2) {
+        if ((isMetaTag.tag.value & 0xFFFF0000) !== 0x00020000) {
           // Rewind the stream to the start of the metadata
           stream.reset();
           stream.increment(128+4);
