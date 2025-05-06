@@ -148,7 +148,7 @@ export default class DicomMessage {
     if (el.tag.value == 0x00020000) {
       metaLength = el.values[0];
     // No Length but there are metadata tags
-    } else if (el.tag.value>>16 == 2) {
+    } else if ((el.tag.value & 0xFFFF0000) === 0x00020000) {
       console.warn("Warning: missing File Meta Information Group Length! (0002,0000)");
 
       // Try to calculate the size of the metadata block by reading all (0002,xxxx) tags
