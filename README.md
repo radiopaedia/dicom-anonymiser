@@ -49,3 +49,7 @@ DICOM uses UIDs to structure a series across multiple files. Where necessary, th
 
 ### Limitations
 The anonymiser won't be able to identify or remove burnt-in information within an image, and works under the assumption that input images are DICOM standard conformant. We recommend manually reviewing the output of the tool before sharing any images.
+
+### Development
+Note that Node.js v12 is necessary to build the project. Get it e.g. via [`nvm`](https://github.com/nvm-sh/nvm): `nvm install v12 && nvm use v12`.
+`npm install` to install dependencies, then `npm run build` to generate the JS output in `lib` from the TypeScript sources. Please note that changes to `lib` are to be committed back to the repository.
