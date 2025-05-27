@@ -173,7 +173,7 @@ export default function anonymize(dcm: TagDict): TagDict {
   // Add Patient Identity Removal Method tag (0012,0062)
   newDcm["00120063"] = {
     vr: "LO",
-    Value: ["Radiopaedia Dicom Anonymizer. github.com/radiopaedia/dicomanon"],
+    Value: ["Radiopaedia Dicom Anonymizer. github.com/radiopaedia/dicom-anonymiser"],
   };
 
   //var warnings = validate(newDcm);
