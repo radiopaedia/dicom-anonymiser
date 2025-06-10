@@ -231,17 +231,18 @@ export default abstract class ValueRepresentation<Value extends TagValueEntry> {
         valid = checklen <= this.maxLength;
       }
       var errmsg =
-        "Value exceeds max length, vr: " +
+        "Value exceeds max length, VR: " +
         this.type +
         ", value: " +
         checkValue +
         ", length: " +
         displaylen;
-      if (!valid) {
-        //  if(isString)
-        //  console.log(errmsg)
-        //  else
-        if (!isString) throw new Error(errmsg);
+      // Due to how liberally some input DICOMs treat maximum field lengths
+      // prescribed by the standard we no longer crash while writing out
+      // overlong values but log them to the console instead.
+      // Note: the object doesn't have access to the offending tag's name
+      if (!valid && !isString) {
+        console.warn(errmsg)
       }
       total += checklen;
     }
