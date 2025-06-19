@@ -10,7 +10,7 @@
     "typecheck": "npm run tsc --noEmit",
     "build": "npm run esbuild",
     "esbuild_docs": "esbuild src/browser.ts --bundle --sourcemap --outfile=docs/js/main.js",
-    "esbuild": "esbuild src/index.ts --bundle --sourcemap --outfile=lib/index.js && npm run esbuild_docs",
+    "esbuild": "esbuild src/index.ts --bundle --sourcemap --outfile=lib/index.js --minify-whitespace --minify-identifiers --minify-syntax && npm run esbuild_docs",
     "test": "jest --silent=false"
   },
   "devDependencies": {
