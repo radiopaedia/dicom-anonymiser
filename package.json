@@ -7,8 +7,10 @@
   "main": "lib/index.js",
   "scripts": {
     "start": "node server.mjs",
-    "build": "tsc && npm run esbuild",
-    "esbuild": "esbuild lib/browser.js --bundle --sourcemap --outfile=docs/js/main.js",
+    "typecheck": "npm run tsc --noEmit",
+    "build": "npm run esbuild",
+    "esbuild_docs": "esbuild src/browser.ts --bundle --sourcemap --outfile=docs/js/main.js",
+    "esbuild": "esbuild src/index.ts --bundle --sourcemap --outfile=lib/index.js && npm run esbuild_docs",
     "test": "jest --silent=false"
   },
   "devDependencies": {
