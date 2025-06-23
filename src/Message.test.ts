@@ -1,6 +1,8 @@
 import DicomMessage from "./Message";
 const fs = require("fs");
 
+const DICOM_FIXTURE = "fixtures/TestPattern_JPEG-Baseline_YBRFull.dcm"
+
 describe("Message tests...", () => {
   it("Try to write binary bits...", () => {
     fs.mkdir("stages", () => undefined);
@@ -19,8 +21,7 @@ describe("Message tests...", () => {
         written,
       };
     }
-    // Note: This test will fail if there's no test.dcm file in the current directory (base dir of the repo).
-    let inBuffer = readFileBuffer("test.dcm");
+    let inBuffer = readFileBuffer(DICOM_FIXTURE);
     //console.log('---------------- First Read');
     let first = readDcm(inBuffer, "first");
     //console.log('---------------- Second Read');

@@ -1,5 +1,4 @@
 import policyFor, { IPolicy } from "./Policies";
-// @ts-expect-error no typedef for sjcl
 import sjcl from "./sjcl.sha512";
 import Validator from "./Validator";
 import { TagDict, TagValue } from "./Message";

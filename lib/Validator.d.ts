@@ -10,7 +10,7 @@ export interface IValidatorWarning {
     text: string;
 }
 export declare function supportedSOPClasses(): string[];
-declare type Warnings = {
+type Warnings = {
     [x: string]: Array<IValidatorWarning>;
 };
 export default function validate(dcm: TagDict): Warnings;

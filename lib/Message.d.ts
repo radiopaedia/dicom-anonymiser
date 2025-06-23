@@ -4,7 +4,7 @@ import Tag from "./Tag";
 export declare const IMPLICIT_LITTLE_ENDIAN = "1.2.840.10008.1.2";
 export declare const EXPLICIT_LITTLE_ENDIAN = "1.2.840.10008.1.2.1";
 export declare const EXPLICIT_BIG_ENDIAN = "1.2.840.10008.1.2.2";
-export declare type NormalizedSyntax = typeof IMPLICIT_LITTLE_ENDIAN | typeof EXPLICIT_LITTLE_ENDIAN | typeof EXPLICIT_BIG_ENDIAN;
+export type NormalizedSyntax = typeof IMPLICIT_LITTLE_ENDIAN | typeof EXPLICIT_LITTLE_ENDIAN | typeof EXPLICIT_BIG_ENDIAN;
 export declare class DicomDict {
     meta: TagDict;
     dict: TagDict;
@@ -12,9 +12,9 @@ export declare class DicomDict {
     upsertTag(tag: string, vr: string, values: Array<string | ArrayBuffer | number>): void;
     write(dict?: TagDict, size?: number): ArrayBuffer;
 }
-export declare type TagDict = Record<string, TagValue>;
-export declare type TagValueEntry = string | ArrayBuffer | number | TagDict;
-export declare type TagValue = {
+export type TagDict = Record<string, TagValue>;
+export type TagValueEntry = string | ArrayBuffer | number | TagDict;
+export type TagValue = {
     vr: string;
     Value: Array<TagValueEntry>;
 };

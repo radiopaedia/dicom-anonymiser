@@ -2,7 +2,7 @@ import { BufferStream } from "./BufferStream";
 import { NormalizedSyntax, TagDict, TagValueEntry } from "./Message";
 import Tag from "./Tag";
 export declare function tagFromNumbers(group: number, element: number): Tag;
-export declare type WriteType = "Uint8" | "Int8" | "Uint16" | "Int16" | "Uint32" | "Int32" | "Float" | "Double" | "String" | "Hex";
+export type WriteType = "Uint8" | "Int8" | "Uint16" | "Int16" | "Uint32" | "Int32" | "Float" | "Double" | "String" | "Hex";
 export default abstract class ValueRepresentation<Value extends TagValueEntry> {
     type: string;
     multi: boolean;

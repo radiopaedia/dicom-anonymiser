@@ -9,7 +9,7 @@ export default class DicomMetaDictionary {
             [name: string]: string;
         };
     } & {
-        [x: string]: string | number | ArrayBuffer | Record<string, import("./Message").TagValue> | TagValueEntry[];
+        [x: string]: TagValueEntry | TagValueEntry[];
     };
     static uid(): string;
     static date(): string;
