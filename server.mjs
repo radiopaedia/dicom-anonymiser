@@ -4,8 +4,8 @@ const PORT = process.env['PORT'] || 8080
 const HOST = process.env['HOST']
 
 let buildContext = await esbuild.context({
-  entryPoints: ['lib/browser.js'],
-  outfile: 'docs/main.js',
+  entryPoints: ['src/browser.ts'],
+  outfile: 'docs/js/main.js',
   bundle: true,
   sourcemap: true,
 })
