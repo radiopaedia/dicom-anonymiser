@@ -1,19 +1,20 @@
 {
   "name": "dicomanon",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "license": "AGPL-3.0-only",
   "description": "Radiopaedia DICOM Anonymizer",
   "author": "plwp",
+  "type": "module",
   "exports": {
-    ".": "lib/index.js",
-    "./lib/Message": "lib/Message.js"
+    ".": "./lib/index.js",
+    "./lib/Message": "./lib/Message.js"
   },
   "scripts": {
     "start": "node server.mjs",
     "typecheck": "npx tsc --noEmit",
     "typings": "npx tsc --declaration src/index.ts src/Message.ts --emitDeclarationOnly --outDir lib",
     "build": "npm run esbuild && npm run typings",
-    "esbuild": "esbuild src/index.ts src/Message.ts --bundle --sourcemap --outdir=lib --minify-whitespace --minify-identifiers --minify-syntax",
+    "esbuild": "esbuild src/index.ts src/Message.ts --bundle --format=esm --sourcemap --outdir=lib --minify-whitespace --minify-identifiers --minify-syntax",
     "test": "jest --silent=false"
   },
   "devDependencies": {
