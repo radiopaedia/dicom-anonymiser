@@ -4,18 +4,22 @@
   "license": "AGPL-3.0-only",
   "description": "Radiopaedia DICOM Anonymizer",
   "author": "plwp",
-  "main": "lib/index.js",
+  "exports": {
+    ".": "lib/index.js",
+    "./lib/Message": "lib/Message.js"
+  },
   "scripts": {
     "start": "node server.mjs",
-    "typecheck": "npm run tsc --noEmit",
-    "build": "npm run esbuild",
-    "esbuild_docs": "esbuild src/browser.ts --bundle --sourcemap --outfile=docs/js/main.js",
-    "esbuild": "esbuild src/index.ts --bundle --sourcemap --outfile=lib/index.js --minify-whitespace --minify-identifiers --minify-syntax && npm run esbuild_docs",
+    "typecheck": "npx tsc --noEmit",
+    "typings": "npx tsc --declaration src/index.ts src/Message.ts --emitDeclarationOnly --outDir lib",
+    "build": "npm run esbuild && npm run typings",
+    "esbuild": "esbuild src/index.ts src/Message.ts --bundle --sourcemap --outdir=lib --minify-whitespace --minify-identifiers --minify-syntax",
     "test": "jest --silent=false"
   },
   "devDependencies": {
     "@types/jest": "^29.5.14",
     "@types/node": "^20.19.0",
+    "esbuild": "^0.25.5",
     "file-saver": "^2.0.2",
     "jest": "^29.7.0",
     "prettier": "^2.1.2",
@@ -24,7 +28,6 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
-    "esbuild": "^0.25.5",
     "esm": "^3.2.25"
   }
 }

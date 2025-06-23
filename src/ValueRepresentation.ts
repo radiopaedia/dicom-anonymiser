@@ -175,18 +175,20 @@ export default abstract class ValueRepresentation<Value extends TagValueEntry> {
     ...valueArgs: Array<number | string>
   ): Array<number> {
     let written: Array<number> = [];
-    // @ts-expect-error until typescript 4.1 allows templated lookups
-    let func = stream["write" + type];
+    // Any of the 'WriteType's from BufferStream are accepted
+    let func: BufferStream[`write${WriteType}`] = stream["write" + type as `write${WriteType}`];
     const firstValue = valueArgs[0];
     if (Array.isArray(firstValue)) {
       if (firstValue.length < 1) {
         written.push(0);
       } else {
         var self = this;
-        firstValue.forEach(function (v, k) {
+        firstValue.forEach(function (v: string|number, k) {
           if (self.allowMultiple() && k > 0) {
             stream.writeHex("5C");
           }
+          // First value is an array, call the appropriate write() function
+          // with each value from the first array & any other value args specified
           var singularArgs = [v].concat(valueArgs.slice(1));
 
           var byteCount = func.apply(stream, singularArgs);
