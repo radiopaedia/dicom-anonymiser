@@ -6,15 +6,20 @@
   "author": "plwp",
   "type": "module",
   "exports": {
-    ".": "./lib/index.js",
+    ".": {
+      "import": "./lib/index.js",
+      "require": "./lib/index.cjs"
+    },
     "./lib/Message": "./lib/Message.js"
   },
+  "types": "./lib/index.d.ts",
   "scripts": {
     "start": "node server.mjs",
     "typecheck": "npx tsc --noEmit",
     "typings": "npx tsc --declaration src/index.ts src/Message.ts --emitDeclarationOnly --outDir lib",
-    "build": "npm run esbuild && npm run typings",
-    "esbuild": "esbuild src/index.ts src/Message.ts --bundle --format=esm --sourcemap --outdir=lib --minify-whitespace --minify-identifiers --minify-syntax",
+    "build": "npm run esbuild && npm run esbuild-require && npm run typings",
+    "esbuild": "esbuild src/index.ts src/Message.ts --bundle --sourcemap --format=esm --outdir=lib --minify-whitespace --minify-identifiers --minify-syntax",
+    "esbuild-require": "esbuild src/index.ts --bundle --sourcemap --format=cjs --out-extension:.js=.cjs --outdir=lib --minify-whitespace --minify-identifiers --minify-syntax",
     "test": "jest --silent=false"
   },
   "devDependencies": {
