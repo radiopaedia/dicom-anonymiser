@@ -1,4 +1,4 @@
-#!/usr/bin/env -S node -r esm
+#!/usr/bin/env -S node
 
 const dcmio = require('../lib/index.js')
 const {ReadBufferStream } = require('../lib/BufferStream.js')

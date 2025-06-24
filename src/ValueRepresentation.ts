@@ -191,11 +191,13 @@ export default abstract class ValueRepresentation<Value extends TagValueEntry> {
           // with each value from the first array & any other value args specified
           var singularArgs = [v].concat(valueArgs.slice(1));
 
+          //@ts-ignore singularArgs: we don't actually have any write*() methods that take >1 args and [v] ensures we supplied at least one arg
           var byteCount = func.apply(stream, singularArgs);
           written.push(byteCount);
         });
       }
-    } else {
+    } else if (valueArgs.length > 0) {
+      //@ts-ignore valueArgs: we don't actually have any write*() methods that take >1 args and we make sure we pass a firstValue
       written.push(func.apply(stream, valueArgs));
     }
     return written;
