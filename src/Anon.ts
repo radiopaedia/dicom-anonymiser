@@ -175,14 +175,18 @@ export default function anonymize(dcm: TagDict): TagDict {
     Value: ["Radiopaedia Dicom Anonymizer. github.com/radiopaedia/dicom-anonymiser"],
   };
   // Fix Slice Location if exceeds DS maxlength (16 bytes)
-  if (newDcm["00201041"] && warnings["00201041"]) {
+  if (newDcm["00201041"] && warnings["00201041"]?.length > 0) {
     const tagValues = newDcm["00201041"].Value
     for (let id = 0; id < tagValues.length; ++id) {
       // Don't fix scientific notation values
       let value = tagValues[id]
       if (typeof value === "string" && value.match(/eE/) === null) {
         tagValues[id] = value.substr(0,16)
-        console.warn(`Warning: clipped Slice Location value from '${value}' to '${tagValues[id]}'.`)
+        
+        // Make sure we only show the warning if the string was actually changed
+        if (value !== tagValues[id]) {
+          console.warn(`Warning: clipped Slice Location value from '${value}' to '${tagValues[id]}'.`)
+        }
       }
     }
   }

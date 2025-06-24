@@ -901,11 +901,5 @@ sjcl.hash.sha512.prototype = {
   },
 };
 
-if (typeof module !== "undefined" && module.exports) {
-  module.exports = sjcl;
-}
-if (typeof define === "function") {
-  define([], function () {
-    return sjcl;
-  });
-}
+// Adopted for ESM by Flaki
+export default sjcl;
