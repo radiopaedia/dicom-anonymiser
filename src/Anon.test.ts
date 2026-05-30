@@ -1,6 +1,13 @@
 import Anonymize from "./Anon";
-import DicomMessage from "./Message";
+import DicomMessage, { TagDict } from "./Message";
 const fs = require("fs");
+
+// Minimal CT dataset; CT's policy includes the patient module, so age/weight
+// rules apply. SOP Class UID is required for anonymize to pick a policy.
+const CT_SOP = "1.2.840.10008.5.1.4.1.1.2";
+function ctDict(extra: TagDict = {}): TagDict {
+  return { "00080016": { vr: "UI", Value: [CT_SOP] }, ...extra };
+}
 
 function readFileBuffer(path: string): ArrayBuffer {
   const b = fs.readFileSync(path);
@@ -13,6 +20,29 @@ function anonymiseFixture(path: string) {
   const writtenBytes = Buffer.from(dcm.write(anon));
   return { dcm, anon, writtenBytes };
 }
+
+describe("Patient age and weight are dropped, not retained", () => {
+  it("blanks Patient's Age rather than keeping a rounded value", () => {
+    const anon = Anonymize(
+      ctDict({ "00101010": { vr: "AS", Value: ["044Y"] } })
+    );
+    expect(anon["00101010"].Value).toEqual([]);
+  });
+
+  it("blanks Patient Weight rather than bucketing it", () => {
+    const anon = Anonymize(
+      ctDict({ "00101030": { vr: "DS", Value: ["72"] } })
+    );
+    expect(anon["00101030"].Value).toEqual([]);
+  });
+
+  it("stamps PatientIdentityRemoved=YES for a file that carries only an age", () => {
+    const anon = Anonymize(
+      ctDict({ "00101010": { vr: "AS", Value: ["044Y"] } })
+    );
+    expect(anon["00120062"].Value).toEqual(["YES"]);
+  });
+});
 
 describe("Anonymize strips previously-kept SQ-VR tags", () => {
   it("strips RequestAttributesSequence carrying nested physician PN", () => {
@@ -72,10 +102,11 @@ describe("Re-anonymising an already-anonymised file only strips SQ tags", () => 
       )
     );
 
-    // The age-regex fix means a well-formed age no longer raises a fatal
-    // warning, so this fixture (previously stamped NO purely because of that
-    // bug) now correctly resolves to PatientIdentityRemoved=YES.
-    const skip = new Set([...SQ_TAGS_REMOVED, "00120062"]);
+    // Tags this policy intentionally rewrites on every run, so they are not
+    // expected to survive a re-anonymise unchanged: age is now blanked, and
+    // PatientIdentityRemoved is recomputed (this fixture was previously stamped
+    // NO by the age-regex bug and now correctly resolves to YES).
+    const skip = new Set([...SQ_TAGS_REMOVED, "00101010", "00120062"]);
     const keys = new Set([
       ...Object.keys(original.dict),
       ...Object.keys(reparsed.dict),

@@ -7,72 +7,6 @@ import { TagDict, TagValue } from "./Message";
 const UIDPREFIX = "1.2.826.0.1.3680043.10.341.";
 // We want to keep the hash algorithm the same to preserve references.
 
-function bucketWeight(oldWeight: TagValue): string {
-  const weightStr = oldWeight.Value[0];
-  if (typeof weightStr !== "string") {
-    return "";
-  }
-  const weight = parseInt(weightStr);
-  if (!weight) {
-    return "";
-  }
-  if (weight < 30 || weight > 140) {
-    // Bucketing may not be enough; discard data.
-    return "";
-  }
-
-  // Round to nearest 5kg.
-  return `${Math.round(weight / 5) * 5}`;
-}
-
-function bucketAge(oldAge: TagValue): string {
-  const val = oldAge.Value[0];
-  if (typeof val !== "string") {
-    return "";
-  }
-  if (oldAge.vr == "AS" && val.length == 4) {
-    // handle age-string like 011M for 11 months old
-    let ageStep = val.slice(3, 4);
-    let ageNum = parseInt(val.slice(0, 3));
-    if (ageStep == "Y") {
-      // Values lower than 90 years are 'not identifying', per
-      // https://www.hhs.gov/hipaa/for-professionals/privacy/special-topics/de-identification/index.html
-      // Values over 90 may be considered identifying information.
-      if (ageNum > 90) {
-        ageNum = 90;
-      }
-      return `${ageNum}Y`.padStart(4, "0");
-    }
-    if (ageStep == "M") {
-      // No more precision than 'years' allowed.
-      ageNum = Math.round(ageNum / 12);
-      return `${ageNum}Y`.padStart(4, "0");
-    }
-    if (ageStep == "W") {
-      // No more precision than 'years' allowed.
-      ageNum = Math.round(ageNum / 52);
-      return `${ageNum}Y`.padStart(4, "0");
-    }
-    if (ageStep == "D") {
-      // No more precision than 'years' allowed.
-      ageNum = Math.round(ageNum / 365);
-      return `${ageNum}Y`.padStart(4, "0");
-    }
-    return "";
-  }
-
-  if (oldAge.vr == "DA") {
-    // handle date string
-    if (val.length != 8) {
-      return "";
-    }
-
-    // Replace month/day with zeroes
-    return val.slice(0, 4) + "0000";
-  }
-  return "";
-}
-
 /**
  * A hashed UID will make sure there's no information hidden in the UID
  * but will maintain relationships between dicoms (e.g. same frame of reference)
@@ -113,10 +47,6 @@ function applyPolicy(dcm: TagDict, policy: IPolicy) {
       var oldTag = cloneTag(dcm[key]);
       if (rule.method == "random") {
         oldTag["Value"] = [randomUid()];
-      } else if (rule.method == "weight") {
-        oldTag["Value"] = [bucketWeight(oldTag)];
-      } else if (rule.method == "age") {
-        oldTag["Value"] = [bucketAge(oldTag)];
       } else if (rule.method == "hash") {
         oldTag["Value"] = [hashedUid(`${oldTag["Value"][0]}`)];
       } else if (rule.method == undefined) {

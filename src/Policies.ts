@@ -15,7 +15,7 @@
 ******************************************************************************/
 
 export type Action = "remove" | "replace" | "keep" | "regenerate";
-export type ReplaceMethod = "hash" | "age" | "weight" | "random";
+export type ReplaceMethod = "hash" | "random";
 
 export interface IPolicy {
   [tagId: string]: {
@@ -364,10 +364,9 @@ function imagePixelModulePolicy(): IPolicy {
 function patientModulePolicy(): IPolicy {
   return {
     "00101010": {
-      action: "regenerate",
-      method: "age",
-      description:
-        "Patient DOB will be rounded to 1 year and replaced if over 90",
+      action: "replace",
+      value: [],
+      description: "Patient age will be replaced",
     },
     "00100020": {
       action: "replace",
@@ -375,10 +374,9 @@ function patientModulePolicy(): IPolicy {
       description: "Patient size will be replaced",
     },
     "00101030": {
-      action: "regenerate",
-      method: "weight",
-      description:
-        "Patient weight will be rounded to nearest 5kg if within 30..140kg, else replaced.",
+      action: "replace",
+      value: [],
+      description: "Patient weight will be replaced",
     },
     "00100040": {
       action: "keep",
