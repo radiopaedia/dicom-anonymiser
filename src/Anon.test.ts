@@ -72,7 +72,10 @@ describe("Re-anonymising an already-anonymised file only strips SQ tags", () => 
       )
     );
 
-    const skip = new Set(SQ_TAGS_REMOVED);
+    // The age-regex fix means a well-formed age no longer raises a fatal
+    // warning, so this fixture (previously stamped NO purely because of that
+    // bug) now correctly resolves to PatientIdentityRemoved=YES.
+    const skip = new Set([...SQ_TAGS_REMOVED, "00120062"]);
     const keys = new Set([
       ...Object.keys(original.dict),
       ...Object.keys(reparsed.dict),

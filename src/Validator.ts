@@ -53,7 +53,7 @@ function validateAgeStringVR(tag: TagValue): IValidatorWarning[] {
   let warnings = Array<IValidatorWarning>();
   for (var i = 0; i < values.length; i++) {
     const value = values[i]
-    if (typeof value === "string" && value.length > 0 && !value.match(/^\d{1-3}Y$/)) {
+    if (typeof value === "string" && value.length > 0 && !value.match(/^\d{1,3}Y$/)) {
       warnings.push({
         level: 1,
         text: "Anonymised data should not include age data.",
