@@ -14,7 +14,7 @@
   random or cryptographically hashed values.
 ******************************************************************************/
 export type Action = "remove" | "replace" | "keep" | "regenerate";
-export type ReplaceMethod = "hash" | "age" | "weight" | "random";
+export type ReplaceMethod = "hash" | "random";
 export interface IPolicy {
     [tagId: string]: {
         action: Action;
