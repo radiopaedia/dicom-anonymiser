@@ -1,11 +1,28 @@
 import policyFor, { IPolicy } from "./Policies";
 import sjcl from "./sjcl.sha512";
-import Validator from "./Validator";
+import Validator, { IValidatorWarning } from "./Validator";
 import { TagDict, TagValue } from "./Message";
 
 // Prefix from Medical Connections
 const UIDPREFIX = "1.2.826.0.1.3680043.10.341.";
 // We want to keep the hash algorithm the same to preserve references.
+
+/**
+ * Thrown when a dataset cannot be fully de-identified. We never return a
+ * dataset stamped PatientIdentityRemoved=NO; callers must handle this and
+ * withhold the file rather than upload a partially-anonymised dataset.
+ */
+export class AnonymizationError extends Error {
+  readonly warnings: IValidatorWarning[];
+  constructor(warnings: IValidatorWarning[]) {
+    super(
+      "DICOM could not be fully de-identified: " +
+        warnings.map((w) => w.text).join("; ")
+    );
+    this.name = "AnonymizationError";
+    this.warnings = warnings;
+  }
+}
 
 /**
  * A hashed UID will make sure there's no information hidden in the UID
@@ -85,20 +102,24 @@ export default function anonymize(dcm: TagDict): TagDict {
   // Apply the anonymization policy.
   var newDcm = applyPolicy(dcm, policy);
 
-  // Check that we don't have ay dealbreaker warnings...
+  // Check that we don't have any dealbreaker warnings. A level-1 warning means
+  // we could not fully de-identify the dataset (e.g. a residual person name or
+  // burnt-in annotation). Never emit a file stamped PatientIdentityRemoved=NO:
+  // refuse instead, so a partially-anonymised dataset can never be returned.
   var warnings = Validator(newDcm);
-  var worked = true;
+  var fatal: IValidatorWarning[] = [];
   for (const key of Object.keys(warnings)) {
     for (const warning of warnings[key]) {
-      worked = worked && warning.level > 1;
+      if (warning.level <= 1) {
+        fatal.push(warning);
+      }
     }
   }
-  // Add Patient Identity Removed tag (0012,0062)
-  if (worked) {
-    newDcm["00120062"] = { vr: "CS", Value: ["YES"] };
-  } else {
-    newDcm["00120062"] = { vr: "CS", Value: ["NO"] };
+  if (fatal.length > 0) {
+    throw new AnonymizationError(fatal);
   }
+  // Add Patient Identity Removed tag (0012,0062)
+  newDcm["00120062"] = { vr: "CS", Value: ["YES"] };
   // Add Patient Identity Removal Method tag (0012,0062)
   newDcm["00120063"] = {
     vr: "LO",

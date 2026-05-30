@@ -1,4 +1,4 @@
-import Anonymize from "./Anon";
+import Anonymize, { AnonymizationError } from "./Anon";
 import DicomMessage, { TagDict } from "./Message";
 const fs = require("fs");
 
@@ -41,6 +41,25 @@ describe("Patient age and weight are dropped, not retained", () => {
       ctDict({ "00101010": { vr: "AS", Value: ["044Y"] } })
     );
     expect(anon["00120062"].Value).toEqual(["YES"]);
+  });
+});
+
+describe("Anonymize refuses rather than emitting PatientIdentityRemoved=NO", () => {
+  it("throws AnonymizationError when a file cannot be fully de-identified", () => {
+    // Burnt-in annotation flag set to YES is a fatal (level-1) warning.
+    const dcm = ctDict({ "00280301": { vr: "CS", Value: ["YES"] } });
+    expect(() => Anonymize(dcm)).toThrow(AnonymizationError);
+  });
+
+  it("never returns a dataset stamped NO", () => {
+    const dcm = ctDict({ "00280301": { vr: "CS", Value: ["YES"] } });
+    let result: TagDict | undefined;
+    try {
+      result = Anonymize(dcm);
+    } catch {
+      result = undefined;
+    }
+    expect(result?.["00120062"]?.Value).not.toEqual(["NO"]);
   });
 });
 
