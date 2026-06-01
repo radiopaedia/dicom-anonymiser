@@ -46,14 +46,15 @@ function validateAplicationEntityVR(tag: TagValue): IValidatorWarning[] {
   return warnings;
 }
 
-// We shouldn't see age string values in anonymized datasets.
+// We shouldn't see age string values in anonymized datasets at all - policy
+// blanks the Patient's Age tag, so any retained age value is a violation.
 function validateAgeStringVR(tag: TagValue): IValidatorWarning[] {
   let values = tag.Value;
 
   let warnings = Array<IValidatorWarning>();
   for (var i = 0; i < values.length; i++) {
     const value = values[i]
-    if (typeof value === "string" && value.length > 0 && !value.match(/^\d{1,3}Y$/)) {
+    if (typeof value === "string" && value.length > 0) {
       warnings.push({
         level: 1,
         text: "Anonymised data should not include age data.",
