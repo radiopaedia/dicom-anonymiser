@@ -371,6 +371,11 @@ function patientModulePolicy(): IPolicy {
     "00100020": {
       action: "replace",
       value: [],
+      description: "Patient ID will be replaced",
+    },
+    "00101020": {
+      action: "replace",
+      value: [],
       description: "Patient size will be replaced",
     },
     "00101030": {
