@@ -51,7 +51,7 @@ describe("Anonymize refuses rather than emitting PatientIdentityRemoved=NO", () 
     expect(() => Anonymize(dcm)).toThrow(AnonymizationError);
   });
 
-  it("never returns a dataset stamped NO", () => {
+  it("does not return a NO-stamped dataset for an un-removable file", () => {
     const dcm = ctDict({ "00280301": { vr: "CS", Value: ["YES"] } });
     let result: TagDict | undefined;
     try {
