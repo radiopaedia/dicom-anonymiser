@@ -63,6 +63,42 @@ describe("Anonymize refuses rather than emitting PatientIdentityRemoved=NO", () 
   });
 });
 
+describe("SOP Instance UID is regenerated, not retained or dropped", () => {
+  // The SOP Common module's instance UID is (0008,0018), not (0020,000D).
+  // It must be rewritten to a hashed value so the original cannot be used to
+  // re-identify the source instance, while staying present (it is Type 1).
+  const HASH_PREFIX = "1.2.826.0.1.3680043.10.341.512.";
+  const ORIGINAL_SOP_INSTANCE_UID = "1.2.840.113619.2.55.3.123456789.1.1";
+
+  it("replaces the original SOP Instance UID with a hashed value", () => {
+    const anon = Anonymize(
+      ctDict({ "00080018": { vr: "UI", Value: [ORIGINAL_SOP_INSTANCE_UID] } })
+    );
+    expect(anon["00080018"].Value[0]).not.toEqual(ORIGINAL_SOP_INSTANCE_UID);
+    expect(anon["00080018"].Value[0]).toMatch(
+      new RegExp("^" + HASH_PREFIX.replace(/\./g, "\\."))
+    );
+  });
+
+  it("does not strip the mandatory SOP Instance UID", () => {
+    const anon = Anonymize(
+      ctDict({ "00080018": { vr: "UI", Value: [ORIGINAL_SOP_INSTANCE_UID] } })
+    );
+    expect(anon["00080018"]).toBeDefined();
+    expect(anon["00080018"].Value).toHaveLength(1);
+  });
+
+  it("is deterministic so cross-file instance references stay consistent", () => {
+    const a = Anonymize(
+      ctDict({ "00080018": { vr: "UI", Value: [ORIGINAL_SOP_INSTANCE_UID] } })
+    );
+    const b = Anonymize(
+      ctDict({ "00080018": { vr: "UI", Value: [ORIGINAL_SOP_INSTANCE_UID] } })
+    );
+    expect(a["00080018"].Value[0]).toEqual(b["00080018"].Value[0]);
+  });
+});
+
 describe("Anonymize strips previously-kept SQ-VR tags", () => {
   it("strips RequestAttributesSequence carrying nested physician PN", () => {
     const { anon, writtenBytes } = anonymiseFixture(

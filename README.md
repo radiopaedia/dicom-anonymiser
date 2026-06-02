@@ -76,7 +76,8 @@ Structural UIDs are rewritten with a cryptographically secure SHA-512 hash (pref
 
 | Tag | Description |
 | --- | --- |
-| `(0020,000D)` | Study Instance UID is hashed to preserve structure. |
+| `(0008,0018)` | SOP Instance UID is hashed to preserve structure. |
+| `(0020,000D)` | Study UID is hashed to preserve structure. |
 | `(0020,000E)` | Series instance UID is hashed to preserve structure. |
 | `(0020,0052)` | Frame of Reference UID is mandatory and is hashed to preserve structure |
 
