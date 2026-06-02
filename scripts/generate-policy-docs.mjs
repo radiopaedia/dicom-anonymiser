@@ -5,9 +5,10 @@
 //
 // The tables cover the whole policy — tags that are blanked/replaced,
 // regenerated, explicitly removed, and kept — for the catch-all policy (the
-// union of every module policy, applied to unrecognised SOP Classes). Tag
-// descriptions are taken verbatim from the policy, which is the single source
-// of truth.
+// union of every module policy, applied to unrecognised SOP Classes). Each
+// row's description is the canonical DICOM tag name from src/TagData.ts, so the
+// "Description" column reads as a consistent label and never restates the
+// action that the surrounding sentence already conveys.
 
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -16,18 +17,26 @@ import { transformSync } from "esbuild";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const policiesPath = path.join(root, "src", "Policies.ts");
+const tagDataPath = path.join(root, "src", "TagData.ts");
 const readmePath = path.join(root, "README.md");
+
+// Transpile a standalone (import-free) TS module and import the result from an
+// in-memory data URL — no build step or temp files.
+async function importStandaloneTs(filePath) {
+  const { code } = transformSync(readFileSync(filePath, "utf8"), {
+    loader: "ts",
+    format: "esm",
+  });
+  const dataUrl =
+    "data:text/javascript;base64," + Buffer.from(code).toString("base64");
+  return (await import(dataUrl)).default;
+}
 
 const BEGIN = "<!-- BEGIN GENERATED POLICY TABLES: regenerate with `npm run update-readme` -->";
 const END = "<!-- END GENERATED POLICY TABLES -->";
 
-// Policies.ts has no imports, so we can transpile it standalone and import the
-// resulting module from an in-memory data URL — no build step or temp files.
-const ts = readFileSync(policiesPath, "utf8");
-const { code } = transformSync(ts, { loader: "ts", format: "esm" });
-const dataUrl =
-  "data:text/javascript;base64," + Buffer.from(code).toString("base64");
-const { default: policyFor } = await import(dataUrl);
+const policyFor = await importStandaloneTs(policiesPath);
+const tagData = await importStandaloneTs(tagDataPath);
 
 // An unrecognised SOP Class UID yields the catch-all whitelist union.
 const policy = policyFor("__catch_all__");
@@ -36,11 +45,25 @@ const formatTag = (id) =>
   `(${id.slice(0, 4).toUpperCase()},${id.slice(4).toUpperCase()})`;
 const escape = (text) => text.replace(/\|/g, "\\|").trim();
 
+// TagData keys are inconsistently cased (mostly upper, but some hex-letter
+// keys are lower), so index by an upper-cased key for a stable lookup.
+const tagNames = new Map(
+  Object.entries(tagData).map(([id, entry]) => [id.toUpperCase(), entry.name])
+);
+
+// The canonical DICOM tag name is the description; fall back to the policy's
+// own description for any tag the dictionary doesn't carry.
+function describe(id, rule) {
+  return tagNames.get(id.toUpperCase()) ?? rule.description;
+}
+
 function table(action) {
   return Object.entries(policy)
     .filter(([id, rule]) => id !== "default" && rule.action === action)
     .sort(([a], [b]) => a.localeCompare(b))
-    .map(([id, rule]) => `| \`${formatTag(id)}\` | ${escape(rule.description)} |`);
+    .map(
+      ([id, rule]) => `| \`${formatTag(id)}\` | ${escape(describe(id, rule))} |`
+    );
 }
 
 const sections = [
