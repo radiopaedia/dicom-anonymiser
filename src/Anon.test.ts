@@ -1,6 +1,13 @@
-import Anonymize from "./Anon";
-import DicomMessage from "./Message";
+import Anonymize, { AnonymizationError } from "./Anon";
+import DicomMessage, { TagDict } from "./Message";
 const fs = require("fs");
+
+// Minimal CT dataset; CT's policy includes the patient module, so age/weight
+// rules apply. SOP Class UID is required for anonymize to pick a policy.
+const CT_SOP = "1.2.840.10008.5.1.4.1.1.2";
+function ctDict(extra: TagDict = {}): TagDict {
+  return { "00080016": { vr: "UI", Value: [CT_SOP] }, ...extra };
+}
 
 function readFileBuffer(path: string): ArrayBuffer {
   const b = fs.readFileSync(path);
@@ -13,6 +20,48 @@ function anonymiseFixture(path: string) {
   const writtenBytes = Buffer.from(dcm.write(anon));
   return { dcm, anon, writtenBytes };
 }
+
+describe("Patient age and weight are dropped, not retained", () => {
+  it("blanks Patient's Age rather than keeping a rounded value", () => {
+    const anon = Anonymize(
+      ctDict({ "00101010": { vr: "AS", Value: ["044Y"] } })
+    );
+    expect(anon["00101010"].Value).toEqual([]);
+  });
+
+  it("blanks Patient Weight rather than bucketing it", () => {
+    const anon = Anonymize(
+      ctDict({ "00101030": { vr: "DS", Value: ["72"] } })
+    );
+    expect(anon["00101030"].Value).toEqual([]);
+  });
+
+  it("stamps PatientIdentityRemoved=YES for a file that carries only an age", () => {
+    const anon = Anonymize(
+      ctDict({ "00101010": { vr: "AS", Value: ["044Y"] } })
+    );
+    expect(anon["00120062"].Value).toEqual(["YES"]);
+  });
+});
+
+describe("Anonymize refuses rather than emitting PatientIdentityRemoved=NO", () => {
+  it("throws AnonymizationError when a file cannot be fully de-identified", () => {
+    // Burnt-in annotation flag set to YES is a fatal (level-1) warning.
+    const dcm = ctDict({ "00280301": { vr: "CS", Value: ["YES"] } });
+    expect(() => Anonymize(dcm)).toThrow(AnonymizationError);
+  });
+
+  it("does not return a NO-stamped dataset for an un-removable file", () => {
+    const dcm = ctDict({ "00280301": { vr: "CS", Value: ["YES"] } });
+    let result: TagDict | undefined;
+    try {
+      result = Anonymize(dcm);
+    } catch {
+      result = undefined;
+    }
+    expect(result?.["00120062"]?.Value).not.toEqual(["NO"]);
+  });
+});
 
 describe("Anonymize strips previously-kept SQ-VR tags", () => {
   it("strips RequestAttributesSequence carrying nested physician PN", () => {
@@ -40,13 +89,19 @@ describe("Anonymize strips previously-kept SQ-VR tags", () => {
   });
 });
 
-describe("Re-anonymising an already-anonymised file only strips SQ tags", () => {
+describe("Re-anonymising an already-anonymised file strips leftover SQ tags", () => {
   // Fixture is a previously-anonymised file that still carries SQ tags
   // (from an older anonymiser that kept them). Re-running anonymise must
   // strip those SQ tags and leave every other tag byte-identical through
   // a write/reparse roundtrip.
-  const FIXTURE = "fixtures/03_reanon_preserves_non_sq.dcm";
+  const FIXTURE = "fixtures/03_anonymised_with_leftover_sq.dcm";
+  // Leftover SQ tags an older anonymiser kept; re-anonymising must remove these.
   const SQ_TAGS_REMOVED = ["00189346", "00400275"];
+  // Tags the policy rewrites rather than removes, so they are present in the
+  // output but legitimately changed: age is blanked and PatientIdentityRemoved
+  // is recomputed. Neither survives a roundtrip unchanged.
+  const POLICY_REWRITES = ["00101010", "00120062"];
+  const ROUNDTRIP_SKIP = [...SQ_TAGS_REMOVED, ...POLICY_REWRITES];
 
   it("removes the leftover SQ tags", () => {
     const { anon } = anonymiseFixture(FIXTURE);
@@ -72,7 +127,7 @@ describe("Re-anonymising an already-anonymised file only strips SQ tags", () => 
       )
     );
 
-    const skip = new Set(SQ_TAGS_REMOVED);
+    const skip = new Set(ROUNDTRIP_SKIP);
     const keys = new Set([
       ...Object.keys(original.dict),
       ...Object.keys(reparsed.dict),

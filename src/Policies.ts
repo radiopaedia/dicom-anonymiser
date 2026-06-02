@@ -15,7 +15,7 @@
 ******************************************************************************/
 
 export type Action = "remove" | "replace" | "keep" | "regenerate";
-export type ReplaceMethod = "hash" | "age" | "weight" | "random";
+export type ReplaceMethod = "hash" | "random";
 
 export interface IPolicy {
   [tagId: string]: {
@@ -57,7 +57,6 @@ function addPolicies(...policies: IPolicy[]): IPolicy {
 function broadlySafeFieldsPolicy(): IPolicy {
   // This is type 2 but useful data
   return {
-    "00041142": {action: "keep", description: "SpecificCharacterSet"},
     "00082122": {action: "keep", description: "Stage number"},
     "00082124": {action: "keep", description: "Stage count"},
     "0008212A": {action: "keep", description: "Number of Views in Stage"},
@@ -364,21 +363,24 @@ function imagePixelModulePolicy(): IPolicy {
 function patientModulePolicy(): IPolicy {
   return {
     "00101010": {
-      action: "regenerate",
-      method: "age",
-      description:
-        "Patient DOB will be rounded to 1 year and replaced if over 90",
+      action: "replace",
+      value: [],
+      description: "Patient age will be replaced",
     },
     "00100020": {
+      action: "replace",
+      value: [],
+      description: "Patient ID will be replaced",
+    },
+    "00101020": {
       action: "replace",
       value: [],
       description: "Patient size will be replaced",
     },
     "00101030": {
-      action: "regenerate",
-      method: "weight",
-      description:
-        "Patient weight will be rounded to nearest 5kg if within 30..140kg, else replaced.",
+      action: "replace",
+      value: [],
+      description: "Patient weight will be replaced",
     },
     "00100040": {
       action: "keep",
