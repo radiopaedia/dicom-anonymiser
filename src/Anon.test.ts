@@ -96,6 +96,9 @@ describe("Re-anonymising an already-anonymised file only strips SQ tags", () => 
   // a write/reparse roundtrip.
   const FIXTURE = "fixtures/03_reanon_preserves_non_sq.dcm";
   const SQ_TAGS_REMOVED = ["00189346", "00400275"];
+  // Also skip tags the policy rewrites rather than removes: age is blanked
+  // and PatientIdentityRemoved is recomputed, so neither survives unchanged.
+  const ROUNDTRIP_SKIP = [...SQ_TAGS_REMOVED, "00101010", "00120062"];
 
   it("removes the leftover SQ tags", () => {
     const { anon } = anonymiseFixture(FIXTURE);
@@ -121,11 +124,7 @@ describe("Re-anonymising an already-anonymised file only strips SQ tags", () => 
       )
     );
 
-    // Tags this policy intentionally rewrites on every run, so they are not
-    // expected to survive a re-anonymise unchanged: age is now blanked, and
-    // PatientIdentityRemoved is recomputed (this fixture was previously stamped
-    // NO by the age-regex bug and now correctly resolves to YES).
-    const skip = new Set([...SQ_TAGS_REMOVED, "00101010", "00120062"]);
+    const skip = new Set(ROUNDTRIP_SKIP);
     const keys = new Set([
       ...Object.keys(original.dict),
       ...Object.keys(reparsed.dict),
