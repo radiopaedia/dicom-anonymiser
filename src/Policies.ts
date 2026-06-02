@@ -395,7 +395,7 @@ function sopCommonModulePolicy(): IPolicy {
     "0020000D": {
       action: "regenerate",
       method: "hash",
-      description: "SOP Storage Instance UID is hashed to preserve structure.",
+      description: "Study Instance UID is hashed to preserve structure.",
     },
   };
 }
