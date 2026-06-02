@@ -47,27 +47,27 @@ These 22 tags are emptied (or set to a fixed non-identifying value such as a zer
 
 | Tag | Description |
 | --- | --- |
-| `(0008,0020)` | Study date is replaced. |
+| `(0008,0020)` | Study Date |
 | `(0008,0021)` | Series Date |
 | `(0008,0022)` | Acquisition Date |
 | `(0008,0023)` | Content Date |
-| `(0008,0030)` | Study time is replaced. |
+| `(0008,0030)` | Study Time |
 | `(0008,0031)` | Series Time |
 | `(0008,0032)` | Acquisition Time |
 | `(0008,0033)` | Content Time |
-| `(0008,0050)` | Accession number is replaced. |
+| `(0008,0050)` | Accession Number |
 | `(0008,0070)` | Manufacturer |
-| `(0008,0090)` | Referring physician is replaced. |
+| `(0008,0090)` | Referring Physician's Name |
 | `(0008,1090)` | Manufacturer's Model Name |
-| `(0010,0020)` | Patient ID will be replaced |
-| `(0010,1010)` | Patient age will be replaced |
-| `(0010,1020)` | Patient size will be replaced |
-| `(0010,1030)` | Patient weight will be replaced |
+| `(0010,0020)` | Patient ID |
+| `(0010,1010)` | Patient's Age |
+| `(0010,1020)` | Patient's Size |
+| `(0010,1030)` | Patient's Weight |
 | `(0018,1000)` | Device Serial Number |
-| `(0018,1020)` | Software Versions |
+| `(0018,1020)` | Software Version(s) |
 | `(0018,1242)` | Actual Frame Duration |
-| `(0020,0010)` | Study ID is replaced. |
-| `(003A,0300)` | Multiplexed Audio Channels Description |
+| `(0020,0010)` | Study ID |
+| `(003A,0300)` | Multiplexed Audio Channels Description Code Sequence |
 | `(0040,0555)` | Acquisition Context Sequence |
 
 ### UIDs that are regenerated
@@ -76,10 +76,10 @@ Structural UIDs are rewritten with a cryptographically secure SHA-512 hash (pref
 
 | Tag | Description |
 | --- | --- |
-| `(0008,0018)` | SOP Instance UID is hashed to preserve structure. |
-| `(0020,000D)` | Study UID is hashed to preserve structure. |
-| `(0020,000E)` | Series instance UID is hashed to preserve structure. |
-| `(0020,0052)` | Frame of Reference UID is mandatory and is hashed to preserve structure |
+| `(0008,0018)` | SOP Instance UID |
+| `(0020,000D)` | Study Instance UID |
+| `(0020,000E)` | Series Instance UID |
+| `(0020,0052)` | Frame of Reference UID |
 
 ### Sequences explicitly removed
 
@@ -87,7 +87,7 @@ These are dropped explicitly (on top of the remove-by-default rule) because they
 
 | Tag | Description |
 | --- | --- |
-| `(0008,2218)` | Anatomic Region Sequence. |
+| `(0008,2218)` | Anatomic Region Sequence |
 | `(0018,9126)` | Volume Localization Sequence |
 | `(0018,9346)` | CTDI Phantom Type Code Sequence |
 | `(0040,0275)` | Request Attributes Sequence |
@@ -107,19 +107,19 @@ The following 237 tags are retained because they are technical imaging/acquisiti
 | `(0008,0008)` | Image Type |
 | `(0008,0016)` | SOP Class UID |
 | `(0008,0060)` | Modality |
-| `(0008,0068)` | Presentation intent type. |
+| `(0008,0068)` | Presentation Intent Type |
 | `(0008,103E)` | Series Description |
-| `(0008,2122)` | Stage number |
-| `(0008,2124)` | Stage count |
+| `(0008,2122)` | Stage Number |
+| `(0008,2124)` | Number of Stages |
 | `(0008,212A)` | Number of Views in Stage |
 | `(0008,9205)` | Pixel Presentation |
 | `(0008,9206)` | Volumetric Properties |
 | `(0008,9207)` | Volume Based Calculation Technique |
 | `(0008,9208)` | Complex Image Component |
 | `(0008,9209)` | Acquisition Contrast |
-| `(0010,0040)` | Patient's sex is not identifying |
+| `(0010,0040)` | Patient's Sex |
 | `(0018,0010)` | Contrast/Bolus Agent |
-| `(0018,0015)` | BodyPartExamined |
+| `(0018,0015)` | Body Part Examined |
 | `(0018,0020)` | Scanning Sequence |
 | `(0018,0021)` | Sequence Variant |
 | `(0018,0022)` | Scan Options |
@@ -128,7 +128,7 @@ The following 237 tags are retained because they are technical imaging/acquisiti
 | `(0018,0050)` | Slice Thickness |
 | `(0018,0060)` | KVP |
 | `(0018,0070)` | Counts Accumulated |
-| `(0018,0080)` | RepetitionTime |
+| `(0018,0080)` | Repetition Time |
 | `(0018,0081)` | Echo Time |
 | `(0018,0082)` | Inversion Time |
 | `(0018,0083)` | Number of Averages |
@@ -137,8 +137,8 @@ The following 237 tags are retained because they are technical imaging/acquisiti
 | `(0018,0086)` | Echo Number(s) |
 | `(0018,0087)` | Magnetic Field Strength |
 | `(0018,0088)` | Spacing Between Slices |
-| `(0018,0089)` | NumberOfPhaseEncodingSteps |
-| `(0018,0090)` | DataCollectionDiameter |
+| `(0018,0089)` | Number of Phase Encoding Steps |
+| `(0018,0090)` | Data Collection Diameter |
 | `(0018,0091)` | Echo Train Length |
 | `(0018,0093)` | Percent Sampling |
 | `(0018,0094)` | Percent Phase Field of View |
@@ -148,13 +148,13 @@ The following 237 tags are retained because they are technical imaging/acquisiti
 | `(0018,1050)` | Spatial Resolution |
 | `(0018,1060)` | Trigger Time |
 | `(0018,1063)` | Frame Time |
-| `(0018,1064)` | Cardiac Framing Type Attribute |
+| `(0018,1064)` | Cardiac Framing Type |
 | `(0018,1065)` | Frame Time Vector |
 | `(0018,1081)` | Low R-R Value |
 | `(0018,1082)` | High R-R Value |
-| `(0018,1083)` | Intervals Acquired Attribute |
-| `(0018,1084)` | Intervals Rejected Attribute |
-| `(0018,1086)` | Skip Beats Attribute |
+| `(0018,1083)` | Intervals Acquired |
+| `(0018,1084)` | Intervals Rejected |
+| `(0018,1086)` | Skip Beats |
 | `(0018,1088)` | Heart Rate |
 | `(0018,1090)` | Cardiac Number of Images |
 | `(0018,1094)` | Trigger Window |
@@ -175,7 +175,7 @@ The following 237 tags are retained because they are technical imaging/acquisiti
 | `(0018,115E)` | Image and Fluoroscopy Area Dose Product |
 | `(0018,1160)` | Filter Type |
 | `(0018,1162)` | Intensifier Size |
-| `(0018,1164)` | Imager pixel spacing |
+| `(0018,1164)` | Imager Pixel Spacing |
 | `(0018,1166)` | Grid |
 | `(0018,1170)` | Generator Power |
 | `(0018,1181)` | Collimator Type |
@@ -193,13 +193,13 @@ The following 237 tags are retained because they are technical imaging/acquisiti
 | `(0018,1316)` | SAR |
 | `(0018,1405)` | Relative X-Ray Exposure |
 | `(0018,1500)` | Positioner Motion |
-| `(0018,1508)` | PositionerType |
+| `(0018,1508)` | Positioner Type |
 | `(0018,1510)` | Positioner Primary Angle |
 | `(0018,1511)` | Positioner Secondary Angle |
 | `(0018,5100)` | Patient Position |
 | `(0018,5101)` | View Position |
 | `(0018,7001)` | Detector Temperature |
-| `(0018,7004)` | Detector type. |
+| `(0018,7004)` | Detector Type |
 | `(0018,7006)` | Detector Description |
 | `(0018,701A)` | Detector Binning |
 | `(0018,7030)` | Field of View Origin |
@@ -211,26 +211,26 @@ The following 237 tags are retained because they are technical imaging/acquisiti
 | `(0018,7060)` | Exposure Control Mode |
 | `(0018,7062)` | Exposure Control Mode Description |
 | `(0018,9004)` | Content Qualification |
-| `(0018,9037)` | Cardiac Synchronization Technique Attribute |
+| `(0018,9037)` | Cardiac Synchronization Technique |
 | `(0018,9052)` | Spectral Width |
 | `(0018,9053)` | Chemical Shift Reference |
-| `(0018,9059)` | Decoupling |
-| `(0018,9060)` | Decoupled Nucleus |
-| `(0018,9061)` | Decoupled Frequency |
-| `(0018,9062)` | Decoupling Method |
-| `(0018,9063)` | Decoupling Chemical Shift Reference |
+| `(0018,9059)` | De-coupling |
+| `(0018,9060)` | De-coupled Nucleus |
+| `(0018,9061)` | De-coupling Frequency |
+| `(0018,9062)` | De-coupling Method |
+| `(0018,9063)` | De-coupling Chemical Shift Reference |
 | `(0018,9065)` | Time Domain Filtering |
 | `(0018,9066)` | Number of Zero Fills |
 | `(0018,9067)` | Baseline Correction |
-| `(0018,9070)` | Cardiac R-R Interval Specified Attribute |
-| `(0018,9085)` | Cardiac Signal Source Attribute |
+| `(0018,9070)` | Cardiac R-R Interval Specified |
+| `(0018,9085)` | Cardiac Signal Source |
 | `(0018,9098)` | Transmitter Frequency |
 | `(0018,9101)` | Frequency Correction |
-| `(0018,9169)` | Cardiac Beat Rejection Technique Attribute |
-| `(0018,9170)` | Respiratory Motion Compensation Technique Attribute |
-| `(0018,9171)` | Respiratory Signal Source Attribute |
-| `(0018,9172)` | Bulk Motion Compensation Technique Attribute |
-| `(0018,9173)` | Bulk Motion Signal Source Attribute |
+| `(0018,9169)` | Cardiac Beat Rejection Technique |
+| `(0018,9170)` | Respiratory Motion Compensation Technique |
+| `(0018,9171)` | Respiratory Signal Source |
+| `(0018,9172)` | Bulk Motion Compensation Technique |
+| `(0018,9173)` | Bulk Motion Signal Source |
 | `(0018,9198)` | First Order Phase Correction |
 | `(0018,9199)` | Water Referenced Phase Correction |
 | `(0018,9306)` | Single Collimation Width |
@@ -245,19 +245,19 @@ The following 237 tags are retained because they are technical imaging/acquisiti
 | `(0018,9352)` | Calcium Scoring Mass Factor Device |
 | `(0018,9559)` | Positioner Primary Angle Direction |
 | `(0020,0011)` | Series Number |
-| `(0020,0012)` | Acquisition number |
+| `(0020,0012)` | Acquisition Number |
 | `(0020,0013)` | Instance Number |
 | `(0020,0020)` | Patient Orientation |
 | `(0020,0032)` | Image Position (Patient) |
 | `(0020,0037)` | Image Orientation (Patient) |
 | `(0020,0060)` | Laterality |
-| `(0020,0062)` | ImageLaterality |
+| `(0020,0062)` | Image Laterality |
 | `(0020,1002)` | Images in Acquisition |
 | `(0020,1040)` | Position Reference Indicator |
 | `(0020,1041)` | Slice Location |
-| `(0020,9250)` | Respiratory Trigger Type Attribute |
-| `(0020,9256)` | Respiratory Trigger Delay Threshold Attribute |
-| `(0028,0002)` | Samples per pixel. |
+| `(0020,9250)` | Respiratory Trigger Type |
+| `(0020,9256)` | Respiratory Trigger Delay Threshold |
+| `(0028,0002)` | Samples per Pixel |
 | `(0028,0004)` | Photometric Interpretation |
 | `(0028,0006)` | Planar Configuration |
 | `(0028,0008)` | Number of Frames |
@@ -268,18 +268,18 @@ The following 237 tags are retained because they are technical imaging/acquisiti
 | `(0028,0034)` | Pixel Aspect Ratio |
 | `(0028,0100)` | Bits Allocated |
 | `(0028,0101)` | Bits Stored |
-| `(0028,0102)` | High Bit, required to decode pixel data |
+| `(0028,0102)` | High Bit |
 | `(0028,0103)` | Pixel Representation |
 | `(0028,0106)` | Smallest Image Pixel Value |
 | `(0028,0107)` | Largest Image Pixel Value |
-| `(0028,0120)` | Pixel Padding Value. |
+| `(0028,0120)` | Pixel Padding Value |
 | `(0028,0121)` | Pixel Padding Range Limit |
 | `(0028,0300)` | Quality Control Image |
 | `(0028,0301)` | Burned In Annotation |
 | `(0028,0302)` | Recognizable Visual Features |
 | `(0028,0A04)` | Pixel Spacing Calibration Description |
-| `(0028,1040)` | Pixel intensity relationship |
-| `(0028,1041)` | Pixel intensity relationship sign |
+| `(0028,1040)` | Pixel Intensity Relationship |
+| `(0028,1041)` | Pixel Intensity Relationship Sign |
 | `(0028,1050)` | Window Center |
 | `(0028,1051)` | Window Width |
 | `(0028,1052)` | Rescale Intercept |
@@ -298,7 +298,7 @@ The following 237 tags are retained because they are technical imaging/acquisiti
 | `(0028,1223)` | Segmented Blue Palette Color Lookup Table Data |
 | `(0028,1300)` | Breast Implant Present |
 | `(0028,2110)` | Lossy Image Compression |
-| `(0028,2112)` | Lossy Image Ratio |
+| `(0028,2112)` | Lossy Image Compression Ratio |
 | `(0028,2114)` | Lossy Image Compression Method |
 | `(0028,6010)` | Representative Frame Number |
 | `(0028,9001)` | Data Point Rows |
@@ -309,7 +309,7 @@ The following 237 tags are retained because they are technical imaging/acquisiti
 | `(0040,0301)` | Total Number of Exposures |
 | `(0040,0314)` | Half Value Layer |
 | `(0040,0316)` | Organ Dose |
-| `(0040,0318)` | OrganExposed |
+| `(0040,0318)` | Organ Exposed |
 | `(0040,8302)` | Entrance Dose in mGy |
 | `(0054,0010)` | Energy Window Vector |
 | `(0054,0011)` | Number of Energy Windows |
