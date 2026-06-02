@@ -57,7 +57,6 @@ function addPolicies(...policies: IPolicy[]): IPolicy {
 function broadlySafeFieldsPolicy(): IPolicy {
   // This is type 2 but useful data
   return {
-    "00041142": {action: "keep", description: "SpecificCharacterSet"},
     "00082122": {action: "keep", description: "Stage number"},
     "00082124": {action: "keep", description: "Stage count"},
     "0008212A": {action: "keep", description: "Number of Views in Stage"},
