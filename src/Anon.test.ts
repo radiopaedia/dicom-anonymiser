@@ -89,16 +89,19 @@ describe("Anonymize strips previously-kept SQ-VR tags", () => {
   });
 });
 
-describe("Re-anonymising an already-anonymised file only strips SQ tags", () => {
+describe("Re-anonymising an already-anonymised file strips leftover SQ tags", () => {
   // Fixture is a previously-anonymised file that still carries SQ tags
   // (from an older anonymiser that kept them). Re-running anonymise must
   // strip those SQ tags and leave every other tag byte-identical through
   // a write/reparse roundtrip.
-  const FIXTURE = "fixtures/03_reanon_preserves_non_sq.dcm";
+  const FIXTURE = "fixtures/03_anonymised_with_leftover_sq.dcm";
+  // Leftover SQ tags an older anonymiser kept; re-anonymising must remove these.
   const SQ_TAGS_REMOVED = ["00189346", "00400275"];
-  // Also skip tags the policy rewrites rather than removes: age is blanked
-  // and PatientIdentityRemoved is recomputed, so neither survives unchanged.
-  const ROUNDTRIP_SKIP = [...SQ_TAGS_REMOVED, "00101010", "00120062"];
+  // Tags the policy rewrites rather than removes, so they are present in the
+  // output but legitimately changed: age is blanked and PatientIdentityRemoved
+  // is recomputed. Neither survives a roundtrip unchanged.
+  const POLICY_REWRITES = ["00101010", "00120062"];
+  const ROUNDTRIP_SKIP = [...SQ_TAGS_REMOVED, ...POLICY_REWRITES];
 
   it("removes the leftover SQ tags", () => {
     const { anon } = anonymiseFixture(FIXTURE);
