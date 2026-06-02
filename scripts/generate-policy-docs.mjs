@@ -101,7 +101,7 @@ const begin = readme.indexOf(BEGIN);
 const end = readme.indexOf(END);
 if (begin === -1 || end === -1) {
   throw new Error(
-    `Could not find the ${BEGIN} / ${END} markers in README.md — ` +
+    "Could not find the begin/end markers in README.md — " +
       "add them around the generated policy tables first."
   );
 }
