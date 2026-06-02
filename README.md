@@ -33,6 +33,15 @@ The application explicitly supports the following DICOM SOP Classes:
 The policy (src/Policies.ts) for a given SOP Class can either remove, replace or regenerate a tag value.
 DICOM uses UIDs to structure a series across multiple files. Where necessary, these UIDS are regenerated using a cryptographically secure SHA-512 hash. Regenerated UIDS can be identified by the prefix "1.2.826.0.1.3680043.10.341." and do not include personal information.
 
+## What is removed and what is kept
+
+The anonymiser works on a strict **whitelist** basis: every tag is removed by default, and only the tags listed below survive. The complete policy lives in [`src/Policies.ts`](src/Policies.ts), which is the authoritative source — the tables here are generated from it.
+
+The lists below show the union of every module policy (the "catch-all" whitelist applied to unrecognised SOP Classes). Recognised SOP Classes apply a few additional per-class overrides — most notably the SOP Class UID `(0008,0016)` is set to the declared class, and a small number of image-type/date fields are blanked — so consult `src/Policies.ts` for the exact policy for a given class.
+
+<!-- BEGIN GENERATED POLICY TABLES: regenerate with `npm run update-readme` -->
+
+<!-- END GENERATED POLICY TABLES -->
 
 ### Usage
 
@@ -54,5 +63,8 @@ The anonymiser won't be able to identify or remove burnt-in information within a
 - `npm install` to install dependencies
 - `npm start` to start the local development server
 - `npm run build` to generate the JS output in `lib` from the TypeScript sources.
+- `npm run update-readme` to regenerate the policy tables above from `src/Policies.ts`.
 
-Please note that changes to `lib` are to be committed back to the repository.
+If you change the policy in `src/Policies.ts`, run `npm run update-readme` and
+commit the regenerated tables as part of your PR. Likewise, changes to `lib`
+are to be committed back to the repository.
