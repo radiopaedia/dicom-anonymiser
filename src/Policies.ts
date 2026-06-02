@@ -392,10 +392,10 @@ function patientModulePolicy(): IPolicy {
 function sopCommonModulePolicy(): IPolicy {
   return {
     "00080016": { action: "keep", description: "SOP Class UID" },
-    "0020000D": {
+    "00080018": {
       action: "regenerate",
       method: "hash",
-      description: "SOP Storage Instance UID is hashed to preserve structure.",
+      description: "SOP Instance UID is hashed to preserve structure.",
     },
   };
 }
@@ -504,11 +504,11 @@ function paletteColorLookupTablePolicy(): IPolicy {
     },
     "00281222": {
       action: "keep",
-      description: "Segmented Blue Palette Color Lookup Table Data",
+      description: "Segmented Green Palette Color Lookup Table Data",
     },
     "00281223": {
       action: "keep",
-      description: "Segmented Green Palette Color Lookup Table Data",
+      description: "Segmented Blue Palette Color Lookup Table Data",
     },
   };
 }
@@ -624,7 +624,7 @@ function mrSpectroscopyModulePolicy(): IPolicy {
       action: "keep",
       description: "Decoupling Chemical Shift Reference",
     },
-    "00189065": { action: "keep", description: "Time Domain Fitting" },
+    "00189065": { action: "keep", description: "Time Domain Filtering" },
     "00189066": { action: "keep", description: "Number of Zero Fills" },
     "00189067": { action: "keep", description: "Baseline Correction" },
     "00189101": { action: "keep", description: "Frequency Correction" },
@@ -759,7 +759,7 @@ function nmMultiframeModulePolicy(): IPolicy {
     "00540031": { action: "keep", description: "Number of Phases" },
     "00540050": { action: "keep", description: "Rotation Vector" },
     "00540051": { action: "keep", description: "Number of Rotations" },
-    "00540060": { action: "keep", description: "R-R Internal Vector" },
+    "00540060": { action: "keep", description: "R-R Interval Vector" },
     "00540061": { action: "keep", description: "Number of R-R Intervals" },
     "00540070": { action: "keep", description: "Time Slot Vector" },
     "00540071": { action: "keep", description: "Number of Time Slots" },

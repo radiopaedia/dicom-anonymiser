@@ -1,6 +1,6 @@
 {
   "name": "dicomanon",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "license": "AGPL-3.0-only",
   "description": "Radiopaedia DICOM Anonymizer",
   "author": "plwp",
@@ -20,7 +20,8 @@
     "build": "npm run esbuild && npm run esbuild-require && npm run typings",
     "esbuild": "esbuild src/index.ts src/Message.ts --bundle --sourcemap --format=esm --outdir=lib --minify-whitespace --minify-identifiers --minify-syntax",
     "esbuild-require": "esbuild src/index.ts --bundle --sourcemap --format=cjs --out-extension:.js=.cjs --outdir=lib --minify-whitespace --minify-identifiers --minify-syntax",
-    "test": "jest --silent=false"
+    "test": "jest --silent=false",
+    "update-readme": "node scripts/generate-policy-docs.mjs"
   },
   "devDependencies": {
     "@types/jest": "^29.5.14",
