@@ -384,7 +384,12 @@ export default function validate(dcm: TagDict): Warnings {
       var warningsList = validateDict[vrKey](dcm[key]);
       warnings[key] = warningsList;
 
-      // Check if the annotations are burnt in:
+      // Check if the annotations are burnt in. This is non-fatal (level 2): we
+      // only de-identify metadata, never pixel data, so refusing the file does
+      // not make anyone safer - it just blocks legitimate uploads. On plain
+      // radiographs BurnedInAnnotation=YES overwhelmingly means benign laterality
+      // or technique markers, not patient PHI. We surface it as a possible leak
+      // and leave the call to the (human) uploader.
       if (key == "00280301") {
         var values = dcm[key]["Value"];
         for (var i = 0; i < values.length; i++) {
@@ -392,7 +397,7 @@ export default function validate(dcm: TagDict): Warnings {
           if (values[i] != "NO") {
             warnings["00280301"] = [
               {
-                level: 1,
+                level: 2,
                 text:
                   "Image contains burnt-in annotations which cannot be anonymized.",
               },
