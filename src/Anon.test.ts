@@ -45,14 +45,22 @@ describe("Patient age and weight are dropped, not retained", () => {
 });
 
 describe("Anonymize refuses rather than emitting PatientIdentityRemoved=NO", () => {
+  // Recognizable visual features means the patient is identifiable from the
+  // image itself (e.g. a face render), so it stays fatal. MR's policy keeps
+  // this tag, so the warning survives into validation.
+  const MR_SOP = "1.2.840.10008.5.1.4.1.1.4";
+  function mrDict(extra: TagDict = {}): TagDict {
+    return { "00080016": { vr: "UI", Value: [MR_SOP] }, ...extra };
+  }
+
   it("throws AnonymizationError when a file cannot be fully de-identified", () => {
-    // Burnt-in annotation flag set to YES is a fatal (level-1) warning.
-    const dcm = ctDict({ "00280301": { vr: "CS", Value: ["YES"] } });
+    // Recognizable visual features set to YES is a fatal (level-1) warning.
+    const dcm = mrDict({ "00280302": { vr: "CS", Value: ["YES"] } });
     expect(() => Anonymize(dcm)).toThrow(AnonymizationError);
   });
 
   it("does not return a NO-stamped dataset for an un-removable file", () => {
-    const dcm = ctDict({ "00280301": { vr: "CS", Value: ["YES"] } });
+    const dcm = mrDict({ "00280302": { vr: "CS", Value: ["YES"] } });
     let result: TagDict | undefined;
     try {
       result = Anonymize(dcm);
@@ -60,6 +68,17 @@ describe("Anonymize refuses rather than emitting PatientIdentityRemoved=NO", () 
       result = undefined;
     }
     expect(result?.["00120062"]?.Value).not.toEqual(["NO"]);
+  });
+});
+
+describe("Anonymize tolerates burnt-in annotations", () => {
+  // Burnt-in annotation is non-fatal: we only de-identify metadata (never pixel
+  // data), so refusing the file does not help, and on plain films YES usually
+  // means a benign laterality/technique marker. The file is still emitted and
+  // stamped PatientIdentityRemoved=YES. CT's policy keeps this tag.
+  it("anonymises the file and stamps PatientIdentityRemoved=YES", () => {
+    const anon = Anonymize(ctDict({ "00280301": { vr: "CS", Value: ["YES"] } }));
+    expect(anon["00120062"].Value).toEqual(["YES"]);
   });
 });
 
