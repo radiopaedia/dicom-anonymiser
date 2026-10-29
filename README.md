@@ -99,7 +99,7 @@ These are dropped explicitly (on top of the remove-by-default rule) because they
 
 ### Tags kept unchanged
 
-The following 237 tags are retained because they are technical imaging/acquisition metadata with no patient-identifying content. Any tag not listed here is removed.
+The following 241 tags are retained because they are technical imaging/acquisition metadata with no patient-identifying content. Any tag not listed here is removed.
 
 | Tag | Description |
 | --- | --- |
@@ -337,9 +337,164 @@ The following 237 tags are retained because they are technical imaging/acquisiti
 | `(0054,1321)` | Decay Factor |
 | `(0054,1330)` | Image Index |
 | `(2050,0020)` | Presentation LUT Shape |
+| `(5200,9229)` | Shared Functional Groups Sequence |
+| `(5200,9230)` | Per-frame Functional Groups Sequence |
 | `(5600,0010)` | First Order Phase Correction Angle |
 | `(5600,0020)` | Spectroscopy Data |
+| `(7FE0,0001)` | Extended Offset Table |
+| `(7FE0,0002)` | Extended Offset Table Lengths |
 | `(7FE0,0010)` | Pixel Data |
+
+### Inside kept sequences
+
+Kept sequences are cleaned item by item with their own whitelist: anything not listed here is removed from each item. These 144 rules apply inside the multi-frame functional groups; the reasons, with PS3.15 Table E.1-1 citations, are in `src/Policies.ts`.
+
+| Path | Action | Description |
+| --- | --- | --- |
+| `(5200,9229)` > `(0008,9124)` | replace | Derivation Image Sequence |
+| `(5200,9229)` > `(0018,9226)` | keep | MR Image Frame Type Sequence |
+| `(5200,9229)` > `(0018,9226)` > `(0008,9007)` | keep | Frame Type |
+| `(5200,9229)` > `(0018,9226)` > `(0008,9205)` | keep | Pixel Presentation |
+| `(5200,9229)` > `(0018,9226)` > `(0008,9206)` | keep | Volumetric Properties |
+| `(5200,9229)` > `(0018,9226)` > `(0008,9207)` | keep | Volume Based Calculation Technique |
+| `(5200,9229)` > `(0018,9226)` > `(0008,9208)` | keep | Complex Image Component |
+| `(5200,9229)` > `(0018,9226)` > `(0008,9209)` | keep | Acquisition Contrast |
+| `(5200,9229)` > `(0018,9329)` | keep | CT Image Frame Type Sequence |
+| `(5200,9229)` > `(0018,9329)` > `(0008,9007)` | keep | Frame Type |
+| `(5200,9229)` > `(0018,9329)` > `(0008,9205)` | keep | Pixel Presentation |
+| `(5200,9229)` > `(0018,9329)` > `(0008,9206)` | keep | Volumetric Properties |
+| `(5200,9229)` > `(0018,9329)` > `(0008,9207)` | keep | Volume Based Calculation Technique |
+| `(5200,9229)` > `(0018,9329)` > `(0008,9208)` | keep | Complex Image Component |
+| `(5200,9229)` > `(0018,9329)` > `(0008,9209)` | keep | Acquisition Contrast |
+| `(5200,9229)` > `(0018,9477)` | keep | Irradiation Event Identification Sequence |
+| `(5200,9229)` > `(0018,9477)` > `(0008,3010)` | regenerate (hash) | Irradiation Event UID |
+| `(5200,9229)` > `(0020,9071)` | keep | Frame Anatomy Sequence |
+| `(5200,9229)` > `(0020,9071)` > `(0008,2218)` | keep | Anatomic Region Sequence |
+| `(5200,9229)` > `(0020,9071)` > `(0008,2218)` > `(0008,0100)` | keep | Code Value |
+| `(5200,9229)` > `(0020,9071)` > `(0008,2218)` > `(0008,0102)` | keep | Coding Scheme Designator |
+| `(5200,9229)` > `(0020,9071)` > `(0008,2218)` > `(0008,0103)` | keep | Coding Scheme Version |
+| `(5200,9229)` > `(0020,9071)` > `(0008,2218)` > `(0008,0104)` | keep | Code Meaning |
+| `(5200,9229)` > `(0020,9071)` > `(0008,2218)` > `(0008,0119)` | keep | Long Code Value |
+| `(5200,9229)` > `(0020,9071)` > `(0008,2218)` > `(0008,0120)` | keep | URN Code Value |
+| `(5200,9229)` > `(0020,9071)` > `(0020,9072)` | keep | Frame Laterality |
+| `(5200,9229)` > `(0020,9111)` | keep | Frame Content Sequence |
+| `(5200,9229)` > `(0020,9111)` > `(0018,9074)` | replace | Frame Acquisition DateTime |
+| `(5200,9229)` > `(0020,9111)` > `(0018,9151)` | replace | Frame Reference DateTime |
+| `(5200,9229)` > `(0020,9111)` > `(0018,9214)` | keep | Respiratory Cycle Position |
+| `(5200,9229)` > `(0020,9111)` > `(0018,9220)` | keep | Frame Acquisition Duration |
+| `(5200,9229)` > `(0020,9111)` > `(0018,9236)` | keep | Cardiac Cycle Position |
+| `(5200,9229)` > `(0020,9111)` > `(0020,9056)` | keep | Stack ID |
+| `(5200,9229)` > `(0020,9111)` > `(0020,9057)` | keep | In-Stack Position Number |
+| `(5200,9229)` > `(0020,9111)` > `(0020,9128)` | keep | Temporal Position Index |
+| `(5200,9229)` > `(0020,9111)` > `(0020,9156)` | keep | Frame Acquisition Number |
+| `(5200,9229)` > `(0020,9111)` > `(0020,9157)` | keep | Dimension Index Values |
+| `(5200,9229)` > `(0020,9111)` > `(0020,9158)` | remove | Frame Comments |
+| `(5200,9229)` > `(0020,9111)` > `(0020,9453)` | remove | Frame Label |
+| `(5200,9229)` > `(0020,9113)` | keep | Plane Position Sequence |
+| `(5200,9229)` > `(0020,9113)` > `(0020,0032)` | keep | Image Position (Patient) |
+| `(5200,9229)` > `(0020,9116)` | keep | Plane Orientation Sequence |
+| `(5200,9229)` > `(0020,9116)` > `(0020,0037)` | keep | Image Orientation (Patient) |
+| `(5200,9229)` > `(0028,9110)` | keep | Pixel Measures Sequence |
+| `(5200,9229)` > `(0028,9110)` > `(0018,0050)` | keep | Slice Thickness |
+| `(5200,9229)` > `(0028,9110)` > `(0018,0088)` | keep | Spacing Between Slices |
+| `(5200,9229)` > `(0028,9110)` > `(0028,0030)` | keep | Pixel Spacing |
+| `(5200,9229)` > `(0028,9132)` | keep | Frame VOI LUT Sequence |
+| `(5200,9229)` > `(0028,9132)` > `(0028,1050)` | keep | Window Center |
+| `(5200,9229)` > `(0028,9132)` > `(0028,1051)` | keep | Window Width |
+| `(5200,9229)` > `(0028,9132)` > `(0028,1056)` | keep | VOI LUT Function |
+| `(5200,9229)` > `(0028,9145)` | keep | Pixel Value Transformation Sequence |
+| `(5200,9229)` > `(0028,9145)` > `(0028,1052)` | keep | Rescale Intercept |
+| `(5200,9229)` > `(0028,9145)` > `(0028,1053)` | keep | Rescale Slope |
+| `(5200,9229)` > `(0028,9145)` > `(0028,1054)` | keep | Rescale Type |
+| `(5200,9229)` > `(0040,9096)` | keep | Real World Value Mapping Sequence |
+| `(5200,9229)` > `(0040,9096)` > `(0028,3003)` | replace | LUT Explanation |
+| `(5200,9229)` > `(0040,9096)` > `(0040,08EA)` | keep | Measurement Units Code Sequence |
+| `(5200,9229)` > `(0040,9096)` > `(0040,08EA)` > `(0008,0100)` | keep | Code Value |
+| `(5200,9229)` > `(0040,9096)` > `(0040,08EA)` > `(0008,0102)` | keep | Coding Scheme Designator |
+| `(5200,9229)` > `(0040,9096)` > `(0040,08EA)` > `(0008,0103)` | keep | Coding Scheme Version |
+| `(5200,9229)` > `(0040,9096)` > `(0040,08EA)` > `(0008,0104)` | keep | Code Meaning |
+| `(5200,9229)` > `(0040,9096)` > `(0040,08EA)` > `(0008,0119)` | keep | Long Code Value |
+| `(5200,9229)` > `(0040,9096)` > `(0040,08EA)` > `(0008,0120)` | keep | URN Code Value |
+| `(5200,9229)` > `(0040,9096)` > `(0040,9210)` | replace | LUT Label |
+| `(5200,9229)` > `(0040,9096)` > `(0040,9211)` | keep | Real World Value Last Value Mapped |
+| `(5200,9229)` > `(0040,9096)` > `(0040,9212)` | keep | Real World Value LUT Data |
+| `(5200,9229)` > `(0040,9096)` > `(0040,9213)` | keep | Double Float Real World Value Last Value Mapped |
+| `(5200,9229)` > `(0040,9096)` > `(0040,9214)` | keep | Double Float Real World Value First Value Mapped |
+| `(5200,9229)` > `(0040,9096)` > `(0040,9216)` | keep | Real World Value First Value Mapped |
+| `(5200,9229)` > `(0040,9096)` > `(0040,9224)` | keep | Real World Value Intercept |
+| `(5200,9229)` > `(0040,9096)` > `(0040,9225)` | keep | Real World Value Slope |
+| `(5200,9230)` > `(0008,9124)` | replace | Derivation Image Sequence |
+| `(5200,9230)` > `(0018,9226)` | keep | MR Image Frame Type Sequence |
+| `(5200,9230)` > `(0018,9226)` > `(0008,9007)` | keep | Frame Type |
+| `(5200,9230)` > `(0018,9226)` > `(0008,9205)` | keep | Pixel Presentation |
+| `(5200,9230)` > `(0018,9226)` > `(0008,9206)` | keep | Volumetric Properties |
+| `(5200,9230)` > `(0018,9226)` > `(0008,9207)` | keep | Volume Based Calculation Technique |
+| `(5200,9230)` > `(0018,9226)` > `(0008,9208)` | keep | Complex Image Component |
+| `(5200,9230)` > `(0018,9226)` > `(0008,9209)` | keep | Acquisition Contrast |
+| `(5200,9230)` > `(0018,9329)` | keep | CT Image Frame Type Sequence |
+| `(5200,9230)` > `(0018,9329)` > `(0008,9007)` | keep | Frame Type |
+| `(5200,9230)` > `(0018,9329)` > `(0008,9205)` | keep | Pixel Presentation |
+| `(5200,9230)` > `(0018,9329)` > `(0008,9206)` | keep | Volumetric Properties |
+| `(5200,9230)` > `(0018,9329)` > `(0008,9207)` | keep | Volume Based Calculation Technique |
+| `(5200,9230)` > `(0018,9329)` > `(0008,9208)` | keep | Complex Image Component |
+| `(5200,9230)` > `(0018,9329)` > `(0008,9209)` | keep | Acquisition Contrast |
+| `(5200,9230)` > `(0018,9477)` | keep | Irradiation Event Identification Sequence |
+| `(5200,9230)` > `(0018,9477)` > `(0008,3010)` | regenerate (hash) | Irradiation Event UID |
+| `(5200,9230)` > `(0020,9071)` | keep | Frame Anatomy Sequence |
+| `(5200,9230)` > `(0020,9071)` > `(0008,2218)` | keep | Anatomic Region Sequence |
+| `(5200,9230)` > `(0020,9071)` > `(0008,2218)` > `(0008,0100)` | keep | Code Value |
+| `(5200,9230)` > `(0020,9071)` > `(0008,2218)` > `(0008,0102)` | keep | Coding Scheme Designator |
+| `(5200,9230)` > `(0020,9071)` > `(0008,2218)` > `(0008,0103)` | keep | Coding Scheme Version |
+| `(5200,9230)` > `(0020,9071)` > `(0008,2218)` > `(0008,0104)` | keep | Code Meaning |
+| `(5200,9230)` > `(0020,9071)` > `(0008,2218)` > `(0008,0119)` | keep | Long Code Value |
+| `(5200,9230)` > `(0020,9071)` > `(0008,2218)` > `(0008,0120)` | keep | URN Code Value |
+| `(5200,9230)` > `(0020,9071)` > `(0020,9072)` | keep | Frame Laterality |
+| `(5200,9230)` > `(0020,9111)` | keep | Frame Content Sequence |
+| `(5200,9230)` > `(0020,9111)` > `(0018,9074)` | replace | Frame Acquisition DateTime |
+| `(5200,9230)` > `(0020,9111)` > `(0018,9151)` | replace | Frame Reference DateTime |
+| `(5200,9230)` > `(0020,9111)` > `(0018,9214)` | keep | Respiratory Cycle Position |
+| `(5200,9230)` > `(0020,9111)` > `(0018,9220)` | keep | Frame Acquisition Duration |
+| `(5200,9230)` > `(0020,9111)` > `(0018,9236)` | keep | Cardiac Cycle Position |
+| `(5200,9230)` > `(0020,9111)` > `(0020,9056)` | keep | Stack ID |
+| `(5200,9230)` > `(0020,9111)` > `(0020,9057)` | keep | In-Stack Position Number |
+| `(5200,9230)` > `(0020,9111)` > `(0020,9128)` | keep | Temporal Position Index |
+| `(5200,9230)` > `(0020,9111)` > `(0020,9156)` | keep | Frame Acquisition Number |
+| `(5200,9230)` > `(0020,9111)` > `(0020,9157)` | keep | Dimension Index Values |
+| `(5200,9230)` > `(0020,9111)` > `(0020,9158)` | remove | Frame Comments |
+| `(5200,9230)` > `(0020,9111)` > `(0020,9453)` | remove | Frame Label |
+| `(5200,9230)` > `(0020,9113)` | keep | Plane Position Sequence |
+| `(5200,9230)` > `(0020,9113)` > `(0020,0032)` | keep | Image Position (Patient) |
+| `(5200,9230)` > `(0020,9116)` | keep | Plane Orientation Sequence |
+| `(5200,9230)` > `(0020,9116)` > `(0020,0037)` | keep | Image Orientation (Patient) |
+| `(5200,9230)` > `(0028,9110)` | keep | Pixel Measures Sequence |
+| `(5200,9230)` > `(0028,9110)` > `(0018,0050)` | keep | Slice Thickness |
+| `(5200,9230)` > `(0028,9110)` > `(0018,0088)` | keep | Spacing Between Slices |
+| `(5200,9230)` > `(0028,9110)` > `(0028,0030)` | keep | Pixel Spacing |
+| `(5200,9230)` > `(0028,9132)` | keep | Frame VOI LUT Sequence |
+| `(5200,9230)` > `(0028,9132)` > `(0028,1050)` | keep | Window Center |
+| `(5200,9230)` > `(0028,9132)` > `(0028,1051)` | keep | Window Width |
+| `(5200,9230)` > `(0028,9132)` > `(0028,1056)` | keep | VOI LUT Function |
+| `(5200,9230)` > `(0028,9145)` | keep | Pixel Value Transformation Sequence |
+| `(5200,9230)` > `(0028,9145)` > `(0028,1052)` | keep | Rescale Intercept |
+| `(5200,9230)` > `(0028,9145)` > `(0028,1053)` | keep | Rescale Slope |
+| `(5200,9230)` > `(0028,9145)` > `(0028,1054)` | keep | Rescale Type |
+| `(5200,9230)` > `(0040,9096)` | keep | Real World Value Mapping Sequence |
+| `(5200,9230)` > `(0040,9096)` > `(0028,3003)` | replace | LUT Explanation |
+| `(5200,9230)` > `(0040,9096)` > `(0040,08EA)` | keep | Measurement Units Code Sequence |
+| `(5200,9230)` > `(0040,9096)` > `(0040,08EA)` > `(0008,0100)` | keep | Code Value |
+| `(5200,9230)` > `(0040,9096)` > `(0040,08EA)` > `(0008,0102)` | keep | Coding Scheme Designator |
+| `(5200,9230)` > `(0040,9096)` > `(0040,08EA)` > `(0008,0103)` | keep | Coding Scheme Version |
+| `(5200,9230)` > `(0040,9096)` > `(0040,08EA)` > `(0008,0104)` | keep | Code Meaning |
+| `(5200,9230)` > `(0040,9096)` > `(0040,08EA)` > `(0008,0119)` | keep | Long Code Value |
+| `(5200,9230)` > `(0040,9096)` > `(0040,08EA)` > `(0008,0120)` | keep | URN Code Value |
+| `(5200,9230)` > `(0040,9096)` > `(0040,9210)` | replace | LUT Label |
+| `(5200,9230)` > `(0040,9096)` > `(0040,9211)` | keep | Real World Value Last Value Mapped |
+| `(5200,9230)` > `(0040,9096)` > `(0040,9212)` | keep | Real World Value LUT Data |
+| `(5200,9230)` > `(0040,9096)` > `(0040,9213)` | keep | Double Float Real World Value Last Value Mapped |
+| `(5200,9230)` > `(0040,9096)` > `(0040,9214)` | keep | Double Float Real World Value First Value Mapped |
+| `(5200,9230)` > `(0040,9096)` > `(0040,9216)` | keep | Real World Value First Value Mapped |
+| `(5200,9230)` > `(0040,9096)` > `(0040,9224)` | keep | Real World Value Intercept |
+| `(5200,9230)` > `(0040,9096)` > `(0040,9225)` | keep | Real World Value Slope |
 
 <!-- END GENERATED POLICY TABLES -->
 

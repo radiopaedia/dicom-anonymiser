@@ -2,6 +2,16 @@ import { BufferStream } from "./BufferStream";
 import { NormalizedSyntax, TagDict, TagValueEntry } from "./Message";
 import Tag from "./Tag";
 export declare function tagFromNumbers(group: number, element: number): Tag;
+export type EncapsulationErrorCode = "ITEM_TAG_MISSING" | "OFFSET_TABLE_LENGTH" | "ITEM_PAST_END" | "FRAGMENT_LENGTH_UNDEFINED" | "FRAGMENT_LENGTH_ODD" | "FRAGMENT_LENGTH_ZERO" | "FRAGMENT_TOO_LONG" | "OFFSET_TOO_LARGE" | "DELIMITER_MISSING" | "DELIMITER_LENGTH" | "OFFSET_TABLE_MISMATCH";
+/**
+ * Encapsulated Pixel Data (PS3.5 A.4) that cannot be read or written
+ * correctly. Thrown instead of guessing, because a wrong guess leaves a file
+ * whose frames after the first cannot be located by a viewer.
+ */
+export declare class EncapsulationError extends Error {
+    readonly code: EncapsulationErrorCode;
+    constructor(code: EncapsulationErrorCode, message: string);
+}
 export type WriteType = "Uint8" | "Int8" | "Uint16" | "Int16" | "Uint32" | "Int32" | "Float" | "Double" | "String" | "Hex";
 export default abstract class ValueRepresentation<Value extends TagValueEntry> {
     type: string;
@@ -33,7 +43,7 @@ export default abstract class ValueRepresentation<Value extends TagValueEntry> {
     write(stream: BufferStream, type: "Double", ...valueArgs: Array<number>): Array<number>;
     write(stream: BufferStream, type: "String", ...valueArgs: Array<string>): Array<number>;
     write(stream: BufferStream, type: "Hex", ...valueArgs: Array<string>): Array<number>;
-    abstract writeBytes(stream: BufferStream, value: Value | Array<Value>, syntax: NormalizedSyntax, isEncapsulated?: boolean): number;
+    abstract writeBytes(stream: BufferStream, value: Value | Array<Value>, syntax: NormalizedSyntax, isEncapsulated?: boolean, basicOffsetTable?: Array<number>): number;
     writeByteLengths(stream: BufferStream, value: Value | Array<Value>, lengths: Array<number>, isEncapsulated?: boolean): number;
     static createByTypeString(type: string): ValueRepresentation<TagValueEntry>;
 }
@@ -42,7 +52,26 @@ export declare class StringRepresentation extends ValueRepresentation<string> {
     writeBytes(stream: BufferStream, value: string, syntax: NormalizedSyntax, isEncapsulated: boolean): number;
 }
 export declare class BinaryRepresentation extends ValueRepresentation<ArrayBuffer> {
-    writeBytes(stream: BufferStream, value: Array<ArrayBuffer>, syntax: NormalizedSyntax, isEncapsulated: boolean): number;
+    /**
+     * Basic Offset Table read from encapsulated pixel data (PS3.5 A.4): one
+     * byte offset per frame, or [] when the file carried an empty table.
+     * Set by readBytes; DicomMessage.read copies it onto the TagValue.
+     */
+    basicOffsetTable: Array<number> | undefined;
+    /**
+     * The Basic Offset Table to write for these fragment lengths (PS3.5 A.4).
+     * Offsets count from the first fragment item, each item taking 8 + length
+     * bytes, so a valid table starts at 0 ("the first entry will always be
+     * 00000000H") and names only fragment item boundaries. That it strictly
+     * increases is inferred from each offset naming the start of a successive
+     * frame's first fragment; A.4 has no sentence saying so. A table that does not match would leave frames
+     * 2..N unlocatable in a viewer, so: an empty table stays empty; a valid one
+     * is kept; a mismatched one is rebuilt when it has one entry per fragment
+     * (one fragment per frame, the only layout it can describe); otherwise the
+     * write is refused.
+     */
+    static offsetTableFor(table: Array<number>, lengths: Array<number>): Array<number>;
+    writeBytes(stream: BufferStream, value: Array<ArrayBuffer>, syntax: NormalizedSyntax, isEncapsulated: boolean, basicOffsetTable?: Array<number>): number;
     readBytes(stream: BufferStream, length: number, _syntax: NormalizedSyntax): Array<ArrayBuffer>;
 }
 export declare class ApplicationEntity extends StringRepresentation {
@@ -175,6 +204,10 @@ export declare class UnknownValue extends StringRepresentation {
     readBytes(stream: BufferStream, length: number, _syntax: NormalizedSyntax): string;
 }
 export declare class OtherWordString extends BinaryRepresentation {
+    constructor();
+}
+/** OV (PS3.5 6.2): 64-bit words, e.g. the Extended Offset Table (7FE0,0001). */
+export declare class OtherVeryLongString extends BinaryRepresentation {
     constructor();
 }
 export declare class OtherByteString extends BinaryRepresentation {

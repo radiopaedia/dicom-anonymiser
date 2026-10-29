@@ -57,7 +57,21 @@ function applyPolicy(dcm: TagDict, policy: IPolicy) {
     var action = rule["action"];
     // For keep actions we can just pass the tag accross...
     if (action == "keep") {
-      newDcm[key] = dcm[key];
+      const items = rule.items;
+      if (items) {
+        // A kept Sequence is cleaned item by item (PS3.15 E.1.1, action K).
+        // A value under a sequence rule that is not a Sequence is dropped.
+        if (dcm[key].vr == "SQ") {
+          newDcm[key] = {
+            vr: "SQ",
+            Value: dcm[key].Value.map((item) =>
+              applyPolicy(item as TagDict, items)
+            ),
+          };
+        }
+      } else {
+        newDcm[key] = dcm[key];
+      }
       // TODO: I'm going to assume we're only regenerating UIDs and they
       // always have a VM (multiplicity) of 1, which may be a bad assumption
     } else if (action == "regenerate") {

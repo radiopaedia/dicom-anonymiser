@@ -103,6 +103,27 @@ const sections = [
   },
 ];
 
+// Kept sequences carry a nested whitelist (`items`); list every rule inside
+// them as a path from the top-level sequence.
+function nestedRows(rules, path) {
+  const rows = [];
+  for (const [id, rule] of Object.entries(rules).sort(([a], [b]) => a.localeCompare(b))) {
+    if (id === "default") continue;
+    const here = [...path, `\`${formatTag(id)}\``];
+    if (path.length > 0) {
+      const action = rule.action === "regenerate" ? "regenerate (hash)" : rule.action;
+      rows.push(`| ${here.join(" > ")} | ${action} | ${escape(describe(id, rule))} |`);
+    }
+    if (rule.items) rows.push(...nestedRows(rule.items, here));
+  }
+  return rows;
+}
+
+const nested = nestedRows(
+  Object.fromEntries(Object.entries(policy).filter(([, rule]) => rule.items)),
+  []
+);
+
 const body = sections
   .map(({ heading, intro, rows }) =>
     [
@@ -115,7 +136,20 @@ const body = sections
       ...rows,
     ].join("\n")
   )
-  .join("\n\n");
+  .join("\n\n") +
+  "\n\n" +
+  [
+    "### Inside kept sequences",
+    "",
+    `Kept sequences are cleaned item by item with their own whitelist: ` +
+      `anything not listed here is removed from each item. These ${nested.length} ` +
+      `rules apply inside the multi-frame functional groups; the reasons, with ` +
+      `PS3.15 Table E.1-1 citations, are in \`src/Policies.ts\`.`,
+    "",
+    "| Path | Action | Description |",
+    "| --- | --- | --- |",
+    ...nested,
+  ].join("\n");
 
 const generated = `${BEGIN}\n\n${body}\n\n${END}`;
 

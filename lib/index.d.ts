@@ -5,6 +5,6 @@ import Message from "./Message";
 import MetaDictionary from "./MetaDictionary";
 import TagData from "./TagData";
 import Tag from "./Tag";
-import ValueRepresentation from "./ValueRepresentation";
+import ValueRepresentation, { EncapsulationError } from "./ValueRepresentation";
 import Validator from "./Validator";
-export { Anonymize, AnonymizationError, Policies, dictionary, Message, MetaDictionary, TagData, Tag, Validator, ValueRepresentation, };
+export { Anonymize, AnonymizationError, EncapsulationError, Policies, dictionary, Message, MetaDictionary, TagData, Tag, Validator, ValueRepresentation, };

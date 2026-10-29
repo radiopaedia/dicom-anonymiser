@@ -17,6 +17,12 @@ export type TagValueEntry = string | ArrayBuffer | number | TagDict;
 export type TagValue = {
     vr: string;
     Value: Array<TagValueEntry>;
+    /**
+     * Encapsulated pixel data only: the Basic Offset Table as read, one byte
+     * offset per frame, or [] for an empty table. Value then holds one
+     * ArrayBuffer per fragment, in file order.
+     */
+    basicOffsetTable?: Array<number>;
 };
 export default class DicomMessage {
     static read(bufferStream: BufferStream, syntax: NormalizedSyntax, length?: number): TagDict;

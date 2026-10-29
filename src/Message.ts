@@ -3,7 +3,10 @@ import {
   ReadBufferStream,
   BufferStream,
 } from "./BufferStream";
-import ValueRepresentation, { tagFromNumbers } from "./ValueRepresentation";
+import ValueRepresentation, {
+  BinaryRepresentation,
+  tagFromNumbers,
+} from "./ValueRepresentation";
 import Tag from "./Tag";
 import DicomMetaDictionary from "./MetaDictionary";
 
@@ -11,7 +14,7 @@ export const IMPLICIT_LITTLE_ENDIAN = "1.2.840.10008.1.2";
 export const EXPLICIT_LITTLE_ENDIAN = "1.2.840.10008.1.2.1";
 export const EXPLICIT_BIG_ENDIAN = "1.2.840.10008.1.2.2";
 
-const singleVRs = ["SQ", "OF", "OW", "OB", "UN"];
+const singleVRs = ["SQ", "OF", "OW", "OB", "OV", "UN"];
 const encapsulatedSyntaxes = [
   "1.2.840.10008.1.2.4.50",
   "1.2.840.10008.1.2.4.51",
@@ -52,6 +55,13 @@ export class DicomDict {
   ): void {
     if (this.dict[tag]) {
       this.dict[tag].Value = values;
+      // A Basic Offset Table describes the fragments it was read with.
+      delete this.dict[tag].basicOffsetTable;
+      if (tag == "7FE00010") {
+        // So does an Extended Offset Table (PS3.3 C.7.6.3).
+        delete this.dict["7FE00001"];
+        delete this.dict["7FE00002"];
+      }
     } else {
       this.dict[tag] = { vr: vr, Value: values };
     }
@@ -93,6 +103,12 @@ export type TagValueEntry = string | ArrayBuffer | number | TagDict;
 export type TagValue = {
   vr: string;
   Value: Array<TagValueEntry>;
+  /**
+   * Encapsulated pixel data only: the Basic Offset Table as read, one byte
+   * offset per frame, or [] for an empty table. Value then holds one
+   * ArrayBuffer per fragment, in file order.
+   */
+  basicOffsetTable?: Array<number>;
 };
 
 export default class DicomMessage {
@@ -105,10 +121,14 @@ export default class DicomMessage {
     while (!bufferStream.end()) {
       var readInfo = DicomMessage.readTag(bufferStream, syntax);
 
-      dict[readInfo.tag.toCleanString()] = {
+      const entry: TagValue = {
         vr: readInfo.vr.type,
         Value: readInfo.values,
       };
+      if (readInfo.vr instanceof BinaryRepresentation && readInfo.vr.basicOffsetTable) {
+        entry.basicOffsetTable = readInfo.vr.basicOffsetTable;
+      }
+      dict[readInfo.tag.toCleanString()] = entry;
     }
     return dict;
   }
@@ -215,7 +235,13 @@ export default class DicomMessage {
         vrType = tagObject.vr,
         values = tagObject.Value;
 
-      written += tag.write(useStream, vrType, values, syntax);
+      written += tag.write(
+        useStream,
+        vrType,
+        values,
+        syntax,
+        tagObject.basicOffsetTable
+      );
     });
 
     return written;
@@ -325,7 +351,7 @@ export default class DicomMessage {
         } else if (vr.type == "SQ") {
           // @ts-expect-error the type of `val` could be inferred from knowing the kind of VR but it doesn't propagate
           values = val;
-        } else if (vr.type == "OW" || vr.type == "OB") {
+        } else if (vr.type == "OW" || vr.type == "OB" || vr.type == "OV") {
           // @ts-expect-error the type of `val` could be inferred from knowing the kind of VR but it doesn't propagate
           values = val;
         } else {

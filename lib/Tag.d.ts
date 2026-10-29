@@ -13,5 +13,5 @@ export default class Tag {
     static fromPString(str: string): Tag;
     static fromNumbers(group: number, element: number): Tag;
     static readTag(stream: BufferStream): Tag;
-    write(stream: WriteBufferStream, vrType: string, values: TagValueEntry | Array<TagValueEntry>, syntax: string): number;
+    write(stream: WriteBufferStream, vrType: string, values: TagValueEntry | Array<TagValueEntry>, syntax: string, basicOffsetTable?: Array<number>): number;
 }

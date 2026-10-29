@@ -21,6 +21,14 @@ export interface IPolicy {
         description: string;
         value?: Array<any>;
         method?: ReplaceMethod;
+        /**
+         * For a kept Sequence (SQ): the whitelist applied to every Item, so the
+         * Sequence is kept and its contents cleaned (PS3.15 E.1.1 action "K":
+         * "requires recursively applying the Profile rules to each Data Set in
+         * each Item of the Sequence"). A value under such a rule that is not
+         * encoded as a Sequence is removed.
+         */
+        items?: IPolicy;
     };
 }
 export default function policyFor(sopClassUid: string): IPolicy;
